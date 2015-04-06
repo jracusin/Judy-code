@@ -1,0 +1,14 @@
+This directory contains 57 FITS files giving the lookup tables for converting
+from a HEALPIX image to a flatmap projection.    Each lookup table differs
+depending on the coordinate transformation (between Galactic, celestial and
+ecliptic), the projection (Mollweide or zenithal equal area (zea)), or the size
+of the image (1, small 512 x 256, 2 medium 1024 x 512, 3 Large 2048 x 1024, 
+4 X large 4096 x 2048, and 5 XX large 8192 x 4096). 
+
+These FITS files are stored as gzip compressed files to save disk space, but
+this somewhat slows the processing speed, as the programs must decompress on the
+fly.    The user is welcome to decompress the files in this directory to
+improve the processing speed 
+
+These files are read by the program GET_HEAL_LUT, while the program
+REPROJ_HEALPIX actually performs the mapping.

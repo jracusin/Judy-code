@@ -1,0 +1,7 @@
+MODULE      MFIT
+DESCRIPTION Model Fit
+VERSION     3.2
+SOURCE      Michael.Briggs@nasa.gov
+BUILD_DATE  2010 January 3
+PROCEDURE   MFIT     54     54
+PROCEDURE   MFIT_FINEPHOTMODEL_C   8    8

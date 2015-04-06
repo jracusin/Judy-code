@@ -1,0 +1,12 @@
+pro convert_files
+  
+  files=file_search('*eps')
+  
+  for i=0,n_elements(files)-1 do begin
+     pspos=strpos(files[i],'eps')
+     outfile=strmid(files[i],0,pspos)
+     print,'convert '+files[i]+' '+outfile+'gif'
+     spawn,'convert '+files[i]+' '+outfile+'gif'
+  endfor 
+  return
+end 

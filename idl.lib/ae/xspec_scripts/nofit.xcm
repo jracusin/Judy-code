@@ -1,0 +1,2 @@
+# This script simply aborts the XSPEC run, useful when running the AE fittig stage only to produce grouped spectra. 
+tclexit 98

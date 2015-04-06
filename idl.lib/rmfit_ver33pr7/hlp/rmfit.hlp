@@ -1,0 +1,40 @@
+RMFIT WINDOW HELP
+
+<Main Menu Items>
+
+File
+----
+
+   "Quit"     : Exits RMFIT and returns you to the "IDL>" prompt
+   "Exit IDL" : Exits RMFIT and exits IDL
+
+
+Options
+-------
+
+   "Display On Load"  : If this button is ON when the FITS file is loaded, it 
+     (Default - ON)     automatically displays the loaded file in the FITS 
+                        Display Window.
+                        
+   "Auto Read Lookup" : If this button is ON when the FITS file is read, the  
+     (Default - ON)     directory that contains the FITS file is searched for 
+                        a lookup file based on the FITS file name and your 
+                        lookup file extension (*.lu).  The lookup file is 
+                        automatically read and the menu updated with the lookup 
+                        file parameters.
+                        See the "Lookup" section in the DATA WINDOW HELP  
+                        for a description of the lookup file.
+
+<Other Menu Items>
+
+   "Load"     : Loads new FITS file of your selection.
+                Can read BATSE files (BFITS and DRMs), XSPEC files (PHA and RSP), 
+                as well as rmfit .par batch (not single) fit result files.
+   "Display"  : Displays loaded FITS file
+   "Hide"     : Hides the loaded FITS file data window
+   "Delete"   : Deletes the loaded FITS file data window and unload the file
+
+These take effects on all the highlighted fits files listed in the rmfit window.
+
+
+-------------------------- END OF RMFIT WINDOW HELP ----------------------------

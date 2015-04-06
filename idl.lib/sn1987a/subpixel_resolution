@@ -1,0 +1,47 @@
+#!/usr/bin/csh -fe 
+#
+# Purpose: 
+#    Improvement of "effective" spatial resolution of ACIS image
+#
+# Usage: 
+#    subpixel_resolution <EVENTFILE> <OUTPUTFILE>
+#
+# For details, please see
+#    http://vtec.ess.sci.osaka-u.ac.jp/~mori/IDL/subpixres.html
+#
+
+# Define the local environment variables
+setenv xycols    "subpixres.temp1"
+setenv rxycols   "subpixres.temp2"
+setenv output    "subpixres.output"
+
+# Remove the old intermediate files
+if (-f $xycols)    rm -i $xycols
+if (-f $rxycols)   rm -i $rxycols
+if (-f $output)    rm -i $output
+
+# Copy the columns which is needed for subpixres.pro
+echo "  "
+echo "Copying the columns which is needed for processing"
+echo "  "
+dmcopy "$1[cols ccd_id,x,y,fltgrade]"  $xycols
+
+# Run the IDL program
+printf "subpixres, '%s', '%s' \n" $xycols $rxycols | idl
+
+# Replace the X & Y columns
+echo "  "
+echo "Replacing the X & Y columns"
+echo "  "
+dmpaste infile="$1[EVENTS][cols -sky]" pastefile="$rxycols[EVENTS][cols sky]" outfile=$output
+
+dmhedit infile=$output filelist=none operation=add key=TLMIN17 value="5.0000000E-01"
+dmhedit infile=$output filelist=none operation=add key=TLMIN18 value="5.0000000E-01"
+dmhedit infile=$output filelist=none operation=add key=TLMAX17 value="8.1925000E+03"
+dmhedit infile=$output filelist=none operation=add key=TLMAX18 value="8.1925000E+03" 
+
+# Rename the output file
+mv -i $output $2
+
+
+

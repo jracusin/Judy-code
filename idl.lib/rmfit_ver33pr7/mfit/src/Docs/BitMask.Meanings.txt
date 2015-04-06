@@ -1,0 +1,32 @@
+
+DebugMask for MFIT
+
+M. S. Briggs, 2009 April 28
+
+
+   Bit 
+  0 or any    MFIT startup announcement
+    1         Fit progress
+    2         Condition Number
+    3         Basic input argument dump to screen
+    4         basic input argument dump to file
+    5         dump of input detector data to screen
+    6         dump of input detector data to file
+    7         dump of DRM values to file
+    
+    8         photon energies that will be used to evaluate the models
+    
+    9      M_Results_1 group A
+   10      M_Results_1 group B
+   11      reserved for M_Results_1, future use
+   12      covariance matrix
+   13      reserved for M_results_2, future use
+
+   
+   16      file, same as 9
+   17      file, same as 10
+   18      reserved for M_Reults_1
+   19      file, same as 12
+   20      M_results_2
+   
+   24      fixing undetermined parameters

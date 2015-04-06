@@ -1,0 +1,37 @@
+pro find_wt_srcdetpos,fname,ra,dec,x_int,y_int,pa,ra_int,dec_int
+;This routine determines the intersection point of the line defined by
+;the events in the input (WT) events list (fname) and a line perpendicular to
+;that line and passing through the input source position (ra, dec)
+
+  dat_nomhead=mrdfits(fname,0,hd0)
+  dat_evt=mrdfits(fname,1,hd1)
+  dat_gti=mrdfits(fname,2,hd2)
+
+  evt_line=linfit(dat_evt.x,dat_evt.y,yfit=dat_evt_yfit)
+
+  x_ref=sxpar(hd1,'TCRPX2')
+  x_ref_coord=sxpar(hd1,'TCRVL2')
+  x_scale=sxpar(hd1,'TCDLT2')
+  y_ref=sxpar(hd1,'TCRPX3')
+  y_ref_coord=sxpar(hd1,'TCRVL3')
+  y_scale=sxpar(hd1,'TCDLT3')
+  obs_roll=sxpar(hd0,'PA_PNT')
+  pa=obs_roll+90.
+
+  ygrb=(dec-y_ref_coord)/y_scale+y_ref
+  xgrb=(ra-x_ref_coord)/x_scale*cos(dec*!dtor)+x_ref
+
+  perp_slope=cos((270.-obs_roll)*!pi/180.)/sin((270.-obs_roll)*!pi/180.)
+  perp_y=ygrb-xgrb*perp_slope
+
+  x_int=(perp_y-evt_line(0))/(evt_line(1)-perp_slope)
+  y_int=perp_y+x_int*perp_slope
+;convert back to ra/dec if needed
+  dec_int=y_ref_coord+(y_int-y_ref)*y_scale
+  ra_int=x_ref_coord+(x_int-x_ref)*x_scale/cos(!dtor*dec_int)
+;ra_int seems off by about 1 pixel for some reason
+
+  print,'intersection at ',x_int,y_int,ra_int,dec_int
+
+end
+

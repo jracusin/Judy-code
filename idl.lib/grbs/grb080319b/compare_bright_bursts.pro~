@@ -1,0 +1,38 @@
+function whatlum,z,mag
+  dist=lumdist(z,h0=71,lambda=0.73)*1d6
+  absmag=mag-5.*(alog10(dist)-1.)
+  
+  return,absmag
+end 
+
+pro compare_bright_bursts
+  
+  ;;grb080319b
+  
+  z=0.937
+  mag=5.3
+  print,whatlum(z,mag)
+  
+  ;;grb990123
+  z=1.6
+  mag=9.
+  print,whatlum(z,mag)
+  
+  ;;grb050904
+  z=6.295
+  z=1.
+  mag=7.6
+  print,whatlum(z,mag)
+  
+  ;;grb061007
+  z=1.26
+  mag=10.3
+  print,whatlum(z,mag)
+  
+  ;;grb030329
+  z=0.1685
+  mag=13.
+  print,whatlum(z,mag)
+  
+  return
+end 

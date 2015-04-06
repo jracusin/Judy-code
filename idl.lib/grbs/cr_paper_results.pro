@@ -1,0 +1,2247 @@
+@get_gcn_bibtex
+pro cr_paper_results,cr,gold,silver,iron,pewter,w0,w23,w123,w4,w3g,nsig=nsig,nofilter=nofilter
+  
+  nsig0=1.
+  if n_elements(nsig) eq 0 then nsig=3.
+;  wset,0
+;  cr_stats,cr,nsig=nsig
+  if nsig eq 2. then signame='_2sig' else signame='_3sig'
+  if n_elements(cr) eq 0 then cr=mrdfits(!mdata+'closure_relations_total'+signame+'.fits',1)
+  outdir='~/papers/jetbreaks1/'
+  plotsym,0,/fill  
+  maybe_jet_break,cr,w,last,nsig=nsig
+  alpha=cr[w].alpha
+  
+  shb=['051210','051221A','060313','060801','061201','070724A','070809','071227']
+  match,strtrim(cr[last].grb,2),'GRB'+shb,m1,m2
+  cr[last[m1]].who_eiso='shb'
+  calc_jet_stuff,cr,nsig=nsig
+
+  
+  j2a=where(cr[w].jets2a le nsig0,nj2a)
+  j2b=where(cr[w].jets2b le nsig0,nj2b)
+  j2ai=where(cr[w].jets2ai le nsig0,nj2ai)
+  j3a=where(cr[w].jets3a le nsig0,nj3a)
+  j3b=where(cr[w].jets3b le nsig0,nj3b)
+  j3ai=where(cr[w].jets3ai le nsig0,nj3ai)
+  ji2a=where(cr[w].jetsism2a le nsig0,nji2a)
+  ji2b=where(cr[w].jetsism2b le nsig0,nji2b)
+  ji2ai=where(cr[w].jetsism2ai le nsig0,nji2ai)
+  ji3a=where(cr[w].jetsism3a le nsig0,nji3a)
+  ji3b=where(cr[w].jetsism3b le nsig0,nji3b)
+  ji3ai=where(cr[w].jetsism3ai le nsig0,nji3ai)
+  jw2a=where(cr[w].jetswind2a le nsig0,njw2a)
+  jw2b=where(cr[w].jetswind2b le nsig0,njw2b)
+  jw2ai=where(cr[w].jetswind2ai le nsig0,njw2ai)
+  jw3a=where(cr[w].jetswind3a le nsig0,njw3a)
+  jw3b=where(cr[w].jetswind3b le nsig0,njw3b)
+  jw3ai=where(cr[w].jetswind3ai le nsig0,njw3ai)
+  jsi2a=where(cr[w].jetsoism2a le nsig0,njsi2a)
+  jsi2b=where(cr[w].jetsoism2b le nsig0,njsi2b)
+  jsi3a=where(cr[w].jetsoism3a le nsig0,njsi3a)
+  jsi3b=where(cr[w].jetsoism3b le nsig0,njsi3b)
+  jsw2a=where(cr[w].jetsowind2a le nsig0,njsw2a)
+  jsw2b=where(cr[w].jetsowind2b le nsig0,njsw2b)
+  jsw3a=where(cr[w].jetsowind3a le nsig0,njsw3a)
+  jsw3b=where(cr[w].jetsowind3b le nsig0,njsw3b)
+  
+  name=['All','jets2a','jets2b','jets2ai','jets3a','jets3b','jets3ai','jetism2a','jetism2b','jetism2ai','jetism3a','jetism3b','jetism3ai','jetwind2a','jetwind2b','jetwind2ai','jetwind3a','jetwind3b','jetwind3ai','jetsoism2a','jetsoism2b','jetsoism3a','jetsoism3b','jetsowind2a','jetsowind2b','jetsowind3a','jetsowind3b']
+  index=['*','j2a','j2b','j2ai','j3a','j3b','j3ai','ji2a','ji2b','ji2ai','ji3a','ji3b','ji3ai','jw2a','jw2b','jw2ai','jw3a','jw3b','jw3ai','jsi2a','jsi2b','jsi3a','jsi3b','jsw2a','jsw2b','jsw3a','jsw3b']
+  nindex='if n'+index+' gt 0 then '
+  nindex[0]=''
+  
+  goto,jump
+  window,1
+  !p.multi=[0,5,5]
+  for i=0,n_elements(name)-1 do begin
+     com=nindex[i]+'plothist,[-1,alpha['+index[i]+']],bin=0.1,xrange=[0,4],yrange=[0,10],xtitle=!tsym.alpha'
+;     print,com
+     tmp=execute(com)
+     tmp=execute(nindex[i]+'legend,name[i],box=0,/top,/right')
+  endfor 
+  
+  !p.multi=0
+  jump:
+  w0=0 & w23=0 & w234=0 & w123=0 & w1234=0 & w12=0
+  for i=0,n_elements(last)-1 do begin
+     q=where(cr.grb eq cr[last[i]].grb,nq)
+     case nq of 
+        1: w0=[w0,q]
+        2: begin 
+           if cr[q[0]].seg1 eq 0 then w23=[w23,q] else w12=[w12,q]
+        end 
+        3: begin
+           if cr[q[0]].seg1 eq 1 then w123=[w123,q] else w234=[w234,q]
+        end
+        4: w1234=[w1234,q]
+     endcase 
+  endfor 
+  w0=w0[1:*]
+  w12=w12[1:*]
+  w23=w23[1:*]
+  w123=w123[1:*]
+  w234=w234[1:*]
+  w1234=w1234[1:*]
+  
+  cr[w0].class=0
+  cr[w12].class=12
+  cr[w23].class=23
+  cr[w123].class=123
+  cr[w234].class=234
+  cr[w1234].class=1234
+  
+  mwrfits,cr,!mdata+'closure_relations_total'+signame+'.fits',/create
+  ;;SHOULD COMPARE OPENING ANGLE LIMITS FOR BURSTS W/ JB AND W/O TO MAKE STATEMENT ABOUT JB
+  n4=n_elements(where(cr[last].jetbreak eq 4))
+  n3=n_elements(where(cr[last].jetbreak eq 3))
+  n2=n_elements(where(cr[last].jetbreak eq 2))
+  n1=n_elements(where(cr[last].jetbreak eq 1))
+  n0=n_elements(where(cr[last].jetbreak eq 0))
+  
+  
+  w4=[w1234,w234]
+;  w4=where(cr.jetbreak eq 4)
+  w3g=where(cr[w4].seg3 eq 1)
+  w44=where(cr.seg4 eq 1)
+  
+;  w23=where(cr.jetbreak eq 3)
+  w3b=where(cr[w23].seg3 eq 1)
+  w2b=where(cr[w23].seg2 eq 1)
+  
+;  w123=where(cr.jetbreak eq 2)
+  w2c=where(cr[w123].seg2 eq 1)
+  w3c=where(cr[w123].seg3 eq 1)
+  
+;  w1a=where(cr[w12].seg1 eq 1)
+  w2a=where(cr[w12].seg2 eq 1)
+  
+  print
+  
+  ;;LETS EXPLORE BASED ON PROBABILITY OF CRAZY JET BREAK
+  print,'Definitely Region 4'
+;  w4=where(cr.seg4 eq 1)
+  type_jb,cr,w44,wjb=wjb,nsig=nsig
+  gold=w44[wjb]
+  
+  print,"Definitely Region 4's Region 3"
+  type_jb,cr,w4[w3g],wonlyeinorm=wonlyeinorm1,weinorm=weinorm,nsig=nsig ;,wsph=wsph,wonlyjb=wonlyjb0
+  
+  print
+  print,'Ambiguous Region 4 (2-3/3-4) second'
+;  w34=where(cr.seg1 eq 0 and cr.seg2 eq 1 and cr.seg3 eq 1 and cr.seg4 eq 0)
+  type_jb,cr,w23[w3b],wonlyjb=wonlyjb1,wonlyeinorm=wonlyeinorm3,wjb=wjb1,wsph=wsph,nsig=nsig,wnorm=wnorm
+  print,'Ambiguous Region 4 (2-3/3-4) first'
+;  w34=where(cr.seg1 eq 0 and cr.seg2 eq 1 and cr.seg3 eq 1 and cr.seg4 eq 0)
+  type_jb,cr,w23[w2b],wonlyjb=wonlyjb1a,wonlyeinorm=wonlyeinorm3a,wjb=wjb1a,weinorm=weinorm1a,nsig=nsig;,wnorm=wnorm
+  
+  
+  print
+  print,'Ambiguous Single PL'
+;  w0=where(cr.jetbreak eq 1)
+  type_jb,cr,w0,wonlyeinorm=wonlyeinorm4,wonlyjb=wonlyjb3,weinorm=weinorm0,wjb=wjb0,nsig=nsig
+  
+  print
+  print,'Region 3 with no Region 4'
+;  w3=where(cr.jetbreak eq 2)
+;  w3=where(cr.seg1 eq 1 and cr.seg3 eq 1 and cr.seg4 eq 0)
+  type_jb,cr,w123[w3c],wonlyjb=wonlyjb2,wjb=wjb2,wonlyeinorm=wonlyeinorm2,weinorm=weinorm2,nsig=nsig
+  
+  print
+  print,'Gold region 2-3'
+  ;;compare gold 2-3 to ambiguous 2-3
+  w1g=where(cr[w4].seg1 eq 1)
+  w2g=where(cr[w4].seg2 eq 1)
+  w3g=where(cr[w4].seg3 eq 1)
+  w4g=where(cr[w4].seg4 eq 1)
+  print,'region 2'
+  type_jb,cr,w4[w2g],wonlysph=wonlysph,nsig=nsig
+  print,'region 3'
+  type_jb,cr,w4[w3g],nsig=nsig
+  
+  
+  silver=0
+  if wonlyjb1[0] ne -1 then silver=[silver,w23[w3b[wonlyjb1]]]
+  if wonlyjb2[0] ne -1 then silver=[silver,w123[w3c[wonlyjb2]]]
+  if wonlyjb3[0] ne -1 then begin
+     wsil=where(cr[w0[wonlyjb3]].tstop gt 3000,nwsil)
+     if nwsil gt 0 then silver=[silver,w0[wonlyjb3]]
+  endif 
+  if n_elements(silver) gt 1 then silver=silver[1:*]
+  
+  wsilv=0
+  for i=0,n_elements(silver)-1 do begin 
+     ws=where(cr.grb eq cr[silver[i]].grb)
+     wsilv=[wsilv,ws]
+  endfor 
+  wsilv=wsilv[1:*]
+  ;;MAKE II-III/III-IV PLOTS
+;  plothist,[-1,cr[w23[w3b]].alpha],bin=0.1,xrange=[0,4],xtitle=!tsym.alpha,ytitle='N'
+;  plothist,[-1,cr[w23[w3b[wonlyjb]]].alpha],bin=0.1,xrange=[0,4],/overplot,/fill,/fline,forient=45
+  jb=[gold,silver]
+  s=sort(jb)
+  jb=jb[s]
+  
+  bronze=[w23[w3b[wjb1]],w0[wjb0],w123[w3c[wjb2]]]
+  dont_match,bronze,jb,m1,m2
+  bronze=bronze[m1]
+  
+  jbs=[gold,silver,bronze]
+  day=86400.
+  minday=0.1  ;;2 hours
+  maxday=10.
+  
+                                ;  begplot,name=outdir+'alpha2v3.ps',/color
+  
+  ;;;USE ALPHA 2-3 & 3-4 CLUSTERING TO GROUP AMBIGUOUS AS JBS OR NO
+  begplot,name=outdir+'alpha_alpha_corr1.eps',/color,/encap,font='helvetica'
+  !p.charsize=1.5
+  xmarg=!x.margin
+  !x.margin=[8,2]
+;  !p.multi=[0,2,1]
+  symsize=0.7
+;  !p.multi=0
+  alpha=cr.alpha
+  alphaerr=abs(cr.alphaerr)
+  alphaerr0=alpha-abs(cr.alphaerr[0])
+  alphaerr1=alpha+abs(cr.alphaerr[1])
+  malphaerr=alphaerr0
+  for i=0,n_elements(cr)-1 do malphaerr[i]=mean(cr[i].alphaerr)
+  
+  wa=w23[w2b] &  wb=w23[w3b]
+  ;;no naked bursts
+  wnaked=where((cr[wb].highlat lt nsig0 or cr[wb].alpha gt 3.) and cr[wb].tbreak lt 1e3 and cr[wb].seg3 eq 1,nwnak)
+  if nwnak gt 0 then begin 
+     wb[wnaked]=-1
+     wp=where(wb ne -1)
+     wb=wb[wp]
+     wa=wa[wp]
+  endif 
+  plot,alpha[wa],alpha[wb],psym=5,yrange=[0,4],xtitle=!tsym.alpha+'!LII or III!N',ytitle=!tsym.alpha+'!LIII or IV!N',symsize=symsize,/iso,/nodata,xrange=[-0.7,1.8],/xsty,/ysty
+  oplot,alpha[wa],alpha[wb],psym=5,symsize=symsize,color=!grey70
+;  goto,skipnow
+  for i=0,n_elements(wa)-1 do begin
+     oplot,[alphaerr0[wa[i]],alphaerr1[wa[i]]],[alpha[wb[i]],alpha[wb[i]]],color=!grey70
+     oplot,[alpha[wa[i]],alpha[wa[i]]],[alphaerr0[wb[i]],alphaerr1[wb[i]]],color=!grey70
+  endfor 
+  match,wb,silver,m1,m2
+  wa2=wa[m1] &  wb2=wb[m1]
+  oplot,alpha[wa2],alpha[wb2],psym=5,color=!blue,symsize=symsize
+  for i=0,n_elements(wa2)-1 do begin
+     oplot,[alphaerr0[wa2[i]],alphaerr1[wa2[i]]],[alpha[wb2[i]],alpha[wb2[i]]],color=!blue
+     oplot,[alpha[wa2[i]],alpha[wa2[i]]],[alphaerr0[wb2[i]],alphaerr1[wb2[i]]],color=!blue
+  endfor 
+  
+  wa=w123[w2c] &  wb=w123[w3c]
+  ;;no naked bursts
+  wnaked=where((cr[wb].highlat lt nsig0 or cr[wb].alpha gt 3.) and cr[wb].tbreak lt 1e3 and cr[wb].seg3 eq 1,nwnak)
+  if nwnak gt 0 then begin 
+     wb[wnaked]=-1
+     wp=where(wb ne -1)
+     wb=wb[wp]
+     wa=wa[wp]
+  endif 
+  oplot,alpha[wa],alpha[wb],psym=4,symsize=symsize,color=!grey70
+  for i=0,n_elements(wa)-1 do begin
+     oplot,[alphaerr0[wa[i]],alphaerr1[wa[i]]],[alpha[wb[i]],alpha[wb[i]]],color=!grey70 ;,color=!purple
+     oplot,[alpha[wa[i]],alpha[wa[i]]],[alphaerr0[wb[i]],alphaerr1[wb[i]]],color=!grey70 ;,color=!purple
+  endfor 
+  match,wb,silver,m1,m2
+  wa2=wa[m1] &  wb2=wb[m1]
+  oplot,alpha[wa2],alpha[wb2],psym=4,color=!blue,symsize=symsize
+  for i=0,n_elements(wa2)-1 do begin
+     oplot,[alphaerr0[wa2[i]],alphaerr1[wa2[i]]],[alpha[wb2[i]],alpha[wb2[i]]],color=!blue
+     oplot,[alpha[wa2[i]],alpha[wa2[i]]],[alphaerr0[wb2[i]],alphaerr1[wb2[i]]],color=!blue
+  endfor 
+;skipnow:
+  wa=w4[w3g] & wb=w4[w4g]
+  oplot,alpha[wa],alpha[wb],psym=8,color=!orange,symsize=symsize
+  for i=0,n_elements(wa)-1 do begin
+     oplot,[alphaerr0[wa[i]],alphaerr1[wa[i]]],[alpha[wb[i]],alpha[wb[i]]],color=!orange
+     oplot,[alpha[wa[i]],alpha[wa[i]]],[alphaerr0[wb[i]],alphaerr1[wb[i]]],color=!orange
+  endfor 
+;  histogram_2d,alpha[wa],alpha[wb],hist,[0.5,2.0],[1,3],4,4
+;  contour,hist.map,hist.xbins,hist.ybins,color=!orange,xrange=[-0.5,2.0],yrange=[0,4]
+;  stop
+  wa=w4[w2g] & wb=w4[w3g]
+  oplot,alpha[wa],alpha[wb],psym=8,color=!red,symsize=symsize
+  for i=0,n_elements(wa)-1 do begin
+     oplot,[alphaerr0[wa[i]],alphaerr1[wa[i]]],[alpha[wb[i]],alpha[wb[i]]],color=!red
+     oplot,[alpha[wa[i]],alpha[wa[i]]],[alphaerr0[wb[i]],alphaerr1[wb[i]]],color=!red
+  endfor 
+  wa=w4[w2g] & wb=w4[w4g]
+  oplot,alpha[wa],alpha[wb],psym=8,color=!magenta,symsize=symsize
+  for i=0,n_elements(wa)-1 do begin
+     oplot,[alphaerr0[wa[i]],alphaerr1[wa[i]]],[alpha[wb[i]],alpha[wb[i]]],color=!magenta
+     oplot,[alpha[wa[i]],alpha[wa[i]]],[alphaerr0[wb[i]],alphaerr1[wb[i]]],color=!magenta
+  endfor 
+  xyouts,1.45,1.8,'III-IV',/data,charsize=1.5
+  xyouts,-0.3,2.5,'II-IV',/data,charsize=1.5
+  xyouts,-0.5,0.7,'II-III',/data,charsize=1.5
+  
+  match,silver,w23[w3b],m1,m2s
+  match,silver,w123[w3c],m1,m2sb
+  xind=[w23[w2b],w123[w2c],w4[w3g],w4[w2g]]
+;  cxind=[w23[w2[m2s]],w123[w2c[m2sb]],w4[w3g],w4[w2g]]
+  cxind=[w4[w3g],w4[w2g]]
+  x=alpha[xind]
+  xerr=malphaerr[xind]
+  cx=alpha[cxind]
+  yind=[w23[w3b],w123[w3c],w4[w4g],w4[w3g]]
+;  cyind=[w23[w3b[m2s]],w123[w3c[m2sb]],w4[w4g],w4[w3g]]
+  cyind=[w4[w4g],w4[w3g]]
+  y=alpha[yind]
+  yerr=malphaerr[yind]
+  cy=alpha[cyind]
+  data=rotate([[x],[y]],4)
+  cdata=rotate([[cx],[cy]],4)
+  
+;  wts=clust_wts(cdata,n_clust=3)
+;  c=cluster(data,wts,n_clust=3)
+;;  wts=nn_learn(cdata,[2,4],n_clust=2)
+;;  c=nn_clust(data,wts,n_clust=2)
+;  wc0=where(c eq 0,nwc0)
+;  wc1=where(c eq 1,nwc1)
+;  wc2=where(c eq 2,nwc2)  
+
+;  match,yind,cyind,m1,m2
+;  fitexy,cx,cy,a,b,x_sig=malphaerr[cxind],y_sig=malphaerr[cyind],sig,chisq
+;  diff=max(x)-min(x)
+;  xx=findgen(1000)/100.*diff-diff*5
+;;  oplot,xx,a+b*xx
+;;  oplot,xx,a-xx/b-1
+;;  oplot,xx,a-xx/b+1.4
+
+;  yy=a+b*xx-1
+;  yyp=a-xx/b-1
+;;  yyp=a+b*xx+2
+;  n=n_elements(x)
+;  nc=n_elements(cx)
+;  dy=fltarr(n) & dyerr=dy & dx=dy
+;  for i=0,n-1 do begin 
+;;     dx[i]=min(sqrt((x[i]-(xx+2.))^2+(y[i]-(b*(xx+2.)))^2))
+;     dx[i]=min(sqrt((x[i]-xx)^2+(y[i]-yy)^2))
+;     dy[i]=min(sqrt((x[i]-xx)^2+(y[i]-yyp)^2))
+;     dyerr[i]=min(sqrt((x[i]+alphaerr[1,xind[i]]-xx)^2+(y[i]+alphaerr[1,yind[i]]-yyp)^2))
+;  endfor 
+;  d=dy[m1]
+;  wa=where(m2 lt n_elements(gold))
+;  wb=where(m2 ge n_elements(gold))
+;  gold34=wa
+;  gold23=wb
+  
+  
+  ;;;use gold 2,3,4 and silver sure 34(w23) and 24(w123) to make parameter space for 23,34,24
+  cn4=n_elements(w3g)
+  cn23=n_elements(m2s)
+  cn123=n_elements(m2sb)
+  xind=[w23[w2b],w123[w2c]]
+  yind=[w23[w3b],w123[w3c]]
+  ;;no silver
+  dont_match,silver,yind,dm1,dm2
+  yind=yind[dm2]
+  xind=xind[dm2]
+  ;;no naked bursts
+  wnaked=where((cr[yind].highlat lt nsig0 or cr[yind].alpha gt 3.) and cr[yind].tbreak lt 1e3 and cr[yind].seg3 eq 1,nwnak)
+  if nwnak gt 0 then begin 
+     yind[wnaked]=-1
+     wp=where(yind ne -1)
+     yind=yind[wp]
+     xind=xind[wp]
+  endif 
+  cxind=[w4[w2g],w4[w3g],w4[w2g]] ;,w23[w2[m2s]],w123[w2c[m2sb]]]
+  cyind=[w4[w3g],w4[w4g],w4[w4g]] ;,w23[w3b[m2s]],w123[w3c[m2sb]]]
+  c2=[w4[w2g]]                    ;,w123[w2c[m2sb]]]
+  c3=[w4[w3g]]                    ;,w23[w2[m2s]]]
+  c4=[w4[w4g]]                    ;,w23[w3b[m2s]],w123[w3c[m2sb]]]
+  
+  xseg=[replicate(2,cn4),replicate(3,cn4),replicate(2,cn4)] ;,replicate(3,cn23),replicate(2,cn123)]
+  yseg=[replicate(3,cn4),replicate(4,cn4),replicate(4,cn4)] ;,replicate(4,cn23),replicate(4,cn123)]
+  cw23=where(xseg eq 2 and yseg eq 3)
+  cw34=where(xseg eq 3 and yseg eq 4)
+  cw24=where(xseg eq 2 and yseg eq 4)
+  
+;  cen2=weighted_mean(alpha[c2],malphaerr[c2])
+;  cen3=weighted_mean(alpha[c3],malphaerr[c3])
+;  cen4=weighted_mean(alpha[c4],malphaerr[c4])
+  cen2=mean(alpha[c2])
+  cen3=mean(alpha[c3])
+  cen4=mean(alpha[c4])
+  
+  print,cen2,cen3,cen4
+  stop
+  ;;;use asymmetric errors
+  xsd23=alphaerr[0,xind]
+  w=where(alpha[xind]-cen2 lt 0)
+  xsd23[w]=alphaerr[1,xind[w]]
+  ysd23=alphaerr[0,yind]
+  w=where(alpha[yind]-cen3 lt 0)
+  ysd23[w]=alphaerr[1,yind[w]]
+  
+  xsd34=alphaerr[0,xind]
+  w=where(alpha[xind]-cen3 lt 0)
+  xsd34[w]=alphaerr[1,xind[w]]
+  ysd34=alphaerr[0,yind]
+  w=where(alpha[yind]-cen4 lt 0)
+  ysd34[w]=alphaerr[1,yind[w]]
+  
+  xsd24=alphaerr[0,xind]
+  w=where(alpha[xind]-cen2 lt 0)
+  xsd24[w]=alphaerr[1,xind[w]]
+  ysd24=alphaerr[0,yind]
+  w=where(alpha[yind]-cen4 lt 0)
+  ysd24[w]=alphaerr[1,yind[w]]
+  
+  
+;  xsd23=stddev(alpha[cxind[cw23]])
+;  ysd23=stddev(alpha[cyind[cw23]])
+;  xsd34=stddev(alpha[cxind[cw34]])
+;  ysd34=stddev(alpha[cyind[cw34]])
+;  xsd24=stddev(alpha[cxind[cw24]])
+;  ysd24=stddev(alpha[cyind[cw24]])
+  dcen23=sqrt(((alpha[xind]-cen2)/xsd23)^2+((alpha[yind]-cen3)/ysd23)^2)
+  dcen34=sqrt(((alpha[xind]-cen3)/xsd34)^2+((alpha[yind]-cen4)/ysd34)^2)
+  dcen24=sqrt(((alpha[xind]-cen2)/xsd24)^2+((alpha[yind]-cen4)/ysd24)^2)
+;  dcen23=sqrt((alpha[xind]-cen2)^2+(alpha[yind]-cen3)^2)  
+;  dcen34=sqrt((alpha[xind]-cen3)^2+(alpha[yind]-cen4)^2)
+;  dcen24=sqrt((alpha[xind]-cen2)^2+(alpha[yind]-cen4)^2)
+  cdcen23=sqrt(((alpha[cxind]-cen2)/xsd23)^2+((alpha[cyind]-cen3)/ysd23)^2)
+  cdcen34=sqrt(((alpha[cxind]-cen3)/xsd34)^2+((alpha[cyind]-cen4)/ysd34)^2)
+  cdcen24=sqrt(((alpha[cxind]-cen2)/xsd24)^2+((alpha[cyind]-cen4)/ysd24)^2)
+;  cdcen23=sqrt((alpha[cxind]-cen2)^2+(alpha[cyind]-cen3)^2)
+;  cdcen34=sqrt((alpha[cxind]-cen3)^2+(alpha[cyind]-cen4)^2)
+;  cdcen24=sqrt((alpha[cxind]-cen2)^2+(alpha[cyind]-cen4)^2)
+  
+  ans=intarr(n_elements(xind))
+  for i=0,n_elements(xind)-1 do begin
+     mm=min([dcen23[i],dcen34[i],dcen24[i]],c)
+     ans[i]=c
+  endfor 
+  
+  cans=intarr(n_elements(cxind))
+  for i=0,n_elements(cxind)-1 do begin
+     mm=min([cdcen23[i],cdcen34[i],cdcen24[i]],c)
+     cans[i]=c
+  endfor 
+  cw0=where(cans[cw23] eq 0,ncw0)
+  cw1=where(cans[cw34] eq 1,ncw1)
+  cw2=where(cans[cw24] eq 2,ncw2)
+  help,cw0,cw1,cw2,cw23,cw34,cw24
+  oplot,[cen2,cen3,cen2],[cen3,cen4,cen4],psym=7,thick=15,symsize=2
+;  ellipse,xsd23,ysd23,0.,0.,360.,cen2,cen3
+;  ellipse,xsd34,ysd34,0.,0.,360.,cen3,cen4
+;  ellipse,xsd24,ysd24,0.,0.,360.,cen2,cen4
+
+  ;;no silver
+;  dont_match,silver,yind,dm1,dm2
+;  ans=ans[dm2]
+;  yind=yind[dm2]
+;  xind=xind[dm2]
+
+  dw0=where(ans eq 0)
+  dw1=where(ans eq 1)
+  dw2=where(ans eq 2)
+  help,dw0,dw1,dw2
+  
+  ;;is defining this new criteria (distance from gold/silver 23,34,24) any better?
+  wn23=dw0
+  wn34=dw1                      ;[dw1,dw2]  ;;;probably grabbing too much, hmmmm.....
+  wn24=dw2
+  
+  goto,skiphist1
+  plothist,[-1,dy],bin=0.1,xrange=[0,3],xstyle=1,x1,y1
+;  plothist,dx,bin=0.1,xrange=[-0.5,2.5],xstyle=1,x1,y1,/noplot ;over,color=!red
+
+  plothist,[-1,d[wa]],x0,y0,bin=0.2,xrange=[0,3],xstyle=1,/over,color=!orange
+  
+  g=gaussfit(x0,y0,g1,estimates=[max(y0),mean(d[wa]),stddev(d[wa])],nterm=3)
+  g=gaussian(x1,g1)
+  oplot,x1,g,color=!green
+  sig=1.645
+;  sig=2.
+  oplot,[g1[1]-g1[2]*sig,g1[1]-g1[2]*sig],[0,100],color=!cyan,line=2
+  plothist,[-1,d[wb]],x0,y0,bin=0.1,xrange=[0,3],xstyle=1,/over,color=!red
+  g=gaussfit(x0,y0,g2,estimates=[max(y0),mean(d[wb]),stddev(d[wb])],nterm=3)
+  g=gaussian(x1,g2)
+  oplot,x1,g,color=!green
+  oplot,[g2[1]+g2[2]*sig,g2[1]+g2[2]*sig],[0,100],color=!purple,line=2
+  
+;  plothist,dyerr-dy,xerr,yerr,bin=0.1,xrange=[-0.5,2.5],xstyle=1,/over,color=!blue
+
+;  match,yind,w123[w3c],mm1,mm2
+;  plothist,dy[mm1],bin=0.1,xrange=[-0.5,2.5],xstyle=1,/over,color=!purple
+;  match,yind,w23[w3b],mm1,mm2
+;  plothist,dy[mm1],bin=0.1,xrange=[-0.5,2.5],xstyle=1,/over,color=!darkgreen
+  
+  oplot,[-1,3],[0,0]
+  yerr=y1*0.1
+  p=[g2,g1]
+;  newp=mpfitfun('double_gauss',x1,y1,yerr,p,weights=1.,yfit=yfit)
+;  oplot,x1,yfit,color=!magenta
+;  g=gaussian(x1,newp[0:2])
+;  oplot,x1,g,color=!cyan
+;  g=gaussian(x1,newp[3:*])
+;  oplot,x1,g,color=!cyan
+  
+;  oplot,[newp[1]+newp[2],newp[1]+newp[2]],[0,100],color=!blue,line=2
+;  oplot,[newp[4]-abs(newp[5]),newp[4]-abs(newp[5])],[0,100],color=!purple,line=2
+  goto,skipfornow
+  dont_match,xind,cxind,dm1,dm2
+  
+;  wn23=where(dy[dm1] lt newp[1]+newp[2])
+;  wn34=where(dy[dm1] gt newp[4]-abs(newp[5]))
+  wn23=where(dy[dm1] lt g2[1]+g2[2]*2.) ;1.645)
+  wn34=where(dy[dm1] gt g1[1]-g1[2]*2.) ;1.645)
+;  wn34=where(dy[dm1] gt g2[1]+g2[2]*1.645)
+;  wneither=where(dy[dm1] gt g2[1]+g2[2]*1.645 and dy[dm1] lt g1[1]-g1[2]*1.645)
+  wn23=dm1[wn23]
+  wn34=dm1[wn34]
+;  wneither=yind[dm1[wneither]]
+  help,wn23,wn34
+  skiphist1:
+  skipfornow:
+  help,bronze
+;  dont_match,yind[wn34],silver,dm1,dm2
+;  pewter=yind[wn34[dm1]]
+  pewter=yind[wn34]
+  cr[yind[wn34]].class=34
+;  wn34=wn34[dm1]
+;  pewter=[pewter,wneither]
+  alsopew=where((cr[w0[wjb0]].tstart gt minday*day or (cr[w0[wjb0]].tstart lt minday*day and cr[w0[wjb0]].tlastdet gt maxday*day)) and cr[w0[wjb0]].alpha gt 1.5)
+  pewter=[pewter,w0[wjb0[alsopew]]]
+  dont_match,bronze,pewter,dm1,dm2
+  bronze=bronze[dm1]
+  wnaked=where((cr[bronze].highlat lt nsig0 or cr[bronze].alpha gt 3.) and (cr[bronze].tbreak lt 1e3 and cr[bronze].seg3 eq 1) or (cr[bronze].seg0 eq 1 and cr[bronze].alpha gt 3 and cr[bronze].tlastdet lt 3000),nwnak)
+  if nwnak gt 0 then begin 
+     bronze[wnaked]=-1
+     wp=where(bronze ne -1)
+     bronze=bronze[wp]
+  endif 
+  
+  wnaked=where((cr[silver].highlat lt nsig0 or cr[silver].alpha gt 3) and (cr[silver].tbreak lt 1e3 and cr[silver].seg3 eq 1) or (cr[silver].seg0 eq 1 and cr[silver].alpha gt 3 and cr[silver].tlastdet lt 3000),nwnak)
+  if nwnak gt 0 then begin 
+     silver[wnaked]=-1
+     wp=where(silver ne -1)
+     silver=silver[wp]
+  endif 
+  
+;  wnaked=where(cr[pewter].highlat lt nsig0 and cr[pewter].tbreak lt 1e3 and cr[pewter].seg3 eq 1,nwnak)
+;  if nwnak gt 0 then begin 
+;     pewter[wnaked]=-1
+;     wp=where(pewter ne -1)
+;     pewter=pewter[wp]
+;  endif 
+  
+;  dont_match,yind[wn24],silver,dm1,dm2
+;  iron=yind[wn24[dm1]]
+  iron=yind[wn24]
+  cr[iron].class=24
+  dont_match,bronze,iron,dm1,dm2
+  bronze=bronze[dm1]
+  
+  ;;put I-II-III-IV/II-III-IV's that don't fit any CRs into bronze sample
+  dont_match,gold,w4[w4g],dm1,dm2
+  bronze=[bronze,w4[w4g[dm2]]]
+  
+  ;;move and pewter or iron nothings to bronze
+  type_jb,cr,pewter,nothing=nothing
+  bronze=[bronze,pewter[nothing]]
+  dont_match,pewter,pewter[nothing],dm1,dm2
+  pewter=pewter[dm1]
+  
+  type_jb,cr,iron,nothing=nothing
+  bronze=[bronze,iron[nothing]]
+  dont_match,iron,iron[nothing],dm1,dm2
+  iron=iron[dm1]
+  
+  
+;  wn24=wn24[dm1]
+;;  wn24=wn24[dm1]
+;  wnaked=where(cr[iron].highlat lt nsig0 and cr[iron].tbreak lt 1e3 and cr[iron].seg3 eq 1,nwnak)
+;  if nwnak gt 0 then begin 
+;     iron[wnaked]=-1
+;     wp=where(iron ne -1)
+;     iron=iron[wp]
+;;     wn24=wn24[wp]
+;  endif 
+;  type_jb,cr,pewter,wjb=wjbp,/silent,nsig=nsig
+;  pewter=pewter[wjbp]
+  endplot
+  begplot,name=outdir+'alpha_alpha_corr2.eps',/color,/encap,font='helvetica'
+  wa=xind & wb=yind
+  plot,alpha[wa],alpha[wb],psym=3,yrange=[0,4],xtitle=!tsym.alpha+'!LII or III!N',ytitle=!tsym.alpha+'!LIII or IV!N',symsize=symsize,/iso,/nodata,xrange=[-0.7,1.8],/xsty,/ysty
+;  goto,skipnow
+;  for i=0,n_elements(wa)-1 do begin
+;     oplot,[alphaerr0[wa[i]],alphaerr1[wa[i]]],[alpha[wb[i]],alpha[wb[i]]]
+;     oplot,[alpha[wa[i]],alpha[wa[i]]],[alphaerr0[wb[i]],alphaerr1[wb[i]]]
+;  endfor 
+  
+  ;;checking for unaccounted for grey points (silver & naked)
+;  wa=w123[w2c] &  wb=w123[w3c]
+;  oplot,alpha[wa],alpha[wb],psym=4,symsize=symsize,color=!grey70
+;  wa=w23[w2] &  wb=w23[w3b]
+;  oplot,alpha[wa],alpha[wb],psym=5,symsize=symsize,color=!grey70
+  
+  wa=xind[wn23] & wb=yind[wn23]
+  match,w23[w2b],wa,m1,m2
+  oplot,alpha[wa[m2]],alpha[wb[m2]],psym=5,color=!purple,symsize=symsize
+  match,w123[w2c],wa,m1,m2
+  oplot,alpha[wa[m2]],alpha[wb[m2]],psym=5,color=!purple,symsize=symsize
+  for i=0,n_elements(wa)-1 do begin
+     oplot,[alphaerr0[wa[i]],alphaerr1[wa[i]]],[alpha[wb[i]],alpha[wb[i]]],color=!purple
+     oplot,[alpha[wa[i]],alpha[wa[i]]],[alphaerr0[wb[i]],alphaerr1[wb[i]]],color=!purple
+  endfor 
+  
+  wa=xind[wn34] & wb=yind[wn34]
+  match,w23[w2b],wa,m1,m2
+  oplot,alpha[wa[m2]],alpha[wb[m2]],psym=5,color=!cyan,symsize=symsize
+  match,w123[w2c],wa,m1,m2
+  oplot,alpha[wa[m2]],alpha[wb[m2]],psym=4,color=!cyan,symsize=symsize
+  for i=0,n_elements(wa)-1 do begin
+     oplot,[alphaerr0[wa[i]],alphaerr1[wa[i]]],[alpha[wb[i]],alpha[wb[i]]],color=!cyan
+     oplot,[alpha[wa[i]],alpha[wa[i]]],[alphaerr0[wb[i]],alphaerr1[wb[i]]],color=!cyan
+  endfor 
+
+  wa=xind[wn24] & wb=yind[wn24]
+  match,w23[w2b],wa,m1,m2
+  oplot,alpha[wa[m2]],alpha[wb[m2]],psym=5,color=!green,symsize=symsize
+  match,w123[w2c],wa,m1,m2
+  oplot,alpha[wa[m2]],alpha[wb[m2]],psym=4,color=!green,symsize=symsize
+  for i=0,n_elements(wa)-1 do begin
+     oplot,[alphaerr0[wa[i]],alphaerr1[wa[i]]],[alpha[wb[i]],alpha[wb[i]]],color=!green
+     oplot,[alpha[wa[i]],alpha[wa[i]]],[alphaerr0[wb[i]],alphaerr1[wb[i]]],color=!green
+  endfor 
+  
+;  wa=w4[w3g] & wb=w4[w4g]
+;  oplot,alpha[wa],alpha[wb],psym=8,color=!orange,symsize=symsize
+;  for i=0,n_elements(wa)-1 do begin
+;     oplot,[alphaerr0[wa[i]],alphaerr1[wa[i]]],[alpha[wb[i]],alpha[wb[i]]],color=!orange
+;     oplot,[alpha[wa[i]],alpha[wa[i]]],[alphaerr0[wb[i]],alphaerr1[wb[i]]],color=!orange
+;  endfor 
+  
+;  wa=[w123[w2c],w23[w2]] & wb=[w123[w3c],w23[w3b]]
+;  match,wb,silver,m1,m2
+;  wa2=wa[m1] &  wb2=wb[m1]
+;  oplot,alpha[wa2],alpha[wb2],psym=5,color=!blue,symsize=symsize
+;  for i=0,n_elements(wa2)-1 do begin
+;     oplot,[alphaerr0[wa2[i]],alphaerr1[wa2[i]]],[alpha[wb2[i]],alpha[wb2[i]]],color=!blue
+;     oplot,[alpha[wa2[i]],alpha[wa2[i]]],[alphaerr0[wb2[i]],alphaerr1[wb2[i]]],color=!blue
+;  endfor 
+;  wa=w4[w2g] & wb=w4[w3g]
+;  oplot,alpha[wa],alpha[wb],psym=8,color=!red,symsize=symsize
+;  for i=0,n_elements(wa)-1 do begin
+;     oplot,[alphaerr0[wa[i]],alphaerr1[wa[i]]],[alpha[wb[i]],alpha[wb[i]]],color=!red
+;     oplot,[alpha[wa[i]],alpha[wa[i]]],[alphaerr0[wb[i]],alphaerr1[wb[i]]],color=!red
+;  endfor 
+;  oplot,xx,a+b*xx
+;  oplot,xx,a-xx/b-1
+;  oplot,xx,a-xx/b+1.4
+  oplot,[cen2,cen3,cen2],[cen3,cen4,cen4],psym=7,thick=15,symsize=2
+;  ellipse,xsd23,ysd23,0.,0.,360.,cen2,cen3
+;  ellipse,xsd34,ysd34,0.,0.,360.,cen3,cen4
+;  ellipse,xsd24,ysd24,0.,0.,360.,cen2,cen4
+  xyouts,1.45,1.8,'III-IV',/data,charsize=1.5
+  xyouts,-0.3,2.5,'II-IV',/data,charsize=1.5
+  xyouts,-0.5,0.7,'II-III',/data,charsize=1.5
+  
+  goto,skiphist2
+  plothist,[-1,dy],bin=0.1,xrange=[0,3],xstyle=1,x1,y1
+  plothist,[-1,d[gold34]],x0,y0,bin=0.1,xrange=[0,3],xstyle=1,/over,color=!orange
+  plothist,[-1,d[gold23]],x0,y0,bin=0.1,xrange=[0,3],xstyle=1,/over,color=!red
+  plothist,[-1,dy[wn34]],bin=0.1,xrange=[0,3],xstyle=1,/over,color=!cyan
+  plothist,[-1,dy[wn24]],bin=0.1,xrange=[0,3],xstyle=1,/over,color=!yellow
+  plothist,[-1,dy[wn23]],bin=0.1,xrange=[0,3],xstyle=1,/over,color=!purple
+  oplot,[-1,3],[0,0]
+  skiphist2:
+  endplot
+
+  !x.margin=xmarg
+  goto,skipthis
+  help,wc0,wc1,wc2
+  plot,[-0.5,2],[0,4],psym=5,/iso,yrange=[0,4],xtitle=!tsym.alpha+'!LII or III!N',ytitle=!tsym.alpha+'!LIII or IV!N',/nodata
+  
+  wa=xind[wc0] & wb=yind[wc0]
+  oplot,alpha[wa],alpha[wb],psym=2,color=!magenta
+  for i=0,n_elements(wa)-1 do begin
+     oplot,[alphaerr0[wa[i]],alphaerr1[wa[i]]],[alpha[wb[i]],alpha[wb[i]]],color=!magenta
+     oplot,[alpha[wa[i]],alpha[wa[i]]],[alphaerr0[wb[i]],alphaerr1[wb[i]]],color=!magenta
+  endfor 
+  
+  wa=xind[wc1] & wb=yind[wc1]
+  oplot,alpha[wa],alpha[wb],psym=2,color=!cyan
+  for i=0,n_elements(wa)-1 do begin
+     oplot,[alphaerr0[wa[i]],alphaerr1[wa[i]]],[alpha[wb[i]],alpha[wb[i]]],color=!cyan
+     oplot,[alpha[wa[i]],alpha[wa[i]]],[alphaerr0[wb[i]],alphaerr1[wb[i]]],color=!cyan
+  endfor 
+  
+  wa=xind[wc2] & wb=yind[wc2]
+  oplot,alpha[wa],alpha[wb],psym=2,color=!green
+  for i=0,n_elements(wa)-1 do begin
+     oplot,[alphaerr0[wa[i]],alphaerr1[wa[i]]],[alpha[wb[i]],alpha[wb[i]]],color=!green
+     oplot,[alpha[wa[i]],alpha[wa[i]]],[alphaerr0[wb[i]],alphaerr1[wb[i]]],color=!green
+  endfor 
+  
+  
+  
+  num=[nwc0,nwc1,nwc2]
+  list=['wc0','wc1','wc2']
+  s=sort(num)
+;  print,list[s[2]]
+  tmp=execute('wlist2='+list[s[2]])
+  tmp=execute('wlist1='+list[s[1]])
+  tmp=execute('wlist0='+list[s[0]])
+  
+  
+  match,[w23[w3b[m2]],w123[w3c[m2b]],w4[w4g]],yind[w],m1,m2 & help,m2
+
+;  match,[w4[w4g]],yind[w],m1,m2 & help,m2
+
+  !p.multi=0
+  
+  stop
+  skipthis:
+  
+;  begplot,name='~/papers/jetbreaks1/class_stats.ps',/land
+  plotsym,0,/fill
+  w=where(cr[last].tstart lt minday*day and cr[last].tstop gt maxday*day,nw)
+  wg=where(cr[gold].tstart lt minday*day and cr[gold].tstop gt maxday*day,nwg)
+  ws=where(cr[silver].tstart lt minday*day and cr[silver].tstop gt maxday*day,nws)
+  wb=where(cr[bronze].tstart lt minday*day and cr[bronze].tstop gt maxday*day,nwb)
+  goto,skip0
+  !p.multi=[0,2,2]
+  plot,cr[jb].alpha,cr[jb].tbreak,psym=3,/ylog,/yno,xtitle=!tsym.alpha,ytitle='t!Lbreak!N'
+;  oplot,cr[gold].alpha,cr[gold].tbreak,psym=8 ;,color=!red
+  if nwg gt 0 then oplot,cr[gold[wg]].alpha,cr[gold[wg]].tbreak,psym=8 ;,color=!red
+;  oplot,cr[silver].alpha,cr[silver].tbreak,psym=1 ;,color=!blue
+  if nws gt 0 then oplot,cr[silver[ws]].alpha,cr[silver[ws]].tbreak,psym=1 ;,color=!red
+;  oplot,cr[bronze].alpha,cr[bronze].tbreak,psym=5 ;,color=!yellow
+  if nwb gt 0 then oplot,cr[bronze[wb]].alpha,cr[bronze[wb]].tbreak,psym=5 ;,color=!red ;,color=!yellow
+;  oplot,cr[jbs[w]].alpha,cr[jbs[w]].tbreak,psym=5
+  
+  plot,cr[jb].beta,cr[jb].tbreak,psym=3,/ylog,/yno,xtitle=!tsym.beta,ytitle='t!Lbreak!N'
+;  oplot,cr[gold].beta,cr[gold].tbreak,psym=8 ;,color=!red
+  if nwg gt 0 then oplot,cr[gold[wg]].beta,cr[gold[wg]].tbreak,psym=8 ;,color=!red
+;  oplot,cr[silver].beta,cr[silver].tbreak,psym=1;;,color=!blue
+  if nws gt 0 then oplot,cr[silver[ws]].beta,cr[silver[ws]].tbreak,psym=1 ;,color=!red
+;  oplot,cr[bronze].beta,cr[bronze].tbreak,psym=5;,color=!yellow
+  if nwb gt 0 then oplot,cr[bronze[wb]].beta,cr[bronze[wb]].tbreak,psym=5 ;,color=!red ;,color=!yellowq
+;  oplot,cr[jbs[w]].beta,cr[jbs[w]].tbreak,psym=5
+  
+  plot,cr[jb].alpha,cr[jb].beta,psym=3,xtitle=!tsym.alpha,ytitle=!tsym.beta
+;  oplot,cr[gold].alpha,cr[gold].beta,psym=8 ;,color=!red
+  if nwg gt 0 then oplot,cr[gold[wg]].alpha,cr[gold[wg]].beta,psym=8 ;,color=!red
+;  oplot,cr[silver].alpha,cr[silver].beta,psym=1;,color=!blue
+  if nws gt 0 then oplot,cr[silver[ws]].alpha,cr[silver[ws]].beta,psym=1 ;,color=!red
+;  oplot,cr[bronze].alpha,cr[bronze].beta,psym=5;,color=!yellow
+  if nwb gt 0 then oplot,cr[bronze[wb]].alpha,cr[bronze[wb]].beta,psym=5 ;,color=!red ;,color=!yellow
+;  oplot,cr[jbs[w]].alpha,cr[jbs[w]].beta,psym=5
+  legend,['Gold','Silver','Bronze'],psym=[8,1,5],box=0,/top,/right
+  
+  !p.multi=0
+;  endplot
+  skip0:
+  
+;  tagnames=tag_names(cr)
+;  wc=where(tagnames eq 'COMPLETE',nwc)
+;;  if nwc eq 0 then begin 
+;     add_tags,cr,['COMPLETE','CLASS'],['0','0'],newcr
+;     cr=newcr & newcr=0
+;  endif 
+  
+  cr[last[w]].complete=1
+;  cr[gold].class=1
+;  cr[silver].class=2
+;  cr[bronze].class=3
+;  for i=0,n_elements(last)-1 do begin
+;     l=where(cr.grb eq cr[last[i]].grb)
+;     c=where(cr[l].complete eq 1,nc)
+;     if nc gt 0 then cr[l].complete=1
+;     g=where(cr[l].class eq 1,ng)
+;     if ng gt 0 then cr[l].class=1
+;     s=where(cr[l].class eq 2,ns)
+;     if ns gt 0 then cr[l].class=2
+;     b=where(cr[l].class eq 3,nb)
+;     if nb gt 0 then cr[l].class=3
+;  endfor 
+  
+  
+  goto,skip
+  jb=[gold,silver,bronze]
+;  w=where(cr[jb].theta gt 0)
+;  wb=where(cr[bronze].theta gt 0)
+  
+  w=where(cr[jb].theta gt 0 and cr[jb].z gt 0)
+  wb=where(cr[bronze].theta gt 0 and cr[bronze].z gt 0)
+  l=where(cr[last].z gt 0)
+  dont_match,jb,last[l],m1,m2
+  m2=l[m2]
+  begplot,name='~/papers/jetbreaks1/theta_dist_wz.ps',/land,/color
+;  begplot,name='~/papers/jetbreaks1/theta_dist_wz_liang.ps',/land,/color
+;  dont_match,jb,last,m1,m2
+;  begplot,name='~/papers/jetbreaks1/theta_dist.ps',/land,/color
+  bin=1.
+  plothist,[-1,cr[jb[w]].theta],bin=bin,xrange=[0,40],xtitle=!tsym.theta+'!Lj!N',ytitle='N'
+  plothist,[-1,cr[last[m2]].theta_end],bin=bin,xrange=[0,40],/over,color=!green            
+  plothist,[-1,cr[bronze[wb]].theta],bin=bin,xrange=[0,40],/over,color=!red
+  plothist,[-1,cr[[gold,silver]].theta],bin=bin,xrange=[0,40],/over,color=!blue
+  plothist,[-1,cr[bronze[wb]].theta_end],bin=bin,xrange=[0,40],/over,color=!magenta        
+  legend,['All JB candidates','Gold,Silver','Bronze','Non-JB last obs lower limit','Bronze last obs lower limit'],color=[!p.color,!blue,!red,!green,!magenta],line=[0,0,0,0,0],/top,/rig,box=0
+  endplot
+  skip:
+  
+  ;;;explore Tstop or Tlastdet and why we don't see jet breaks
+  jb=[gold,silver,bronze]
+  jb0=[gold,silver]
+  wjb=where(cr[jb].z gt 0)
+  wl=where(cr[last].z gt 0)
+  wg=where(cr[gold].z gt 0)
+  ws=where(cr[silver].z gt 0)
+  wb=where(cr[bronze].z gt 0)
+  wp=where(cr[pewter].z gt 0)
+  z1=1.+cr.z
+  wzz=where(cr.z eq 0.)
+  z1[wzz]=1e12
+  dont_match,last,jb,m1,m2
+  nojb=last[m1[where(cr[last[m1]].z gt 0)]]
+  goto,skip1
+  begplot,name='~/papers/jetbreaks1/tstop_tbreak.ps',/land,/color
+  plot,cr[last[wl]].tstop/z1[last[wl]],cr[last[wl]].tbreak/z1[last[wl]],/xlog,/ylog,yrange=[1e2,1e6],xrange=[1e4,1e8],xtitle='t!Lstop!N',ytitle='t!Lbreak!N',/nodata
+  oplot,cr[gold[wg]].tstop/z1[gold[wg]],cr[gold[wg]].tbreak/z1[gold[wg]],psym=8,color=!yellow
+  oplot,cr[silver[ws]].tstop/z1[silver[ws]],cr[silver[ws]].tbreak/z1[silver[ws]],psym=1,color=!blue
+  oplot,cr[bronze[wb]].tstop/z1[bronze[wb]],cr[bronze[wb]].tbreak/z1[bronze[wb]],psym=5,color=!red
+  oplot,cr[nojb].tstop/z1[nojb],cr[nojb].tbreak/z1[nojb],psym=4,color=!green
+  legend,['Gold','Silver','Bronze','No JB'],box=0,/top,/left,color=[!yellow,!blue,!red,!green],psym=[8,1,5,4]
+  oplot,[7.*day,7.*day]/(1.+2.5),[1e2,1e7],line=2
+  endplot
+  skip1:
+  
+  fluxrat=cr.flux/cr.rate
+  tlastdet=cr.tlastdet
+  tlastdet_rest=cr.tlastdet/z1
+  tlastpos=cr.tlastpos
+  ctr_lastdet=cr.ctr_tlastdet
+  ctr_lastpos=cr.ctr_tlastpos
+  
+  w=where(tlastpos eq 0.)
+  tlastpos[w]=tlastdet[w]
+  tlastpos_rest=tlastpos/z1
+  ctr_lastpos[w]=ctr_lastdet[w]
+  tbreak=cr.tbreak
+  tbreak[w4[w4g[wonlyeinorm1]]]=cr[w4[w3g[wonlyeinorm1]]].tbreak
+  tbreak_rest=tbreak/z1
+  tbreakerr=fltarr(2,n_elements(cr))
+  tbreakerr[0,*]=cr.tbreakerr[0]
+  tbreakerr[1,*]=cr.tbreakerr[1]
+  
+  ctr_break=cr.ctr_tbreak
+  
+  flux_lastdet=ctr_lastdet*fluxrat
+  flux_break=ctr_break*fluxrat
+  
+  dl=lumdist(cr.z,h0=71,lambda=0.7)*1d6*3.08568025d18 ;;lumdist in cm
+  lum_lastdet=4.*!pi*dl^2.*flux_lastdet*(1.+cr.z)^(-cr.alpha+cr.beta-1.)
+  lum_break=4.*!pi*dl^2.*flux_break*(1.+cr.z)^(-cr.alpha+cr.beta-1.)
+  lum_break_gam=lum_break*(1.-cos(cr.theta*!dtor))
+  lum_lastdet_gam=lum_lastdet*(1.-cos(cr.theta_lastdet*!dtor))
+  
+;  !p.multi=[0,2,4]
+;  erase
+  goto,skip2a
+  legsize=1
+  charsize=1
+  begplot,name=outdir+'t_flux_lum.ps',/color
+  multiplot,/init,[2,4]
+  multiplot
+  plot,tlastdet_rest[last],ctr_lastdet[last],/xlog,/ylog,/nodata,ytitle='Count Rate (t)  (s!U-1!N)',xrange=[1e2,1e8],yrange=[1e-5,100],charsize=charsize
+  oplot,tbreak_rest[gold],ctr_break[gold],psym=8,color=!orange
+  oplot,tbreak_rest[silver],ctr_break[silver],symsize=symsize,psym=1,color=!blue
+  oplot,tbreak_rest[bronze],ctr_break[bronze],symsize=symsize,psym=5,color=!red
+;  legend,['Prominent','Hidden','Unlikely','No Jet Break'],box=0,/top,/right,color=[!orange,!blue,!red,!green],psym=[8,1,5,4],charsize=legsize
+  
+  multiplot
+  plot,tlastdet_rest[last],ctr_lastdet[last],/xlog,/ylog,/nodata,xrange=[1e2,1e8],yrange=[1e-5,100]
+  oplot,tlastdet_rest[gold],ctr_lastdet[gold],symsize=symsize,psym=8,color=!orange
+  oplot,tlastdet_rest[silver],ctr_lastdet[silver],symsize=symsize,psym=1,color=!blue
+  oplot,tlastdet_rest[bronze],ctr_lastdet[bronze],symsize=symsize,psym=5,color=!red
+  oplot,tlastdet_rest[last[m1]],ctr_lastdet[last[m1]],symsize=symsize,psym=4,color=!green
+  legend,['Prominent','Hidden','Unlikely','No Jet Break'],box=0,/top,/right,color=[!orange,!blue,!red,!green],psym=[8,1,5,4],charsize=legsize
+  
+  multiplot
+  plot,tlastdet_rest[last],flux_lastdet[last],/xlog,/ylog,/nodata,ytitle='Flux (t)  (erg cm!U-2!N s!U-1!N)',xrange=[1e2,1e8],yrange=[1e-15,1e-9],charsize=charsize
+  oplot,tbreak_rest[gold],flux_break[gold],psym=8,color=!orange
+  oplot,tbreak_rest[silver],flux_break[silver],symsize=symsize,psym=1,color=!blue
+  oplot,tbreak_rest[bronze],flux_break[bronze],symsize=symsize,psym=5,color=!red
+;  legend,['Prominent','Hidden','Unlikely','No Jet Break'],box=0,/top,/right,color=[!orange,!blue,!red,!green],psym=[8,1,5,4],charsize=legsize
+  
+  multiplot
+  plot,tlastdet_rest[last],flux_lastdet[last],/xlog,/ylog,/nodata,xrange=[1e2,1e8],yrange=[1e-15,1e-9]
+  oplot,tlastdet_rest[gold],flux_lastdet[gold],symsize=symsize,psym=8,color=!orange
+  oplot,tlastdet_rest[silver],flux_lastdet[silver],symsize=symsize,psym=1,color=!blue
+  oplot,tlastdet_rest[bronze],flux_lastdet[bronze],symsize=symsize,psym=5,color=!red
+  oplot,tlastdet_rest[last[m1]],flux_lastdet[last[m1]],symsize=symsize,psym=4,color=!green
+;  legend,['Prominent','Hidden','Unlikely','No Jet Break'],box=0,/top,/right,color=[!orange,!blue,!red,!green],psym=[8,1,5,4],charsize=legsize
+  
+  multiplot
+  plot,tlastdet_rest[last],lum_lastdet[last],/xlog,/ylog,/nodata,ytitle='L!Lx,iso!N (t)  (erg s!U-1!N)',xrange=[1e2,1e8],yrange=[1d40,1d49],charsize=charsize
+  oplot,tbreak_rest[gold],lum_break[gold],psym=8,color=!orange
+  oplot,tbreak_rest[silver],lum_break[silver],symsize=symsize,psym=1,color=!blue
+  oplot,tbreak_rest[bronze],lum_break[bronze],symsize=symsize,psym=5,color=!red
+;  legend,['Prominent','Hidden','Unlikely','No Jet Break'],box=0,/top,/right,color=[!orange,!blue,!red,!green],psym=[8,1,5,4],charsize=legsize
+  
+  multiplot
+  plot,tlastdet_rest[last],lum_lastdet[last],/xlog,/ylog,/nodata,xrange=[1e2,1e8],yrange=[1d40,1d49]
+  oplot,tlastdet_rest[gold],lum_lastdet[gold],symsize=symsize,psym=8,color=!orange
+  oplot,tlastdet_rest[silver],lum_lastdet[silver],symsize=symsize,psym=1,color=!blue
+  oplot,tlastdet_rest[bronze],lum_lastdet[bronze],symsize=symsize,psym=5,color=!red
+  oplot,tlastdet_rest[last[m1]],lum_lastdet[last[m1]],symsize=symsize,psym=4,color=!green
+;  legend,['Prominent','Hidden','Unlikely','No Jet Break'],box=0,/top,/right,color=[!orange,!blue,!red,!green],psym=[8,1,5,4],charsize=legsize
+  
+  multiplot
+  plot,tlastdet_rest[last],lum_lastdet_gam[last],/xlog,/ylog,/nodata,xtitle='t!Lbreak!N/(1+z) (s)',ytitle='L!Lx,'+!tsym.gamma+'!N (t) (erg s!U-1!N)',xrange=[1e2,1e8],yrange=[1d39,1d45],charsize=charsize
+  oplot,tbreak_rest[gold],lum_break_gam[gold],psym=8,color=!orange
+  oplot,tbreak_rest[silver],lum_break_gam[silver],symsize=symsize,psym=1,color=!blue
+  oplot,tbreak_rest[bronze],lum_break_gam[bronze],symsize=symsize,psym=5,color=!red
+;  legend,['Prominent','Hidden','Unlikely','No Jet Break'],box=0,/top,/right,color=[!orange,!blue,!red,!green],psym=[8,1,5,4],charsize=legsize
+  
+  multiplot
+  plot,tlastdet_rest[last],lum_lastdet_gam[last],/xlog,/ylog,/nodata,xtitle='t!Llast detection!N/(1+z) (s)',xrange=[1e2,1e8],yrange=[1d39,1d45],charsize=charsize
+  oplot,tlastdet_rest[gold],lum_lastdet_gam[gold],symsize=symsize,psym=8,color=!orange
+  oplot,tlastdet_rest[silver],lum_lastdet_gam[silver],symsize=symsize,psym=1,color=!blue
+  oplot,tlastdet_rest[bronze],lum_lastdet_gam[bronze],symsize=symsize,psym=5,color=!red
+  oplot,tlastdet_rest[last[m1]],lum_lastdet_gam[last[m1]],symsize=symsize,psym=4,color=!green
+;  legend,['Prominent','Hidden','Unlikely','No Jet Break'],box=0,/top,/right,color=[!orange,!blue,!red,!green],psym=[8,1,5,4],charsize=legsize
+  multiplot,/reset
+  endplot
+  skip2a:
+;  !p.multi=0
+;  erase
+;  goto,skip5a
+;  stop
+  bin=0.5
+  cs=1.5
+  legsize=1.5
+  xr=[2,8]
+;  erase
+  jbs=[gold,silver,pewter]
+  w=where(tbreak eq 0)
+  tbreak[w]=1.                  ;cr[w].tstart
+  tbreak_rest[w]=1.             ;cr[w].tstart/z1
+;  erase
+  multiplot2,/default
+  begplot,name=outdir+'tlastdet_dist.eps',/color,font='helvetica' ;,/land
+  !x.margin=[8,3]
+  multiplot2,[2,4],/init
+;  multiplot2,[2,2],/init
+  
+  ;;;gold obs
+  yr=[0,35]
+  multiplot2
+;  plothist,[0.,alog10(tlastdet[gold])],bin=bin,xrange=xr,yrange=yr,charsize=cs
+  plot,xr,yr,/nodata,ytitle='N'
+  plothist,alog10(tbreak[gold]),bin=bin,xrange=xr,yrange=yr,/over,charsize=cs,min=xr[0],max=xr[1],/fill,fcolor=!grey30,color=!grey30
+;  plothist,[0.,alog10(tlastpos[gold])],bin=bin,xrange=xr,yrange=yr,/over,color=!orange
+  oplot,xr,[0,0]
+  legend,['Prominent'],box=0,/top,/left,charsize=legsize,margin=-0.4
+  ;;;gold rest
+  multiplot2
+  wz=where(cr[gold].z gt 0,nwz)
+  plot,xr,yr,/nodata
+;  plothist,[0.,alog10(tlastdet_rest[gold[wz]])],bin=bin,xrange=xr,yrange=yr,charsize=cs
+  plothist,alog10(tbreak_rest[gold[wz]]),xg,yg,bin=bin,xrange=xr,yrange=yr,/over,min=xr[0],max=xr[1],/fill,fcolor=!grey30,color=!grey30
+;  plothist,[0.,alog10(tbreak_rest[gold[wz]])],x,y,bin=1,xrange=xr,yrange=yr,/noplot
+  limsamp=alog10(tbreak_rest[gold[wz]])
+
+;  plothist,[0.,alog10(tlastpos_rest[gold[wz]])],bin=bin,xrange=xr,yrange=yr,/over,color=!orange
+  oplot,xr,[0,0]
+
+  legend,['t!Ljblim!N','t!Lbreak!N','t!Llast det!N'],color=[!p.color,!grey30,!grey70],box=0,/top,/right,charsize=legsize,/fill,line=[2,0,0]
+  
+  ;;;silver & pewter & iron obs
+;  yr=[0,25]
+  sp=[silver,pewter,iron]
+  multiplot2
+  plot,xr,yr,/nodata,ytitle='N'
+  plothist,alog10(tbreak[sp]),bin=bin,xrange=xr,yrange=yr,/over,min=xr[0],max=xr[1],/fill,fcolor=!grey30,color=!grey30
+  plothist,alog10(tlastdet[sp]),bin=bin,xrange=xr,yrange=yr,min=xr[0],max=xr[1],/over,/fill,fcolor=!grey70,color=!grey70,/fline,forient=45
+  plothist,alog10(tlastpos[sp]),bin=bin,xrange=xr,yrange=yr,/over,min=xr[0],max=xr[1],line=2
+  oplot,xr,[0,0]
+  legend,['Hidden & Possible'],box=0,/top,/left,charsize=legsize,margin=-0.4
+  ;;;silver & pewter rest
+  multiplot2
+  wz=where(cr[sp].z gt 0,nwz)
+  
+  plot,xr,yr,/nodata
+  plothist,alog10(tbreak_rest[sp[wz]]),bin=bin,xrange=xr,yrange=yr,/over,min=xr[0],max=xr[1],/fill,fcolor=!grey30,color=!grey30
+  plothist,alog10(tlastdet_rest[sp[wz]]),bin=bin,xrange=xr,yrange=yr,min=xr[0],max=xr[1],/over,/fill,fcolor=!grey70,color=!grey70,/fline,forient=45
+  plothist,alog10(tlastpos_rest[sp[wz]]),x,y,bin=bin,xrange=xr,yrange=yr,/over,line=2,min=xr[0],max=xr[1]
+  
+  limsamp=[limsamp,alog10(tbreak_rest[sp[wz]])]
+  w=where(limsamp gt 0)
+  limsamp=limsamp[w]
+  meantr=mean(limsamp)
+  stdtr=stddev(limsamp)
+  lim=meantr+stdtr*1.645
+  lim=alog10(max(tbreak_rest[gold]))
+;  ag=[1.,meantr,stdtr,1.]
+;  g=gaussfit(xg,yg,ag,nterm=4)
+;  lim=meantr+ag[2]*1.645
+;  oplot,xg,g,color=!green
+;  oplot,[lim,lim],[0,100],color=!green,line=1
+  
+  wlim=where(alog10(tlastpos_rest[sp[wz]]) lt lim,nlim)
+  print,'last pos',nwz,nlim,nlim*1./nwz*1.
+  wlim=where(alog10(tlastdet_rest[sp[wz]]) lt lim,nlim)
+  print,'last det',nwz,nlim,nlim*1./nwz*1.
+
+  oplot,xr,[0,0]
+;  multiplot2,/reset
+;  multiplot2,/default
+;  endplot
+  
+;  begplot,name=outdir+'tlastdet_dist2.ps',/color,/land
+;  multiplot2,[2,2],/init
+  ;;;bronze obs
+;  yr=[0,25]
+  multiplot2
+  plot,xr,yr,/nodata,ytitle='N'
+  plothist,alog10(tbreak[bronze]),bin=bin,xrange=xr,yrange=yr,/over,min=xr[0],max=xr[1],/fill,fcolor=!grey30,color=!grey30
+  plothist,alog10(tlastdet[bronze]),bin=bin,xrange=xr,yrange=yr,min=xr[0],max=xr[1],/over,/fill,fcolor=!grey70,color=!grey70,/fline,forient=45
+  plothist,alog10(tlastpos[bronze]),bin=bin,xrange=xr,yrange=yr,/over,line=2,min=xr[0],max=xr[1]
+  oplot,xr,[0,0]
+  legend,['Unlikely'],box=0,/top,/left,charsize=legsize,margin=-0.4
+  ;;;bronze rest
+  multiplot2
+  wz=where(cr[bronze].z gt 0,nwz)
+  plot,xr,yr,/nodata
+  plothist,alog10(tbreak_rest[bronze[wz]]),bin=bin,xrange=xr,yrange=yr,/over,min=xr[0],max=xr[1],/fill,fcolor=!grey30,color=!grey30
+  plothist,alog10(tlastdet_rest[bronze[wz]]),bin=bin,xrange=xr,yrange=yr,/over,min=xr[0],max=xr[1],/fill,fcolor=!grey70,color=!grey70,/fline,forient=45
+  plothist,alog10(tlastpos_rest[bronze[wz]]),x,y,bin=bin,xrange=xr,yrange=yr,/over,line=2,min=xr[0],max=xr[1]
+  wlim=where(alog10(tlastpos_rest[bronze[wz]]) lt lim,nlim)
+  print,'last pos',nwz,nlim,nlim*1./nwz*1.
+  wlim=where(alog10(tlastdet_rest[bronze[wz]]) lt lim,nlim)
+  print,'last det',nwz,nlim,nlim*1./nwz*1.
+
+  oplot,xr,[0,0]
+;  legend,['t!Lbreak!N','t!Llast det!N','t!Llast possible break!N'],line=[0,0,0],color=[!red,!p.color,!orange],box=0,/top,/right,charsize=legsize
+  
+  ;;;Non-JB obs
+  dont_match,[gold,silver,iron,pewter,bronze],last,dm1,dm2
+  nojb=last[dm2]
+;  yr=[0,25]
+  multiplot2
+  plot,xr,yr,/nodata,ytitle='N',charsize=cs,xtitle='log t!Lobs!N (s)',xtickname=['2','4','6',' ']
+  plothist,alog10(tlastdet[nojb]),bin=bin,xrange=xr,yrange=yr,min=xr[0],max=xr[1],/over,/fill,fcolor=!grey70,color=!grey70,/fline,forient=45
+;  plothist,[0.,alog10(tbreak[nojb])],bin=bin,xrange=xr,yrange=yr,/over,color=!red
+  plothist,alog10(tlastpos[nojb]),bin=bin,xrange=xr,yrange=yr,/over,line=2,min=xr[0],max=xr[1]
+  oplot,xr,[0,0]
+  legend,['Non-','Jet Break'],box=0,/top,/left,charsize=legsize,margin=-0.4
+  ;;;Non-JB rest
+  multiplot2
+  wz=where(cr[nojb].z gt 0,nwz)
+  plot,xr,yr,/nodata,charsize=cs,xtitle='log t!Lobs!N/(1+z) (s)',xtickname=[' ','4','6','8']
+  plothist,alog10(tlastdet_rest[nojb[wz]]),bin=bin,xrange=xr,yrange=yr,min=xr[0],max=xr[1],/over,/fill,fcolor=!grey70,color=!grey70,/fline,forient=45
+;  plothist,[1,alog10(tbreak_rest[nojb[wz]])],bin=bin,xrange=xr,yrange=yr,/over,color=!red
+  plothist,alog10(tlastpos_rest[nojb[wz]]),x,y,bin=bin,xrange=xr,yrange=yr,/over,line=2,min=xr[0],max=xr[1]
+  wlim=where(alog10(tlastpos_rest[nojb[wz]]) lt lim,nlim)
+  print,'last pos',nwz,nlim,nlim*1./nwz*1.
+  wlim=where(alog10(tlastdet_rest[nojb[wz]]) lt lim,nlim)
+  print,'last det',nwz,nlim,nlim*1./nwz*1.
+
+  oplot,xr,[0,0]  
+  
+  multiplot2,/reset,/default
+  endplot  
+  
+  wnaked=where((cr.highlat lt nsig0 or cr.alpha gt 3) and (cr.tbreak lt 1e3 and cr.seg3 eq 1) or (cr.seg0 eq 1 and cr.alpha gt 3 and cr.tlastdet lt 3000),nwnak)
+  dont_match,last,[gold,silver,pewter,iron,bronze],m1,m2
+  nonjb=last[m1]
+  
+  stop
+  
+  ;;;PROBE EISO
+;  !p.multi=0
+;  bin=0.2
+;  w=where(cr[last].eiso gt 0)
+;  plothist,[1,alog10(cr[last[w]].eiso*1d52)],bin=bin,xrange=[48,55],xtitle='E!Liso!N'
+;  jbs=[gold,silver,pewter,iron]
+;  w=where(cr[jbs].eiso gt 0)
+;  plothist,[1,alog10(cr[jbs[w]].eiso*1d52)],bin=bin,xrange=[48,55],/over,color=!red;,line=2
+;  w=where(cr[nojb].eiso gt 0)
+;  plothist,[1,alog10(cr[nojb[w]].eiso*1d52)],bin=bin,xrange=[48,55],/over,color=!green;,line=2
+
+  
+  if not keyword_set(nofilter) then filter_jb_properties,cr,pewter,iron,nsig=nsig
+  
+
+;  skip5a:
+  
+;;   plot,tlastdet[last],tbreak[last],psym=3,/xlog,/ylog,yrange=[1e2,1e6],xtitle='t!Llast det!N',ytitle='t!Lbreak!N'
+;;   for i=0,n_elements(last)-1 do oplot,[tlastdet[last[i]],tlastdet[last[i]]],[tbreak[last[i]]-tbreakerr[0,last[i]],tbreak[last[i]]+tbreakerr[1,last[i]]]
+;;   oplot,tlastdet[gold],tbreak[gold],psym=8,color=!orange
+;;   for i=0,n_elements(gold)-1 do oplot,[tlastdet[gold[i]],tlastdet[gold[i]]],[tbreak[gold[i]]-tbreakerr[0,gold[i]],tbreak[gold[i]]+tbreakerr[1,gold[i]]],color=!orange
+;;   oplot,tlastdet[silver],tbreak[silver],psym=8,color=!blue
+;;   for i=0,n_elements(silver)-1 do oplot,[tlastdet[silver[i]],tlastdet[silver[i]]],[tbreak[silver[i]]-tbreakerr[0,silver[i]],tbreak[silver[i]]+tbreakerr[1,silver[i]]],color=!blue
+;;   oplot,tlastdet[pewter],tbreak[pewter],psym=8,color=!purple
+;;   for i=0,n_elements(pewter)-1 do oplot,[tlastdet[pewter[i]],tlastdet[pewter[i]]],[tbreak[pewter[i]]-tbreakerr[0,pewter[i]],tbreak[pewter[i]]+tbreakerr[1,pewter[i]]],color=!purple
+;;   oplot,tlastdet[bronze],tbreak[bronze],psym=8,color=!red
+;;   for i=0,n_elements(bronze)-1 do oplot,[tlastdet[bronze[i]],tlastdet[bronze[i]]],[tbreak[bronze[i]]-tbreakerr[0,bronze[i]],tbreak[bronze[i]]+tbreakerr[1,bronze[i]]],color=!red
+;;   dont_match,last,[gold,silver,pewter,bronze],m1,m2
+;;   nojb=last[m1]
+;;   oplot,tlastdet[nojb],tbreak[nojb],psym=8,color=!green
+;;   for i=0,n_elements(nojb)-1 do oplot,[tlastdet[nojb[i]],tlastdet[nojb[i]]],[tbreak[nojb[i]]-tbreakerr[0,nojb[i]],tbreak[nojb[i]]+tbreakerr[1,nojb[i]]],color=!green
+  
+  
+  
+  goto,skip2
+  begplot,name='~/papers/jetbreaks1/tstop_confusion.ps',/color
+  !p.charsize=1.5
+  symsize=0.5
+  legsize=0.8
+  !p.multi=[0,2,3]
+  ;;IN THE OBSERVED FRAME, DO WE OBSERVED JB'S LONGER THAN NON-JB'S?
+  plot,tlastdet[last],ctr_lastdet[last],/xlog,/ylog,/nodata,xtitle='t!Llast det!N (s)',ytitle='Count Rate @ T!Llast det!N (counts s!U-1!N)',xrange=[1e3,1e8],yrange=[1e-5,1]
+  oplot,tbreak[gold],ctr_break[gold],psym=8,color=!orange
+  oplot,tbreak[silver],ctr_break[silver],symsize=symsize,psym=1,color=!blue
+;  oplot,tbreak[bronze],ctr_break[bronze],symsize=symsize,psym=5,color=!red
+;  oplot,tlastdet[silver],ctr_lastdet[silver],symsize=symsize,psym=1,color=!blue
+  oplot,tlastdet[bronze],ctr_lastdet[bronze],symsize=symsize,psym=5,color=!red
+  oplot,tlastdet[last[m1]],ctr_lastdet[last[m1]],symsize=symsize,psym=4,color=!green
+  legend,['Gold','Silver','Bronze','No JB'],box=0,/top,/right,color=[!orange,!blue,!red,!green],psym=[8,1,5,4],charsize=legsize
+  
+  ;;IN THE REST FRAME, DO WE OBSERVED JB'S LONGER THAN NON-JB'S?
+  plot,tlastdet_rest[last[wl]],ctr_lastdet[last[wl]],/xlog,/ylog,/nodata,xtitle='t!Llast det!N/(1+z)  (s)',ytitle='Count Rate @ T!Llast det!N (counts s!U-1!N)',xrange=[1e3,1e8],yrange=[1e-5,1]
+  oplot,tbreak_rest[gold[wg]],ctr_break[gold[wg]],psym=8,color=!orange
+  oplot,tbreak_rest[silver[ws]],ctr_break[silver[ws]],symsize=symsize,psym=1,color=!blue
+;  oplot,tbreak_rest[bronze[wb]],ctr_break[bronze[wb]],symsize=symsize,psym=5,color=!red
+;  oplot,tlastdet_rest[silver[ws]],ctr_lastdet[silver[ws]],symsize=symsize,psym=1,color=!blue
+  oplot,tlastdet_rest[bronze[wb]],ctr_lastdet[bronze[wb]],symsize=symsize,psym=5,color=!red
+  oplot,tlastdet_rest[nojb],ctr_lastdet[last[m1]],symsize=symsize,psym=4,color=!green
+  legend,['Gold','Silver','Bronze','No JB'],box=0,/top,/right,color=[!orange,!blue,!red,!green],psym=[8,1,5,4],charsize=legsize
+  
+  ;;IN REST FRAME, DOES FLUX CHANGE ANYTHING?
+  plot,tlastdet[last],flux_lastdet[last],/xlog,/ylog,/nodata,xtitle='t!Llast det!N (s)',ytitle='Flux @ T!Llast det!N (erg cm!U-2!N s!U-1!N)',yrange=[1e-15,1e-10],xrange=[1e3,1e8]
+  oplot,tbreak[gold],flux_break[gold],psym=8,color=!orange
+  oplot,tbreak[silver],flux_break[silver],symsize=symsize,psym=1,color=!blue
+;  oplot,tbreak[bronze],flux_break[bronze],symsize=symsize,psym=5,color=!red
+;  oplot,tlastdet[silver],flux_lastdet[silver],symsize=symsize,psym=1,color=!balue
+  oplot,tlastdet[bronze],flux_lastdet[bronze],symsize=symsize,psym=5,color=!red
+  oplot,tlastdet[last[m1]],flux_lastdet[last[m1]],symsize=symsize,psym=4,color=!green
+  legend,['Gold','Silver','Bronze','No JB'],box=0,/top,/right,color=[!orange,!blue,!red,!green],psym=[8,1,5,4],charsize=legsize
+  
+  plot,tlastdet_rest[last[wl]],flux_lastdet[last[wl]],/xlog,/ylog,/nodata,xtitle='t!Llast det!N/(1+z)  (s)',ytitle='Flux @ T!Llast det!N (erg cm!U-2!N s!U-1!N)',xrange=[1e3,1e8],yrange=[1e-15,1e-10]
+  oplot,tbreak_rest[gold[wg]],flux_break[gold[wg]],psym=8,color=!orange
+  oplot,tbreak_rest[silver[ws]],flux_break[silver[ws]],symsize=symsize,psym=1,color=!blue
+;  oplot,tbreak_rest[bronze[wb]],flux_break[bronze[wb]],symsize=symsize,psym=5,color=!red
+;  oplot,tlastdet_rest[silver[ws]],flux_lastdet[silver[ws]],symsize=symsize,psym=1,color=!blue
+  oplot,tlastdet_rest[bronze[wb]],flux_lastdet[bronze[wb]],symsize=symsize,psym=5,color=!red
+  oplot,tlastdet_rest[nojb],flux_lastdet[nojb],symsize=symsize,psym=4,color=!green
+  legend,['Gold','Silver','Bronze','No JB'],box=0,/top,/right,color=[!orange,!blue,!red,!green],psym=[8,1,5,4],charsize=legsize
+  
+  ;;HOW ABOUT LUM_ISO?
+  plot,tlastdet_rest[last[wl]],lum_lastdet[last[wl]],/xlog,/ylog,/nodata,xtitle='t!Llast det!N/(1+z)  (s)',ytitle='L!Lx,ISO!N (erg s!U-1!N)',xrange=[1e3,1e8],yrange=[1d40,1d48]
+  oplot,tbreak_rest[gold[wg]],lum_break[gold[wg]],psym=8,color=!orange
+  oplot,tbreak_rest[silver[ws]],lum_break[silver[ws]],symsize=symsize,psym=1,color=!blue
+;  oplot,tbreak_rest[bronze[wb]],lum_break[bronze[wb]],symsize=symsize,psym=5,color=!red
+;  oplot,tlastdet_rest[silver[ws]],lum_lastdet[silver[ws]],symsize=symsize,psym=1,color=!blue
+  oplot,tlastdet_rest[bronze[wb]],lum_lastdet[bronze[wb]],symsize=symsize,psym=5,color=!red
+  oplot,tlastdet_rest[nojb],lum_lastdet[nojb],symsize=symsize,psym=4,color=!green
+  legend,['Gold','Silver','Bronze','No JB'],box=0,/top,/right,color=[!orange,!blue,!red,!green],psym=[8,1,5,4],charsize=legsize
+  
+  ;;HOW ABOUT LUM_GAMMA?
+  plot,tlastdet_rest[last[wl]],lum_lastdet_gam[last[wl]],/xlog,/ylog,/nodata,xtitle='t!Llast det!N/(1+z)  (s)',ytitle='L!Lx'+!tsym.gamma+'!N (erg s!U-1!N)',xrange=[1e3,1e8],yrange=[1d39,1d45]
+  oplot,tbreak_rest[gold[wg]],lum_break_gam[gold[wg]],psym=8,color=!orange
+  oplot,tbreak_rest[silver[ws]],lum_break_gam[silver[ws]],symsize=symsize,psym=1,color=!blue
+;  oplot,tbreak_rest[bronze[wb]],lum_break_gam[bronze[wb]],symsize=symsize,psym=5,color=!red
+;  oplot,tlastdet_rest[silver[ws]],lum_lastdet_gam[silver[ws]],symsize=symsize,psym=1,color=!blue
+  oplot,tlastdet_rest[bronze[wb]],lum_lastdet_gam[bronze[wb]],symsize=symsize,psym=5,color=!red
+  oplot,tlastdet_rest[nojb],lum_lastdet_gam[nojb],symsize=symsize,psym=4,color=!green
+  legend,['Gold','Silver','Bronze','No JB'],box=0,/top,/right,color=[!orange,!blue,!red,!green],psym=[8,1,5,4],charsize=legsize
+  
+  !p.multi=0
+  
+  endplot
+  skip2:
+  
+  goto,skip3
+  ;;; looking at differences in redshift distributions - doesn't say much
+  erase
+  multiplot,[1,4],/init
+  dont_match,[gold,silver,bronze,pewter],last,dm1,dm2
+  nojb=last[dm2]
+  wl=where(cr[nojb].z gt 0)
+  bin=0.2
+  multiplot & plothist,cr[gold[wg]].z,bin=bin,xrange=[0,6],min=0,max=6
+  legend,'Prominent jet break',/top,/right,box=0
+  multiplot & plothist,cr[[pewter[wp],silver[ws]]].z,bin=bin,xrange=[0,6],min=0,max=6
+  legend,'Hidden & Possible jet break',/top,/right,box=0
+  multiplot & plothist,cr[bronze[wb]].z,bin=bin,xrange=[0,6],min=0,max=6
+  legend,'Unlikely jet break',/top,/right,box=0
+  multiplot & plothist,cr[nojb[wl]].z,bin=bin,xrange=[0,6],xtitle='z',min=0,max=6
+  legend,'Non - jet break',/top,/right,box=0
+  multiplot,/reset
+  
+  
+
+;  begplot,name='~/papers/jetbreaks1/tlastdet_z.ps',/color,/land
+  plot,tlastdet_rest[last[wl]],z1[last[wl]],/xlog,/nodata,xtitle='t!Llast det!N/(1+z)  (s)',ytitle='1+z',xrange=[1e3,1e8]
+  oplot,tlastdet_rest[gold[wg]],z1[gold[wg]],psym=8,color=!orange
+  oplot,tlastdet_rest[silver[ws]],z1[silver[ws]],psym=6,color=!blue
+  oplot,tlastdet_rest[pewter[wp]],z1[pewter[wp]],psym=4,color=!purple
+  oplot,tlastdet_rest[bronze[wb]],z1[bronze[wb]],psym=5,color=!red
+  oplot,tlastdet_rest[nojb],z1[nojb],psym=1,color=!green
+  legend,['Prominent','Hidden','Possible','Unlikely','Non-Jet Break'],box=0,/top,/right,color=[!orange,!blue,!purple,!red,!green],psym=[8,6,4,5,1]
+;  endplot
+  skip3:
+  
+;;;LETS EXPLORE JB+EI
+
+  if wonlyeinorm1[0] ne -1 then jbei1=w4[w3g[wonlyeinorm1]]
+  if wonlyeinorm2[0] ne -1 then jbei2=w123[w3c[wonlyeinorm2]]
+  if wonlyeinorm3[0] ne -1 then jbei3=w23[w3b[wonlyeinorm3]]
+  if wonlyeinorm3a[0] ne -1 then jbei3a=w23[w2b[wonlyeinorm3a]]
+  if wonlyeinorm4[0] ne -1 then jbei4=w0[wonlyeinorm4]
+  
+  njbei1=n_elements(jbei1)
+  njbei2=n_elements(jbei2)
+  njbei3=n_elements(jbei3)
+  njbei3a=n_elements(jbei3a)
+  njbei4=n_elements(jbei4)
+;  jbei=[jbei1,jbei2];,jbei3]
+  help,njbei1,njbei2,njbei3,njbei3a,njbei4
+  
+  
+  ks=1e3
+  day=86400.
+  
+  ;;;GOLD properties
+  
+  !p.multi=[0,3,3]
+  w=where(cr[w4[w1g]].alpha ne 0)
+  plothist,cr[w4[w1g[w]]].alpha,bin=0.3,xtitle='alpha 1',charsize=1.5
+  w=where(cr[w4[w2g]].alpha ne 0)
+  plothist,cr[w4[w2g[w]]].alpha,bin=0.1,xtitle='alpha 2',charsize=1.5
+  w=where(cr[w4[w3g]].alpha ne 0)
+  plothist,cr[w4[w3g[w]]].alpha,bin=0.1,xtitle='alpha 3',charsize=1.5
+  w=where(cr[w4[w4g]].alpha ne 0)
+  plothist,cr[w4[w4g[w]]].alpha,bin=0.1,xtitle='alpha 4',charsize=1.5
+  w=where(cr[w4[w2g]].tbreak ne 0)
+  plothist,alog10(cr[w4[w2g[w]]].tbreak),bin=0.1,xtitle='tbreak 1',charsize=1.5
+  w=where(cr[w4[w3g]].tbreak ne 0)
+  plothist,alog10(cr[w4[w3g[w]]].tbreak),bin=0.1,xtitle='tbreak 2',charsize=1.5
+  w=where(cr[w4[w4g]].tbreak ne 0)
+  plothist,alog10(cr[w4[w4g[w]]].tbreak),bin=0.1,xtitle='tbreak 3',charsize=1.5
+  !p.multi=0
+  stop
+  
+;  goto,skip4
+  ;;LETS STUDY THE DIFFERENCE BETWEEN II-III/III-IV AND GOLD II-III
+  
+  bin=0.15
+  tbin=0.2
+  charsize=1.3
+  yr=[0,12]
+  !x.margin=[10,3]
+  begplot,name=outdir+'compare23.eps',/color,/encap,font='helvetica'
+;  !p.multi=[0,2,3]
+  multiplot2,[2,3],/init
+  xrange=[-0.5,2.5]
+  multiplot2
+  plot,xrange,yr,/nodata,xrange=xrange,yrange=yr,/xsty,/ysty,ytitle='N'
+;  plothist,cr[w4[[w2g,w3g]]].alpha,bin=bin,xrange=xrange,xstyle=1,/nodata,charsize=charsize,yrange=yr,ytitle='N',min=xrange[0],max=xrange[1] ;,xtitle=!tsym.alpha,title='Prominent Sample II-III'
+  plothist,cr[w4[w2g]].alpha,bin=bin,/over,xrange=xrange,xstyle=1,min=xrange[0],max=xrange[1],/fill,fcolor=!grey30,color=!grey30
+  plothist,cr[w4[w4g]].alpha,bin=bin,/over,xrange=xrange,xstyle=1,min=xrange[0],max=xrange[1],/fill,fcolor=!grey70,color=!grey70
+  plothist,cr[w4[w3g]].alpha,bin=bin,/over,xrange=xrange,xstyle=1,min=xrange[0],max=xrange[1],/fill,/fline,forient=45
+  oplot,xrange,[0,0]
+;  legend,[!tsym.alpha+'!LII!N',!tsym.alpha+'!LIII!N',!tsym.alpha+'!LIV!N'],/top,/right,box=0,textcolor=[!red,!blue,!green],charsize=charsize,margin=-0.6
+  xyouts,0.2,10,!tsym.alpha+'!LII!N',/data
+  xyouts,1.,10,!tsym.alpha+'!LIII!N',/data
+  xyouts,1.7,10,!tsym.alpha+'!LIV!N',/data
+  
+  multiplot2
+  plot,[2,6],yr,/nodata,charsize=charsize,xrange=[2,6],yrange=yr,/xsty,/ysty
+  plothist,alog10(cr[w4[w3g]].tbreak),bin=tbin,charsize=charsize,xrange=[2,6],yrange=yr,min=2,max=6,/fill,/over,color=!grey50,fcolor=!grey50
+  plothist,alog10(cr[w4[w4g]].tbreak),bin=tbin,xrange=[2,6],/over,min=2,max=6,line=2 ;,/fill,fcolor=!grey90,color=!grey90
+  xyouts,3.5,8,'t!Lb,2!N',/data
+  xyouts,4.5,8,'t!Lb,3!N',/data
+  legend,['Prominent'],/top,/right,charsize=charsize,box=0,margin=-0.15
+  oplot,[2,6],[0,0]
+  
+  yr=[0,15]
+  multiplot2
+  plot,xrange,yr,/nodata,ytitle='N',xrange=xrange,yrange=yr,/ysty,/xsty
+  plothist,cr[w23[w2b]].alpha,bin=bin,/over,color=!grey30,/fill,fcolor=!grey30,xrange=xrange,xstyle=1,min=xrange[0],max=xrange[1]
+  plothist,cr[w23[w3b]].alpha,bin=bin,/over,/fill,xrange=xrange,xstyle=1,min=xrange[0],max=xrange[1],/fline,forient=45
+  xyouts,0.4,12,!tsym.alpha+'!LII!N',/data
+  xyouts,1.5,12,!tsym.alpha+'!LIII!N',/data
+  
+  oplot,xrange,[0,0]
+;  legend,[!tsym.alpha+'!LII!N',!tsym.alpha+'!LIII!N'],/top,/right,box=0,textcolor=[!red,!blue],charsize=charsize,margin=-0.6
+  
+  multiplot2
+  plot,[2,6],yr,/nodata,charsize=charsize,xrange=[2,6],yrange=yr,/xsty,/ysty
+  plothist,alog10(cr[w23[w3b]].tbreak),bin=tbin,xrange=[2,6],charsize=charsize,yrange=yr,min=2,max=6,/fill,/over,fcolor=!grey50,color=!grey50
+  xyouts,4,8,'t!Lb,2!N',/data
+  legend,['Ambiguous II-III/III-IV'],/top,/right,charsize=charsize,box=0,margin=-0.15
+  
+  yr=[0,20]
+  multiplot2
+  plothist,cr[w123[w2c]].alpha,bin=bin,xrange=xrange,xstyle=1,charsize=charsize,yrange=yr,xtitle=!tsym.alpha,ytitle='N',xtickname=['-0.5','0.0','0.5','1.0','1.5','2.0',' '],min=xrange[0],max=xrange[1] ;,title='I-II-III Sample'
+  plothist,cr[w123[w2c]].alpha,bin=bin,/over,color=!grey30,/fill,fcolor=!grey30,xrange=xrange,xstyle=1,min=xrange[0],max=xrange[1]
+  plothist,cr[w123[w3c]].alpha,bin=bin,/over,/fill,xrange=xrange,xstyle=1,min=xrange[0],max=xrange[1],/fline,forient=45
+  xyouts,0.3,18,!tsym.alpha+'!LII!N',/data
+  xyouts,1.5,18,!tsym.alpha+'!LIII!N',/data
+  
+  oplot,xrange,[0,0]
+;  legend,[!tsym.alpha+'!LII!N',!tsym.alpha+'!LIII!N'],/top,/right,box=0,textcolor=[!red,!blue],charsize=charsize,margin=-0.6
+  
+  multiplot2
+  plot,[2,6],yr,/nodata,xtitle='log t!Lbreak!N (s)',charsize=charsize,xrange=[2,6],yrange=yr,/xsty,/ysty
+  plothist,alog10(cr[w123[w3c]].tbreak),bin=tbin,xrange=[2,6],min=2,max=6,/fill,/over,color=!grey50,fcolor=!grey50
+  xyouts,4,12,'t!Lb,2!N',/data
+  
+  legend,'I-II-III',/top,/right,charsize=charsize,box=0,margin=-0.15
+  oplot,[2,6],[0,0]
+  multiplot2,/reset
+  multiplot2,/default
+  endplot  
+  
+  ;;;WITH REDSHIFT
+  begplot,name=outdir+'compare23_z.ps',/color
+;  !p.multi=[0,2,3]
+  multiplot2,[2,3],/init
+  xrange=[-0.5,2.5]
+  multiplot2
+  w2gz=where(cr[w4].seg2 eq 1 and cr[w4].z gt 0)
+  w3gz=where(cr[w4].seg3 eq 1 and cr[w4].z gt 0)
+  w4gz=where(cr[w4].seg4 eq 1 and cr[w4].z gt 0)
+  
+  plothist,cr[w4[[w2gz,w3gz]]].alpha,bin=bin,xrange=xrange,xstyle=1,/nodata,charsize=charsize,yrange=yr,ytitle='N',min=xrange[0],max=xrange[1] ;,xtitle=!tsym.alpha,title='Prominent Sample II-III'
+  plothist,cr[w4[w2gz]].alpha,bin=bin,/over,color=!red,xrange=xrange,xstyle=1,min=xrange[0],max=xrange[1]
+  plothist,cr[w4[w3gz]].alpha,bin=bin,/over,color=!blue,xrange=xrange,xstyle=1,min=xrange[0],max=xrange[1]
+  plothist,cr[w4[w4gz]].alpha,bin=bin,/over,color=!green,xrange=xrange,xstyle=1,min=xrange[0],max=xrange[1]
+  oplot,xrange,[0,0]
+  legend,[!tsym.alpha+'!LII!N',!tsym.alpha+'!LIII!N',!tsym.alpha+'!LIV!N'],/top,/right,box=0,textcolor=[!red,!blue,!green],charsize=charsize,margin=-0.6
+  legend,['I-II-III-IV/','II-III-IV'],/top,/left,charsize=charsize,box=0,margin=-0.15
+  
+  multiplot2
+  plothist,alog10(cr[w4[w3gz]].tbreak/(cr[w4[w3gz]].z+1.)),bin=.1,charsize=charsize,xrange=[2,6],yrange=yr,min=xrange[0],max=xrange[1] ;,xtitle='log t!Lbreak!N (s)',title='Prominent Sample II-III'
+  plothist,alog10(cr[w4[w4gz]].tbreak/(cr[w4[w4gz]].z+1.)),bin=.1,xrange=[2,6],/over,color=!green,line=2,min=xrange[0],max=xrange[1]
+  
+  w2bz=where(cr[w23].seg2 eq 1 and cr[w23].z gt 0)
+  w3bz=where(cr[w23].seg3 eq 1 and cr[w23].z gt 0)
+
+  multiplot2
+  plothist,cr[w23[w2bz]].alpha,bin=bin ,xrange=xrange,xstyle=1,charsize=charsize,yrange=yr,min=xrange[0],max=xrange[1] ;,xtitle=!tsym.alpha,ytitle='N',title='Ambiguous II-III/III-IV'
+  plothist,cr[w23[w2bz]].alpha,bin=bin,/over,color=!red,xrange=xrange,xstyle=1,min=xrange[0],max=xrange[1]
+  plothist,cr[w23[w3bz]].alpha,bin=bin,/over,color=!blue,xrange=xrange,xstyle=1,min=xrange[0],max=xrange[1]
+
+  oplot,xrange,[0,0]
+  legend,[!tsym.alpha+'!LII!N',!tsym.alpha+'!LIII!N'],/top,/right,box=0,textcolor=[!red,!blue],charsize=charsize,margin=-0.6
+  legend,['Ambiguous','II-III/III-IV'],/top,/left,charsize=charsize,box=0,margin=-0.15
+  
+  multiplot2
+  plothist,alog10(cr[w23[w3bz]].tbreak/(cr[w23[w3bz]].z+1.)),bin=.1,xrange=[2,6],charsize=charsize,yrange=yr,min=2,max=6 ;,title='Ambiguous II-III/III-IV',xtitle='log t!Lbreak!N (s)'
+  
+  w2cz=where(cr[w123].seg2 eq 1 and cr[w123].z gt 0)
+  w3cz=where(cr[w123].seg3 eq 1 and cr[w123].z gt 0)
+  multiplot2
+  plothist,cr[w123[w2cz]].alpha,bin=bin,xrange=xrange,xstyle=1,charsize=charsize,yrange=yr,xtitle=!tsym.alpha,ytitle='N',min=xrange[0],max=xrange[1] ;,title='I-II-III Sample'
+  plothist,cr[w123[w2cz]].alpha,bin=bin,/over,color=!red,xrange=xrange,xstyle=1,min=xrange[0],max=xrange[1]
+  plothist,cr[w123[w3cz]].alpha,bin=bin,/over,color=!blue,xrange=xrange,xstyle=1,min=xrange[0],max=xrange[1]
+  
+  oplot,xrange,[0,0]
+  legend,[!tsym.alpha+'!LII!N',!tsym.alpha+'!LIII!N'],/top,/right,box=0,textcolor=[!red,!blue],charsize=charsize,margin=-0.6
+  legend,'I-II-III',/top,/left,charsize=charsize,box=0,margin=-0.15
+  
+  multiplot2
+  plothist,alog10(cr[w123[w3cz]].tbreak/(cr[w123[w3cz]].z+1.)),bin=.1,xtitle='log t!Lbreak!N (s)',xrange=[2,6],charsize=charsize,min=2,max=6 ;,title='I-II-III Sample'
+  
+  multiplot2,/reset
+  multiplot2,/default
+  endplot  
+  
+  
+  ;;;KS TESTS
+  begplot,name=outdir+'ks_compare23.ps' ;,/land
+  !p.multi=[0,2,3]
+  kstwop,cr[w23[w2b]].alpha,cr[w4[w2g]].alpha,d,prob,/plot,xtitle=!tsym.alpha+'!LII!N',title='KS test II (Prominent vs. II-III/III-IV)'
+  kstwop,cr[w123[w2c]].alpha,cr[w4[w2g]].alpha,d,prob,/plot,xtitle=!tsym.alpha+'!LII!N',title='KS test II (Prominent vs. I-II-III)'
+  kstwop,cr[w23[w3b]].alpha,cr[w4[w3g]].alpha,d,prob,/plot,xtitle=!tsym.alpha+'!LIII!N',title='KS test III (Prominent vs. II-III/III-IV)'
+  kstwop,cr[w123[w3c]].alpha,cr[w4[w3g]].alpha,d,prob,/plot,xtitle=!tsym.alpha+'!LIII!N',title='KS test III (Prominent vs. I-II-III)'
+  kstwop,cr[w23[w3b]].tbreak,cr[w4[w3g]].tbreak,d,prob,/plot,xtitle=!tsym.alpha+'!LIII!N',title='KS test t!Lbreak!N (Prominent vs. II-III/III-IV)',/xlog,xrange=[1e2,1e6]
+  kstwop,cr[w123[w3c]].tbreak,cr[w4[w3g]].tbreak,d,prob,/plot,xtitle=!tsym.alpha+'!LIII!N',title='KS test t!Lbreak!N (Prominent vs. I-II-III)',/xlog,xrange=[1e2,1e6]
+  
+  !p.multi=0   
+  endplot
+  !p.multi=[0,2,4]
+  match,w23[w3b],yind[wn23],m1,m2
+  match,w23[w2b],xind[wn23],m1x,m2x
+  kstwop,cr[w23[w2b[m1x]]].alpha,cr[w4[w2g]].alpha,d,prob,/plot,xtitle=!tsym.alpha+'!LII!N',title='KS test II (Prominent vs. II-III/III-IV)'
+  kstwop,cr[w23[w3b[m1]]].alpha,cr[w4[w3g]].alpha,d,prob,/plot,xtitle=!tsym.alpha+'!LII!N',title='KS test III (Prominent vs. II-III/III-IV)'
+  kstwop,cr[w23[w2b[m1x]]].alpha,cr[w4[w3g]].alpha,d,prob,/plot,xtitle=!tsym.alpha+'!LII!N',title='KS test III (Prominent vs. II-III/III-IV)'
+  kstwop,cr[w23[w3b[m1]]].alpha,cr[w4[w4g]].alpha,d,prob,/plot,xtitle=!tsym.alpha+'!LII!N',title='KS test IV (Prominent vs. II-III/III-IV)'
+  
+  match,w23[w3b],yind[wn34],m1,m2
+  match,w23[w2b],xind[wn34],m1x,m2x
+  kstwop,cr[w23[w2b[m1x]]].alpha,cr[w4[w2g]].alpha,d,prob,/plot,xtitle=!tsym.alpha+'!LII!N',title='KS test II (Prominent vs. II-III/III-IV)'
+  kstwop,cr[w23[w3b[m1]]].alpha,cr[w4[w3g]].alpha,d,prob,/plot,xtitle=!tsym.alpha+'!LII!N',title='KS test III (Prominent vs. II-III/III-IV)'
+  kstwop,cr[w23[w2b[m1x]]].alpha,cr[w4[w3g]].alpha,d,prob,/plot,xtitle=!tsym.alpha+'!LII!N',title='KS test III (Prominent vs. II-III/III-IV)'
+  kstwop,cr[w23[w3b[m1]]].alpha,cr[w4[w4g]].alpha,d,prob,/plot,xtitle=!tsym.alpha+'!LII!N',title='KS test IV (Prominent vs. II-III/III-IV)'
+;  skip4:
+
+;  goto,skip5
+  ;;NOW TIME TO COMPARE SINGLE PL TO OTHER BREAK TIMES AND STUFF
+  !x.margin=[12,0]
+  begplot,name=outdir+'singlepl.eps',/color,/land,/encap,font='helvetica'
+;  !p.multi=[0,2,1]
+  !p.multi=0
+  type_jb,cr,w0,wjb=wjb,nsig=nsig
+  tlastpos=cr.tlastdet
+  plot,cr[w0[wjb]].tstart,cr[w0[wjb]].alpha,/xlog,psym=3,xrange=[10,1e7],xstyle=1,xtitle='t!Lstart!N -> t!Llastdet!N (s)',ytitle=!tsym.alpha,charsize=1.5
+  for i=0,n_elements(wjb)-1 do begin
+     j=w0[wjb[i]]
+;     lc=lcout2fits(strtrim(cr[j].grb,2)+'/lc_newout.txt',/silent)
+;     nlc=n_elements(lc)
+     color=!p.color
+     line=0
+     thick=5
+;     if nlc gt 3 then color=!red
+     if (cr[j].tstart gt minday*day or (cr[j].tstart lt minday*day and cr[j].tlastdet gt maxday*day)) and cr[j].alpha gt 1.5 then begin
+        line=1
+        thick=8                 ;color=!orange
+     endif 
+;     if cr[j].tstart lt minday*day and cr[j].tlastdet gt maxday*day then color=!blue
+     oplot,[cr[j].tstart,tlastpos[j]],[cr[j].alpha,cr[j].alpha],color=color,line=line,thick=thick
+     oplot,[cr[j].tstart,cr[j].tstart],[cr[j].alpha-cr[j].alphaerr[0],cr[j].alpha+cr[j].alphaerr[1]],color=color,line=line,thick=thick
+     
+  endfor 
+  oplot,[minday*day,maxday*day],[0.1,0.1],thick=20;,color=!green
+  
+  endplot
+;  skip5:
+;goto,skip5  
+;  !p.multi=[0,1,2]
+  
+  ;;;NEED TO SEPARATE Z & NO Z & HIGHLIGHT THE 4 W0 WHO ARE SHALLOW FOR LONG TIME W/ NO BREAK
+  begplot,name=outdir+'singlepl_egam.eps',/color,/encap,font='helvetica' ;,/land
+  !x.margin=[10,3]
+
+  multiplot2,[1,2],/init
+  w=where(cr[w0].eiso eq 0)
+  eiso=cr[w0].eiso
+;  eiso[w]=10.
+  eiso[w]=3.7
+  egamstart=alog10(eiso*1d52*(1.-cos(cr[w0].theta_tstart*!dtor)))
+  thetalp=cr[w0].theta_lastpos
+  wth0=where(cr[w0].tlastpos eq 0.)
+  thetalp[wth0]=cr[w0[wth0]].theta_lastdet
+  thetastop=cr[w0].theta_stop
+;  thetalp=cr[w0].theta_lastdet
+  egamlp=alog10(eiso*1d52*(1.-cos(thetalp*!dtor)))
+  egamstop=alog10(eiso*1d52*(1.-cos(thetastop*!dtor)))
+;  z1[*]=1.;
+
+;  plot,cr[w0[wjb]].tstart/z1[w0[wjb]],egamstart[wjb],psym=8,yrange=[46,53],/xlog,/ysty,xrange=[10,1e7]
+;  oplot,tlastpos[w0[wjb]]/z1[w0[wjb]],egamstop[wjb],psym=8,color=!red
+;  w=where(cr[w0[wjb]].tstart gt minday*day and cr[w0[wjb]].alpha gt 1.5,nw)
+;  oplot,cr[w0[wjb[w]]].tstart,egamstart[wjb[w]],psym=8,color=!cyan
+;  oplot,cr[w0[wjb[w]]].tstop,egamstop[wjb[w]],psym=8,color=!orange
+;  oplot,[minday*day,maxday*day],[46.3,46.3],color=!green,thick=3
+;  oplot,[10,1e7],[51,51],line=2
+  
+  xrange=[46,53]
+  yrange=[0,25]
+  bin=0.5
+  multiplot2
+  plot,xrange,yrange,xrange=xrange,yrange=yrange,/xsty,/ysty,/nodata,ytitle='N'
+  plothist,egamstart[wjb],bin=bin,xrange=xrange,yrange=yrange,/xstyle,min=xrange[0],max=xrange[1],/over,/fill,color=!grey40,fcolor=!grey40
+  plothist,egamlp[wjb],bin=bin,/over,xrange=xrange,yrange=yrange,min=xrange[0],max=xrange[1],/fill,/fline,forient=45,color=!grey70,fcolor=!grey70
+  plothist,egamstop[wjb],bin=bin,/over,xrange=xrange,yrange=yrange,line=2,min=xrange[0],max=xrange[1]
+  
+  postjb=wjb0[alsopew]
+  dont_match,wjb0[alsopew],wjb0,dm1,dm2
+  prejb=wjb0[dm2]
+  multiplot2
+  plot,xrange,yrange,xrange=xrange,yrange=yrange,/xsty,/ysty,/nodata,xtitle='log E!L'+!tsym.gamma+'!N (ergs)',ytitle='N'
+  plothist,egamstart[postjb],bin=bin,xrange=xrange,yrange=yrange,/xstyle,min=xrange[0],max=xrange[1],/over,/fill,color=!grey40,fcolor=!grey40
+  plothist,egamlp[prejb],bin=bin,/over,xrange=xrange,yrange=yrange,min=xrange[0],max=xrange[1],/fill,/fline,forient=45,color=!grey70,fcolor=!grey70
+  plothist,egamstop[prejb],bin=bin,/over,xrange=xrange,yrange=yrange,line=2,min=xrange[0]-1,max=xrange[1]
+;  oplot,[0,100],[0,0]
+;    legend,['E!L'+!tsym.gamma+'!N (t!Lstart!N)','','E!L'+!tsym.gamma+'!N (t!Llast pos!N)'],box=0,/top,/left,line=[0,-1,2],color=[!p.color,0,!red] ;,charsize=1.
+;  legend,['E!L'+!tsym.gamma+'!N (t!Lstart!N)','','E!L'+!tsym.gamma+'!N (t!Llast pos!N)'],box=0,/top,/left,line=[0,-1,2],color=[!p.color,0,!red] ;,charsize=1.
+
+  endplot
+  multiplot2,/reset
+  multiplot2,/default
+
+;  !p.multi=0
+  goto,skip5  
+  !p.multi=0
+  dont_match,last,[gold,silver,pewter,iron],dm1,dm2
+  nojb=last[dm1]
+  jbs=[gold,silver,pewter,iron]
+  plothist,cr[last].alpha,bin=0.1,xrange=[0,4],yrange=[0,20],/nodata,min=0,max=4
+  plothist,cr[jbs].alpha,bin=0.1,/over,color=!red,xrange=[0,4],yrange=[0,20],min=0,max=4
+  plothist,cr[bronze].alpha,bin=0.1,/over,xrange=[0,4],color=!blue,yrange=[0,20],min=0,max=4
+  plothist,cr[nojb].alpha,bin=0.1,/over,xrange=[0,4],color=!green,yrange=[0,20],min=0,max=4
+skip5:
+  
+  ;;;COMPARING RESULTS TO OTHER PEOPLE'S RESULTS
+  myjbs=[gold,silver,pewter,iron] ;,bronze]
+  myjbs=myjbs[sort(myjbs)]
+  
+  pan1='GRB'+['050315','050318','050319','050505','050730','050803','050814','050820A','051008','051022','051221A','060105','060109','060204B','060413','060428A','060526','060605','060607A','060614','060807','060813','060906','061201','061202','061222A','070107','070220','070306','070311']
+  pan2='GRB'+['050401','050408','050525A','050603','050712','050713A','050713B','050726','050802','050826','050922B','051001','051016B','051211B','060121','060124','060210','060218','060219','060306','060707','060719','060923C','061019','061126','070125','070318']
+  pan=[pan1,pan2]
+  pan=pan[sort(pan)]
+  
+  burrows='GRB'+['050315','050814','050820A','051221A','060428A','060614']
+  enwei='GRB'+['050124','050128','050315','050318','050525A','050717','050726','050730','050802','050803','050820A','050908','051006','051008','051016B','051109A','051221A','060105','060108','060124','060203','060204B','060210','060211A','060313','060319','060323','060428A','060502A','060510A','060526','060605','060614','060807','060813','060814','060906','060908','060927','061121','061201','061222A','070103']
+  eclass=[2,2,2,2,3,2,2,1,1,1,3,1,2,2,2,3,2,2,1,2,1,1,2,1,2,2,1,1,1,2,3,1,3,2,2,2,1,1,2,2,1,2,1]
+  class=['bronze','silver','gold']
+  w=where(eclass gt 2)
+;  enwei=enwei[w]
+;  colprint,enwei,class[eclass-1]
+  
+  kocev='GRB'+['050315','050318','050319','050505','050730','050803','050814','051022','060526','060605','060614','060906','070306','050401','050408','050525A','050603','050802','051016B','060210','060218','060707','060708','070125','070318']
+  
+  will='GRB'+['050603','050730','050802','060413','060421','060526','060605','060614','050315','050814','060105','060607A']
+  
+  
+  help,pan
+  w=where(cr[myjbs].grb le pan[n_elements(pan)-1])
+  wall=where(cr[last].grb lt pan[n_elements(pan)-1],nw)
+  match,strtrim(cr[myjbs[w]].grb,2),pan,m1,m2
+  print,'In common between My JBs and Panaitescu et al.: ',n_elements(m1)
+  dont_match,strtrim(cr[myjbs[w]].grb,2),pan,dm1,dm2
+  if dm2[0] ne -1 then ndm2=n_elements(dm2) else ndm2=0
+  if dm1[0] ne -1 then ndm1=n_elements(dm1) else ndm1=0
+  print,'Not in common between my JBs and Panaitescu et al.: ',ndm2,ndm1,ndm1*1./nw
+  
+  print
+  help,burrows
+  w=where(cr[myjbs].grb le burrows[n_elements(burrows)-1])
+  wall=where(cr[last].grb lt pan[n_elements(pan)-1],nw)
+  match,strtrim(cr[myjbs[w]].grb,2),burrows,m1,m2
+  print,'In common between My JBs and Burrows et al.: ',n_elements(m1)
+  dont_match,strtrim(cr[myjbs[w]].grb,2),burrows,dm1,dm2
+  if dm2[0] ne -1 then ndm2=n_elements(dm2) else ndm2=0
+  if dm1[0] ne -1 then ndm1=n_elements(dm1) else ndm1=0
+  print,'Not in common between my JBs and Burrows et al.: ',ndm2,ndm1,ndm1*1./nw
+  
+  print
+  help,enwei
+;  myjbs=myjbs[sort(myjbs)]
+;  my=myjbs[0:42]
+  w=where(cr[myjbs].grb le enwei[n_elements(enwei)-1])
+  wall=where(cr[last].grb lt pan[n_elements(pan)-1],nw)
+  match,strtrim(cr[myjbs[w]].grb,2),enwei,m1,m2
+  print,'In common between My JBs and Liang et al.: ',n_elements(m1)
+  dont_match,strtrim(cr[myjbs[w]].grb,2),enwei,dm1,dm2
+  if dm2[0] ne -1 then ndm2=n_elements(dm2) else ndm2=0
+  if dm1[0] ne -1 then ndm1=n_elements(dm1) else ndm1=0
+  print,'Not in common between my JBs and Liang et al.: ',ndm2,ndm1,ndm1*1./nw
+  
+  print
+  help,kocev
+  w=where(cr[myjbs].grb le kocev[n_elements(kocev)-1])
+  wall=where(cr[last].grb lt pan[n_elements(pan)-1],nw)
+  match,strtrim(cr[myjbs[w]].grb,2),kocev,m1,m2
+  print,'In common between My JBs and Kocev et al.: ',n_elements(m1)
+  dont_match,strtrim(cr[myjbs[w]].grb,2),kocev,dm1,dm2
+  if dm2[0] ne -1 then ndm2=n_elements(dm2) else ndm2=0
+  if dm1[0] ne -1 then ndm1=n_elements(dm1) else ndm1=0
+  print,'Not in common between my JBs and Kocev et al.: ',ndm2,ndm1,ndm1*1./nw
+  
+  print
+  help,will
+  w=where(cr[myjbs].grb le will[n_elements(will)-1])
+  wall=where(cr[last].grb lt pan[n_elements(pan)-1],nw)
+  match,strtrim(cr[myjbs[w]].grb,2),will,m1,m2
+  print,'In common between My JBs and Willingale et al.: ',n_elements(m1)
+  dont_match,strtrim(cr[myjbs[w]].grb,2),will,dm1,dm2
+  if dm2[0] ne -1 then ndm2=n_elements(dm2) else ndm2=0
+  if dm1[0] ne -1 then ndm1=n_elements(dm1) else ndm1=0
+  print,'Not in common between my JBs and Willingale et al.: ',ndm2,ndm1,ndm1*1./nw
+  
+  
+  print,'GRB                 Me        Burrows    Panaitescu    Liang       Kocevski   Willingale'
+;  last=gold
+  smp=' '+['G','S','P','I','B']
+  n=intarr(n_elements(last))
+  nwme=n
+  for i=0,n_elements(last)-1 do begin
+     wg=where(last[i] eq gold,nwg)
+     ws=where(last[i] eq silver,nws)
+     wp=where(last[i] eq pewter,nwp)
+     wi=where(last[i] eq iron,nwi)
+     wb=where(last[i] eq bronze,nwb)
+     nww=[nwg,nws,nwp,nwi,nwb]
+     nwme[i]=nwg+nws+nwp+nwi
+     wn=where(nww gt 0,nwn)
+     if nwn gt 0 then samp=smp[wn[0]] else samp=''
+     
+     grb=strtrim(cr[last[i]].grb,2)
+     wme=where(strtrim(cr[myjbs].grb,2) eq grb,nme)
+     wdave=where(burrows eq grb,ndave)
+     wpan=where(pan eq grb,npan)
+     wen=where(enwei eq grb,nen)
+     wkoc=where(kocev eq grb,nkoc)
+     wwill=where(will eq grb,nwill)
+     n[i]=ndave+npan+nen+nkoc+nwill
+     if nme eq 0 and (ndave eq 1 or npan eq 1 or nen eq 1 or nkoc eq 1 or nwill eq 1) then stuff=replicate('!',n[i]) else stuff=''
+     if nme ne 0 or ndave ne 0 or npan ne 0 or nen ne 0 or nkoc ne 0 or nwill ne 0 then $
+        print,cr[last[i]].grb,nme,ndave,npan,nen,nkoc,nwill,'      ',samp,stuff
+  endfor 
+  w=where(n ge 2 and nwme eq 0)
+  
+  stop
+  ;;PLOT GOLD LCS
+;  begplot,name=outdir+'prominent_jb.ps',/color,/land
+;  !p.multi=[0,5,5]
+;  for i=0,n_elements(gold)-1 do begin
+;     dir=strtrim(cr[gold[i]].grb)
+;     cd,dir
+;     print,dir
+;     fit_lc,/justplot,title=cr[gold[i]].grb,arrowsize=1,/noleg,charsize=1.1,symsize=0.4
+;     cd,'..'
+;  endfor 
+;  !p.multi=0
+;  endplot
+  
+  ;;SHOULD MAKE SIMILAR TO W0 PLOT FOR WN23 TO SEE THOSE THAT ARE 3'S THAT DON'T BREAK AND KEEP GOING PAST JB TIME 
+  !p.multi=0
+;;   plot,cr[w23[w3b]].tbreak,cr[w23[w3b]].alpha,psym=3,/xlog,yrange=[0.5,4],xrange=[1e2,1e7]
+;;   for i=0,n_elements(w3b)-1 do begin
+;;      wa=where(yind[wn23] eq w23[w3b[i]],m1a)
+;;      wb=where(yind[wn34] eq w23[w3b[i]],m1b)
+;;      color=!p.color
+;;      if m1a[0] ne 0 then color=!orange
+;;      if m1b[0] ne 0 then color=!green
+
+;;      j=w23[w3b[i]]
+;; ;     j=yind[wn23[i]]
+;;      oplot,[cr[j].tbreak,cr[j].tlastdet],[cr[j].alpha,cr[j].alpha],color=color
+;;      oplot,[cr[j].tbreak,cr[j].tbreak],[cr[j].alpha-cr[j].alphaerr[0],cr[j].alpha+cr[j].alphaerr[1]],color=color
+;;   endfor 
+;;   oplot,[minday*day,maxday*day],[0.1,0.1],color=!green,thick=13  
+  
+;  goto,skip7
+  jbs=[gold,silver,pewter]
+  dont_match,jbs,last,m1,m2
+  w=where(cr[last[m2]].tstart lt minday*day and cr[last[m2]].tlastdet gt maxday*day and cr[last[m2]].tlastpos gt 4.*day)
+  ww=last[m2[w]]
+  begplot,name=outdir+'unexplain.ps',/color
+  !p.multi=[0,1,2]
+  
+  plot,cr[ww].tstart,cr[ww].alpha,/xlog,psym=3,xrange=[80,1e7],xtitle='t!Lstart!N -> t!Llast detection!N  (s)',ytitle=!tsym.alpha,yrange=[0.5,2.0],title='Observed Frame',charsize=2.
+  for i=0,n_elements(ww)-1 do begin
+     oplot,[cr[ww[i]].tstart,cr[ww[i]].tstart],[cr[ww[i]].alpha-cr[ww[i]].alphaerr[0],cr[ww[i]].alpha+cr[ww[i]].alphaerr[1]]
+     oplot,[cr[ww[i]].tstart,cr[ww[i]].tlastdet],replicate(cr[ww[i]].alpha,2)
+     if cr[ww[i]].tbreak gt 0 then oplot,[cr[ww[i]].tbreak,cr[ww[i]].tlastpos],replicate(cr[ww[i]].alpha,2),color=!red 
+     
+  endfor 
+  oplot,cr[ww].tlastpos,cr[ww].alpha,color=!orange,psym=8,thick=3
+  oplot,[4.*day,4.*day],[0,2],line=1
+  oplot,[6.*day,6.*day],[0,2],line=1
+  oplot,[8.*day,8.*day],[0,2],line=1
+;  plots,cr[ww].tbreak,cr[ww].alpha,color=!red,psym=1
+
+  oplot,[minday*day,maxday*day],[0.6,0.6],color=!green,thick=13  
+  
+  
+  wb=where(cr[ww].z gt 0)
+  ww=ww[wb]
+  
+  plot,cr[ww].tstart/z1[ww],cr[ww].alpha,/xlog,psym=3,xrange=[80,1e7],xtitle='t!Lstart!N -> t!Llast detection!N  (s)',ytitle=!tsym.alpha,yrange=[0.5,2.0],title='Rest Frame',charsize=2
+  for i=0,n_elements(ww)-1 do begin
+     oplot,[cr[ww[i]].tstart,cr[ww[i]].tstart]/z1[ww[i]],[cr[ww[i]].alpha-cr[ww[i]].alphaerr[0],cr[ww[i]].alpha+cr[ww[i]].alphaerr[1]]
+     oplot,[cr[ww[i]].tstart,cr[ww[i]].tlastdet]/z1[ww[i]],replicate(cr[ww[i]].alpha,2)
+     if cr[ww[i]].tbreak gt 0 then oplot,[cr[ww[i]].tbreak,cr[ww[i]].tlastpos]/z1[ww[i]],replicate(cr[ww[i]].alpha,2),color=!red 
+     
+  endfor 
+  oplot,cr[ww].tlastpos/z1[ww],cr[ww].alpha,color=!orange,psym=8
+  oplot,[1.*day,1.*day],[0,2],line=1  
+  oplot,[3.*day,3.*day],[0,2],line=1  
+  oplot,[5.*day,5.*day],[0,2],line=1  
+;  oplot,[4.*day,4.*day],[0,2],line=1
+;  oplot,[6.*day,6.*day],[0,2],line=1
+;  oplot,[8.*day,8.*day],[0,2],line=1
+;  plots,cr[ww].tbreak,cr[ww].alpha,color=!red,psym=1
+
+  oplot,[minday*day,5*day],[0.6,0.6],color=!green,thick=13  
+;;   colprint,cr[last[m2[w]]].grb,cr[last[m2[w]]].alpha,cr[last[m2[w]]].tlastpos/day,cr[last[m2[w]]].tlastdet/day  
+  !p.multi=0
+  endplot
+;  skip7:
+  
+  ;;;LETS PLOT THETA
+  ;;;only for those with z
+  
+goto,skipcrap
+  begplot,name=outdir+'energetics.eps',/color,/encap,font='helvetica'
+;  !p.multi=[0,2,1]
+  !p.charsize=1.
+  !x.margin=[10,3]
+  multiplot2,/init,[3,6]
+;  yrange=[0,12]
+  xrange=[0,19]
+  bin=1.
+  legsize=1
+  jbs=[gold,silver,pewter,iron]
+  sp=[silver,pewter,iron]
+;  wzsp=where(cr[sp].z gt 0)
+  dont_match,jbs,last,dm1,dm2
+  theta=cr.theta
+;  type_jb,cr,w4[w3g],wonlyei=wonlyei,/silent,nsig=nsig
+;  theta[w4[w4g[wonlyei]]]=theta[w4[w3g[wonlyei]]]
+  wz=where(cr[jbs].z gt 0)
+;  w=where(theta[jbs] eq 0.)
+;  theta[jbs[w]]=cr[jbs[w]].theta_tstart
+  wno0=where(theta[jbs[wz]] ne 0.)
+  
+  gxrange=[47,52]  
+  txrange=[2,8]
+  tbin=0.4
+;  gyrange=yrange;[0,6]
+  gbin=0.2
+  w=where(cr[jbs[wz[wno0]]].eiso gt 0)
+  wn0=where(cr.eiso eq 0.)
+;  cr[wn0].eiso=10.
+  cr[wn0].eiso=3.7
+  ;;;what about those with z but no eiso?????
+
+  tbreak=alog10(cr.tbreak)
+  ;;;;
+  multiplot2
+  sp=gold
+  wz=where(cr[sp].z gt 0 and cr[sp].eiso ne 3.7 and cr[sp].eiso gt 0)
+  wnoz=where(cr[sp].z eq 0. or cr[sp].eiso eq 3.7)
+  yrange=[0,8]
+  plot,txrange,yrange,xrange=txrange,yrange=yrange,/xsty,/ysty,/nodata,ytitle='N'
+  plothist,tbreak[sp[wz]],bin=tbin,xrange=txrange,yrange=yrange,xstyle=1,min=txrange[0],max=txrange[1],/over,/fill,color=!grey50,fcolor=!grey50
+  plothist,tbreak[sp[wnoz]],bin=tbin,/over,xrange=txrange,yrange=yrange,min=txrange[0],max=txrange[1],/fill,/fline,forient=45.,fspac=0.3
+
+  multiplot2
+  plot,xrange,yrange,xrange=xrange,yrange=yrange,/xsty,/ysty,/nodata
+  plothist,theta[sp[wz]],bin=bin,xrange=xrange,yrange=yrange,xstyle=1,min=xrange[0],max=xrange[1],/over,/fill,color=!grey50,fcolor=!grey50
+  plothist,theta[sp[wnoz]],bin=bin,/over,xrange=xrange,yrange=yrange,min=xrange[0],max=xrange[1],/fill,/fline,forient=45.,fspac=0.3
+  legend,['Prominent'],charsize=legsize,box=0,/top,/right
+
+  multiplot2
+  egam=alog10(cr[sp].eiso*1d52*(1.-cos(theta[sp]*!dtor)))
+  plot,gxrange,yrange,xrange=gxrange,yrange=yrange,/nodata,/xsty,/ysty
+  plothist,egam[wz],bin=gbin,xrange=gxrange,yrange=yrange,min=gxrange[0],max=gxrange[1],/fill,color=!grey50,fcolor=!grey50,/over
+  plothist,egam[wnoz],bin=gbin,/over,xrange=gxrange,yrange=yrange,min=gxrange[0],max=gxrange[1],/fill,/fline,forient=45.,fspac=0.3
+
+  ;;;;
+  sp=silver
+  wz=where(cr[sp].z gt 0 and cr[sp].eiso ne 3.7)
+;  wnoz=where(cr[sp].z eq 0. or cr[sp].eiso eq 3.7)
+  wnoz=where((cr[sp].z eq 0. or cr[sp].eiso eq 3.7) and finite(tbreak[sp]))
+  multiplot2
+  plot,txrange,yrange,xrange=txrange,yrange=yrange,/nodata,/xsty,/ysty,ytitle='N'
+  plothist,tbreak[sp[wz]],bin=tbin,xrange=txrange,yrange=yrange,xstyle=1,min=txrange[0],max=txrange[1],/fill,color=!grey50,fcolor=!grey50,/over
+  plothist,tbreak[sp[wnoz]],bin=tbin,/over,xrange=txrange,yrange=yrange,min=txrange[0],max=txrange[1],/fill,/fline,forient=45.,fspac=0.3
+
+  multiplot2
+  plot,xrange,yrange,xrange=xrange,yrange=yrange,/nodata,/xsty,/ysty
+  plothist,theta[sp[wz]],bin=bin,xrange=xrange,yrange=yrange,xstyle=1,min=xrange[0],max=xrange[1],/fill,color=!grey50,fcolor=!grey50,/over
+  plothist,theta[sp[wnoz]],bin=bin,/over,xrange=xrange,yrange=yrange,min=xrange[0],max=xrange[1],/fill,/fline,forient=45.,fspac=0.3
+;  legend,['Hidden & Possible'],charsize=legsize,box=0,/top,/right
+  legend,['Hidden'],charsize=legsize,box=0,/top,/right
+
+  multiplot2
+  egam=alog10(cr[sp].eiso*1d52*(1.-cos(theta[sp]*!dtor)))
+  plot,gxrange,yrange,xrange=gxrange,yrange=yrange,/nodata,/xsty,/ysty
+  plothist,egam[wz],bin=gbin,xrange=gxrange,yrange=yrange,min=gxrange[0],max=gxrange[1],/over,/fill,color=!grey50,fcolor=!grey50
+  plothist,egam[wnoz],bin=gbin,/over,xrange=gxrange,yrange=yrange,min=gxrange[0],max=gxrange[1],/fill,/fline,forient=45.,fspac=0.3
+
+  sp=pewter
+  wz=where(cr[sp].z gt 0 and cr[sp].tbreak gt 0 and cr[sp].eiso ne 3.7)
+  wnoz=where((cr[sp].z eq 0. or cr[sp].eiso eq 3.7) and finite(tbreak[sp]))
+  multiplot2
+  plot,txrange,yrange,xrange=txrange,yrange=yrange,/nodata,/xsty,/ysty,ytitle='N'
+  plothist,tbreak[sp[wz]],bin=tbin,xrange=txrange,yrange=yrange,xstyle=1,min=txrange[0],max=txrange[1],/fill,color=!grey50,fcolor=!grey50,/over
+  plothist,tbreak[sp[wnoz]],bin=tbin,/over,xrange=txrange,yrange=yrange,min=txrange[0],max=txrange[1],/fill,/fline,forient=45.,fspac=0.3
+
+  multiplot2
+  plot,xrange,yrange,xrange=xrange,yrange=yrange,/nodata,/xsty,/ysty;,ytitle='N'
+  plothist,theta[sp[wz]],bin=bin,xrange=xrange,yrange=yrange,xstyle=1,min=xrange[0],max=xrange[1],/fill,color=!grey50,fcolor=!grey50,/over
+  plothist,theta[sp[wnoz]],bin=bin,/over,xrange=xrange,yrange=yrange,min=xrange[0],max=xrange[1],/fill,/fline,forient=45.,fspac=0.3
+  legend,['Possible III-IV'],charsize=legsize,box=0,/top,/right
+
+  multiplot2
+  egam=alog10(cr[sp].eiso*1d52*(1.-cos(theta[sp]*!dtor)))
+  plot,gxrange,yrange,xrange=gxrange,yrange=yrange,/nodata,/xsty,/ysty
+  plothist,egam[wz],bin=gbin,xrange=gxrange,yrange=yrange,min=gxrange[0],max=gxrange[1],/over,/fill,color=!grey50,fcolor=!grey50
+  plothist,egam[wnoz],bin=gbin,/over,xrange=gxrange,yrange=yrange,min=gxrange[0],max=gxrange[1],/fill,/fline,forient=45.,fspac=0.3
+
+  sp=iron
+  wz=where(cr[sp].z gt 0 and cr[sp].eiso ne 3.7)
+;  wnoz=where(cr[sp].z eq 0. or cr[sp].eiso eq 3.7)
+  wnoz=where((cr[sp].z eq 0. or cr[sp].eiso eq 3.7) and finite(tbreak[sp]))
+  multiplot2
+  plot,txrange,yrange,xrange=txrange,yrange=yrange,/nodata,/xsty,/ysty,ytitle='N'
+  plothist,tbreak[sp[wz]],bin=tbin,xrange=txrange,yrange=yrange,xstyle=1,min=txrange[0],max=txrange[1],/fill,color=!grey50,fcolor=!grey50,/over
+  plothist,tbreak[sp[wnoz]],bin=tbin,/over,xrange=txrange,yrange=yrange,min=txrange[0],max=txrange[1],/fill,/fline,forient=45.,fspac=0.3
+
+  multiplot2
+  plot,xrange,yrange,xrange=xrange,yrange=yrange,/nodata,/xsty,/ysty;,ytitle='N'
+  plothist,theta[sp[wz]],bin=bin,xrange=xrange,yrange=yrange,xstyle=1,min=xrange[0],max=xrange[1],/fill,color=!grey50,fcolor=!grey50,/over
+  plothist,theta[sp[wnoz]],bin=bin,/over,xrange=xrange,yrange=yrange,min=xrange[0],max=xrange[1],/fill,/fline,forient=45.,fspac=0.3
+  legend,['Possible II-IV'],charsize=legsize,box=0,/top,/right
+
+  multiplot2
+  egam=alog10(cr[sp].eiso*1d52*(1.-cos(theta[sp]*!dtor)))
+  plot,gxrange,yrange,xrange=gxrange,yrange=yrange,/nodata,/xsty,/ysty
+  plothist,egam[wz],bin=gbin,xrange=gxrange,yrange=yrange,min=gxrange[0],max=gxrange[1],/over,/fill,color=!grey50,fcolor=!grey50
+  plothist,egam[wnoz],bin=gbin,/over,xrange=gxrange,yrange=yrange,min=gxrange[0],max=gxrange[1],/fill,/fline,forient=45.,fspac=0.3
+  ;;;;
+  w=where(theta[bronze] ne 0.)
+  tb1=theta[bronze[w]]
+  ttb1=tbreak[bronze[w]]
+  wz=where(cr[bronze[w]].z gt 0 and cr[bronze[w]].eiso ne 3.7)
+;  wnoz=where(cr[bronze[w]].z eq 0. or cr[bronze[w]].eiso eq 3.7)
+  wnoz=where((cr[bronze[w]].z eq 0. or cr[bronze[w]].eiso eq 3.7) and finite(tbreak[bronze[w]]))
+  tb2=cr[bronze].theta_lastpos
+  ttb2=alog10(cr[bronze].tlastpos)
+  wth0=where(cr[bronze].tlastpos eq 0.)
+  tb2[wth0]=cr[bronze[wth0]].theta_lastdet
+  ttb2[wth0]=alog10(cr[bronze[wth0]].tlastdet)
+  wz2=where(cr[bronze].z gt 0 and cr[bronze].eiso ne 3.7)
+  wnoz2=where((cr[bronze].z eq 0. or cr[bronze].eiso eq 3.7) and finite(tbreak[bronze]))
+  multiplot2
+  yrange=[0,16]
+  plot,txrange,yrange,xrange=txrange,yrange=yrange,/nodata,/xsty,/ysty,ytitle='N'
+  plothist,ttb1[wz],bin=tbin,xrange=txrange,yrange=yrange,xstyle=1,min=txrange[0],max=txrange[1],/fill,color=!grey50,fcolor=!grey50,/over
+  plothist,ttb2[wz],bin=tbin,/over,xrange=txrange,yrange=yrange,min=txrange[0],max=txrange[1],line=1
+  plothist,ttb1[wnoz],bin=tbin,/over,xrange=txrange,yrange=yrange,min=txrange[0],max=txrange[1],/fill,/fline,forient=45.,fspac=0.3
+  plothist,ttb2[wnoz],bin=tbin,/over,xrange=txrange,yrange=yrange,min=txrange[0],max=txrange[1],color=!grey50,line=2
+
+  multiplot2
+  plot,xrange,yrange,xrange=xrange,yrange=yrange,/nodata,/xsty,/ysty;,ytitle='N'
+  plothist,tb1[wz],bin=bin,xrange=xrange,yrange=yrange,xstyle=1,min=xrange[0],max=xrange[1],/fill,color=!grey50,fcolor=!grey50,/over
+  plothist,tb2[wz],bin=bin,/over,xrange=xrange,yrange=yrange,min=xrange[0],max=xrange[1],line=1
+  plothist,tb1[wnoz],bin=bin,/over,xrange=xrange,yrange=yrange,min=xrange[0],max=xrange[1],/fill,/fline,forient=45.,fspac=0.3
+  plothist,tb2[wnoz],bin=bin,/over,xrange=xrange,yrange=yrange,min=xrange[0],max=xrange[1],color=!grey50,line=2
+  legend,['Unlikely'],charsize=legsize,box=0,/top,/right
+  
+  multiplot2
+  egam=alog10(cr[bronze[w]].eiso*1d52*(1.-cos(tb1*!dtor)))
+  plot,gxrange,yrange,xrange=gxrange,yrange=yrange,/nodata,/xsty,/ysty
+  plothist,egam[wz],bin=gbin,xrange=gxrange,yrange=yrange,min=gxrange[0],max=gxrange[1],/over,/fill,color=!grey50,fcolor=!grey50
+  egam2=alog10(cr[bronze].eiso*1d52*(1.-cos(tb2*!dtor)))
+  plothist,egam2[wz],bin=gbin,/over,xrange=gxrange,yrange=yrange,min=gxrange[0],max=gxrange[1],line=1
+  plothist,egam[wnoz],bin=gbin,/over,xrange=gxrange,yrange=yrange,min=gxrange[0],max=gxrange[1],/fill,/fline,forient=45.,fspac=0.3
+  plothist,egam2[wnoz],bin=gbin,/over,xrange=gxrange,yrange=yrange,min=gxrange[0],max=gxrange[1],color=!grey50,line=2
+
+  dont_match,pewter,w0,dm1,dm2
+;  wafterjb=[yind[wn23],w12[w2a],w0[dm2]]
+  wafterjb=[w12[w2a],w0[dm2]]
+  wz=where(cr[wafterjb].eiso ne 0 and cr[wafterjb].z gt 0 and cr[wafterjb].eiso ne 3.7)
+  wnoz=where(cr[wafterjb].eiso ne 0 and cr[wafterjb].z eq 0. or cr[wafterjb].eiso eq 3.7)
+  thetalp=cr[wafterjb].theta_lastpos
+  tlp=alog10(cr[wafterjb].tlastpos)
+  wth0=where(cr[wafterjb].tlastpos eq 0.)
+  thetalp[wth0]=cr[wafterjb[wth0]].theta_lastdet
+  tlp[wth0]=alog10(cr[wafterjb[wth0]].tlastpos)
+
+  multiplot2
+  yrange=[0,16]
+  plot,txrange,yrange,xrange=txrange,yrange=yrange,/nodata,/xsty,/ysty,ytitle='N',xtitle='log t!Lb!N (s)',xtickname=['2','3','4','5','6','7',' '],xticks=6
+  plothist,tlp[wz],bin=tbin,xrange=txrange,yrange=yrange,xstyle=1,min=txrange[0],max=txrange[1],/over,line=1
+  plothist,tlp[wnoz],bin=tbin,/over,xrange=txrange,yrange=yrange,min=txrange[0],max=txrange[1],color=!grey50,line=2
+
+  multiplot2
+  plot,xrange,yrange,xrange=xrange,yrange=yrange,/nodata,/xsty,/ysty,xtitle=!tsym.theta+'!Lj!N (deg)'
+  plothist,thetalp[wz],bin=bin,xrange=xrange,yrange=yrange,xstyle=1,min=xrange[0],max=xrange[1],/over,line=1
+  plothist,thetalp[wnoz],bin=bin,/over,xrange=xrange,yrange=yrange,min=xrange[0],max=xrange[1],color=!grey50,line=2
+  legend,['Non-Jet Break'],charsize=legsize,box=0,/top,/right
+  
+  multiplot2
+  egam=alog10(cr[wafterjb].eiso*1d52*(1.-cos(thetalp*!dtor)))
+  plot,gxrange,yrange,xrange=gxrange,yrange=yrange,/nodata,/xsty,/ysty,xtitle='log E!L'+!tsym.gamma+'!N (ergs)'
+  plothist,egam[wz],bin=gbin,xrange=gxrange,yrange=yrange,min=gxrange[0],max=gxrange[1],/over,line=1
+  plothist,egam[wnoz],bin=gbin,/over,xrange=gxrange,yrange=yrange,min=gxrange[0],max=gxrange[1],color=!grey50,line=2
+  
+  
+;  oplot,[0,20],[0,0]
+  
+;  legend,['Prominent','Hidden & Possible','Non jet break'],color=[!red,!blue,!green],/top,/right,box=0,line=[0,2,1]
+  
+
+;  aplot,1,xrange,yrange,xtitle='log E!L'+!tsym.gamma+'!N (ergs)',xrange=xrange,yrange=yrange,ytitle='N',/nodata
+;;   w=where(cr[w4[w4g]].eiso gt 0)
+;;   egam=alog10(cr[w4[w4g[w]]].eiso*1d52*(1.-cos(theta[w4[w4g[w]]]*!dtor)))
+;;   plothist,[1,egam],bin=bin,/over,color=!red,xrange=xrange,yrange=yrange
+;;   w=where(cr[sp].eiso gt 0)
+;;   egam=alog10(cr[sp[w]].eiso*1d52*(1.-cos(theta[sp[w]]*!dtor)))
+;;   plothist,[1,egam],bin=bin,/over,color=!blue,xrange=xrange,yrange=yrange,line=2
+  
+;;   w=where(cr[wafterjb].eiso ne 0 and cr[wafterjb].z gt 0)
+;;   egam=alog10(cr[wafterjb[w]].eiso*1d52*(1.-cos(thetalp*!dtor)))
+;;   plothist,[1,egam],bin=bin,/over,color=!green,xrange=xrange,yrange=yrange,line=1
+;;   oplot,xrange,[0,0]
+;;   !p.multi=0
+  endplot
+skipcrap:
+  multiplot2,/reset
+  multiplot2,/default
+
+
+  ;;WHAT ABOUT THOSE W/O Z, ADD SOME SORT OF LIMIT (TSTOP,TLASTPOS,TLASTDET)?
+  plot_eiso,cr,last,w4,w3g,w4g,gold,silver,pewter,iron,nsig=nsig,/chandra
+  
+  ;;LOOK AT Z DISTRIBUTION WITH JB CLASS
+  begplot,name=outdir+'zdist.ps'
+  bin=0.3
+  yrange=[0,6]
+  multiplot2,/init,[1,4]
+  
+  wzg=where(cr[gold].z gt 0)
+  multiplot2
+  plothist,cr[gold[wzg]].z,bin=bin,xrange=[0,7],yrange=yrange
+  legend,['Prominent'],charsize=legsize,box=0,/top,/right
+  print,mean(cr[gold[wzg]].z),median(cr[gold[wzg]].z)
+  
+  wzsp=where(cr[sp].z gt 0)
+  multiplot2
+  plothist,cr[sp[wzsp]].z,bin=bin,xrange=[0,7],yrange=yrange
+  legend,['Hidden & Possible'],charsize=legsize,box=0,/top,/right
+  print,mean(cr[sp[wzsp]].z),median(cr[sp[wzsp]].z)
+  
+  wzb=where(cr[bronze].z gt 0)
+  multiplot2
+  plothist,cr[bronze[wzb]].z,bin=bin,xrange=[0,7],yrange=yrange
+  legend,['Unlikely'],charsize=legsize,box=0,/top,/right
+  print,mean(cr[bronze[wzb]].z),median(cr[bronze[wzb]].z)
+  
+  dont_match,[gold,silver,pewter,iron,bronze],last,dm1,dm2
+  nojb=last[dm2]
+  wzn=where(cr[nojb].z gt 0)
+  multiplot2
+  plothist,cr[nojb[wzn]].z,bin=bin,xrange=[0,7],xtitle='z',yrange=yrange
+  legend,['Non jet break'],charsize=legsize,box=0,/top,/right
+  print,mean(cr[nojb[wzn]].z),median(cr[nojb[wzn]].z)
+  
+  wz=where(cr[last].z gt 0)
+  print
+  print,mean(cr[last[wz]].z),median(cr[last[wz]].z)
+  multiplot2,/reset
+  multiplot2,/default
+  endplot
+  
+  
+  ;;;LOOK AT EISO DISTRIBUTION AS A FUNCTION OF JB CLASS
+  begplot,name=outdir+'eiso_dist_jb.ps'
+  bin=0.3
+  yrange=[0,8]
+  xrange=[48,55]
+  multiplot2,/init,[1,4]
+  w=where(cr.eiso gt 0 and cr.eiso ne 10.)
+  eiso=dblarr(n_elements(cr))
+  eiso[w]=alog10(cr[w].eiso*1d52)
+  
+  weiso=where(eiso[gold] gt 0)
+  multiplot2
+  plothist,eiso[gold[weiso]],bin=bin,xrange=xrange,yrange=yrange,min=xrange[0],max=xrange[1]
+  legend,['Prominent'],charsize=legsize,box=0,/top,/left
+  print,mean(eiso[gold[weiso]]),median(eiso[gold[weiso]])
+  
+  weiso=where(eiso[sp] gt 0)
+  multiplot2
+  plothist,eiso[sp[weiso]],bin=bin,xrange=xrange,yrange=yrange,min=xrange[0],max=xrange[1]
+  legend,['Hidden & Possible'],charsize=legsize,box=0,/top,/left
+  print,mean(eiso[sp[weiso]]),median(eiso[sp[weiso]])
+  
+  weiso=where(eiso[bronze] gt 0)
+  multiplot2
+  plothist,eiso[bronze[weiso]],bin=bin,xrange=xrange,yrange=yrange,min=xrange[0],max=xrange[1]
+  legend,['Unlikely'],charsize=legsize,box=0,/top,/left
+  print,mean(eiso[bronze[weiso]]),median(eiso[bronze[weiso]])
+  
+  dont_match,[gold,silver,pewter,iron,bronze],last,dm1,dm2
+  nojb=last[dm2]
+  weiso=where(eiso[nojb] gt 0)
+  multiplot2
+  plothist,eiso[nojb[weiso]],bin=bin,xrange=xrange,xtitle='E!L'+!tsym.gamma+',iso!N (erg)',yrange=yrange,min=xrange[0],max=xrange[1]
+  legend,['Non jet break'],charsize=legsize,box=0,/top,/left
+  print,mean(eiso[nojb[weiso]]),median(eiso[nojb[weiso]])
+  
+  weiso=where(eiso[last] gt 0)
+  print
+  print,mean(eiso[last[weiso]]),median(eiso[last[weiso]])
+  multiplot2,/reset
+  multiplot2,/default
+  endplot
+  
+;    goto,skip4
+  if not keyword_set(nofilter) then begin 
+     print,'Making CR results tables'
+     ;;MAKE CR RESULTS TABLE
+     s=' & '
+     m='$'
+oga=0
+     sm=m+s+m
+     jbei1=w4[w3g[weinorm]]
+     jbei3a=[w23[w2b[weinorm1a]]]
+     jbei2=[w123[w3c[weinorm2]]]
+     jbnorm3=[w23[w3b[wnorm]]]
+;  jbei0=w0[weinorm0]
+     alphabet,az
+     for b=0,4 do begin 
+        grbs=''
+        case b of
+           0: begin
+              list=gold
+              file='jb_gold.tex'
+              caption='\tablecaption{Prominent Jet Breaks \label{table:prominent}}'
+              comments='\tablecomments{Prominent jet breaks are those with a distinct segment IV which are consistent with the post-jet break closure relations.  Alternative times for jet angle limits depend on models fit.  Energy injection (EI) breaks are listed only if at least one jet-break-with-energy-injection-relation is consistent.  Requirements listed are for those properties of families of closure relations that are required by consistent models.  $\xi$ is defined in Equation \ref{eq:xi}.  All errors are $2\sigma$ confidence.}'
+           end
+           1: begin
+              list=silver[sort(silver)]
+              file='jb_silver.tex'
+              caption='\tablecaption{Hidden Jet Breaks \label{table:hidden}}'
+              comments='\tablecomments{Hidden jet breaks require jet break closure relations in the last light curve segment.  $t_{start}$ parameters are listed for those afterglows that are consistent with a jet-break-with-energy-injection during the first segment, suggesting that the jet break could have occurred prior to the start of the observations. Other notes are the same as for Prominent Jet Breaks table.}'
+           end 
+           2: begin
+              pi=[pewter,iron]
+              list=pi[sort(pi)]
+              file='jb_pewter.tex'
+              caption='\tablecaption{Possible Jet Breaks \label{table:possible}}'
+              comments='\tablecomments{Possible jet breaks are consistent with both pre- and post-jet break closure relations.  They have pre- and post-break slopes similar to the segments III-IV or II-IV of the Prominent sample, or are single power-laws with steep slopes either and late starts or long coverage, and are therefore more likely to be jet breaks than the Unlikely sample.  The requirements are the result of another iteration of the internal consistency after excluding the remaining pre-jet break closure relations in final segments. $t_{start}$ and $t_{lastdet}$ times and opening angle limits are only listed if they are feasible within the canonical framework.  Other notes are the same as for Prominent Jet Breaks table.}'
+           end 
+           3: begin
+              list=bronze[sort(bronze)]
+              file='jb_bronze.tex'
+              caption='\tablecaption{Unlikely Jet Breaks \label{table:unlikely}}'
+              comments='\tablecomments{Unlikely jet breaks are consistent with both pre- and post-jet break closure relations in their last light curve segment, and their temporal decays and decay transitions either resemble segments II-III of the Prominent sample or are fit by single power-laws.  The Unlikely jet break sample also contains 6 afterglows that are not consistent with any closure relations after internal consistency checks but have temporal behavior consistent with post-jet break decays, and are denoted with the requirements of "none".  $t_{start}$ and $t_{lastdet}$ times and opening angle limits are only listed if they are feasible within the canonical framework.  Other notes are the same as for Prominent Jet Breaks table.} '
+           end
+           4: begin
+              list=nojb[sort(nojb)]
+              file='jb_nojb.tex'
+              caption='\tablecaption{Non-Jet Breaks \label{table:nojb}}'
+              comments='\tablecomments{Non-jet breaks are the remaining GRBs not in the other categories that are with inconsistent with previous criteria, only contain segments I-II, are naked GRBs (0-I), or were ruled out by internal consistency checks. $t_{start}$ and $t_{lastdet}$ times and opening angle limits are only listed if they are feasible within the canonical framework.  Other notes are the same as for Prominent Jet Breaks table.}'
+           end 
+        endcase 
+        openw,lun,'~/papers/jetbreaks1/'+file,/get_lun
+        printf,lun,'\begin{deluxetable}{lllccrccrrl}'
+        printf,lun,'\tabletypesize{\scriptsize}'
+        printf,lun,caption
+        printf,lun,'\tablewidth{0pt}'
+        printf,lun,'\tablehead{'
+        printf,lun,'  \colhead{GRB} & \colhead{Segments} & \colhead{Time} & \colhead{$\alpha$} & \colhead{$\beta$} & \colhead{t} & \colhead{z} & \colhead{log $E_{\gamma,iso}$} & \colhead{$\theta_j$} &   \colhead{log $E_{\gamma}$} & \colhead{Requirements\tablenotemark{\dag}} \\'
+        printf,lun,' \colhead{} &  \colhead{} &  \colhead{} &  \colhead{} &  \colhead{} &  \colhead{(ks)} &  \colhead{} &  \colhead{(ergs)} &  \colhead{(deg)} &  \colhead{(ergs)} &  \colhead{}} '
+        printf,lun,'\startdata'
+        azz=0
+        for i=0,n_elements(list)-1 do begin
+           bold=0
+           only=0
+           g=list[i]
+           w=where(cr[jbei1].grb eq cr[g].grb,nw)
+           w2a=where(cr[jbei3a].grb eq cr[g].grb,nw2)
+           w3=where(cr[jbei2].grb eq cr[g].grb,nw3)
+           w3b=where(cr[jbnorm3].grb eq cr[g].grb,nw3a)
+;        w0a=where(cr[jbei0].grb eq cr[g].grb,nw0)
+           wg=where(cr.grb eq cr[g].grb,nwg)
+           theta=cr[g].theta
+           if nwg eq 1 then theta=cr[g].theta_lastdet
+           grb=strmid(cr[g].grb,3,7)
+           reg='$t_{b}$'
+
+           ;;which region
+           isareg=where(g eq w1234,nreg)
+           if nreg gt 0 then class='I-II-III-IV'
+           isareg=where(g eq w234,nreg)
+           if nreg gt 0 then class='II-III-IV'
+           isareg=where(g eq w123,nreg)
+           if nreg gt 0 then class='I-II-III'
+           isareg=where(g eq w23,nreg)
+           if nreg gt 0 then begin 
+              wpew=where(g eq pewter,npew)
+              wiron=where(g eq iron,nir)
+              if npew gt 0 then class='III-IV'
+              if nir gt 0 then class='II-IV'
+              if npew eq 0 and nir eq 0 then class='II-III'
+;              class='II-III/III-IV'
+           endif 
+           isareg=where(g eq w0,nreg)
+           if nreg gt 0 then class='Single PL'
+           isareg=where(g eq w12,nreg)
+           if nreg gt 0 then class='I-II'
+           isareg=where(cr[g].highlat lt nsig0 and (cr[g].tbreak lt 1e3 and cr[g].seg3 eq 1) or (cr[g].seg0 eq 1 and cr[g].alpha gt 3 and cr[g].tlastdet lt 3000),nreg)
+           if nreg gt 0 then class='0-I'
+           
+           doagain:
+           if cr[g].z gt 0. then begin
+              z=m+numdec(cr[g].z,2)+m 
+              if cr[g].eiso gt 0 and cr[g].eiso ne 3.7 then begin 
+                 eiso=m+numdec(alog10(cr[g].eiso*1d52),1)+m
+                 egam=numdec(alog10(cr[g].eiso*1d52*(1.-cos(theta*!dtor))),1)
+              endif else begin 
+                 eiso=' -- '
+                 egam=eiso
+              endelse 
+           endif else begin
+              z=' -- '
+              eiso=z
+              egam=z
+           endelse
+           
+           if b eq 4 then only=1
+           theta=numdec(theta,1)
+;           if nwg eq 1 or only eq 3 then begin ;;if w0
+           if nwg eq 1 then begin ;;if w0
+              if only and b ne 4 then begin  ;; if 2nd list
+                 theta='<'+theta
+                 tbreak=m+'<'+numdec(cr[g].tstart/ks,2)+m
+                 reg='$t_{start}$'
+                 if cr[g].z gt 0 and cr[g].eiso ne 0 and cr[g].eiso ne 3.7 then egam=m+'<'+egam+m
+              endif else begin ;;if 1st list
+                 tbreak=m+'>'+numdec(cr[g].tlastdet/ks,2)+m
+                 theta='>'+theta
+                 reg='$t_{lastdet}$'
+                 if cr[g].z gt 0 and cr[g].eiso ne 0 and cr[g].eiso ne 3.7 then egam=m+'>'+egam+m
+              endelse 
+;if oga then stop
+           endif 
+           if nwg ne 1 and only ne 3 then tbreak=m+numdec(cr[g].tbreak/ks,1)+'^{+'+numdec(cr[g].tbreakerr[1]/ks,1)+'}_{-'+numdec(cr[g].tbreakerr[0]/ks,1)+'}'+m
+           if nwg ge 2 and b gt 0 and only eq 1 then begin ;;if 23 or 123 2nd list lastdet
+              tbreak=m+'>'+numdec(cr[g].tlastdet/ks,2)+m
+              theta='>'+theta
+              if cr[g].z gt 0 and cr[g].eiso ne 0 and cr[g].eiso ne 3.7 then egam=m+'>'+egam+m
+              reg='$t_{lastdet}$'
+           endif 
+;           if nw2 gt 0 and nwg eq 2 and ((b eq 2 or b eq 3) or (b eq
+;           1 and nw3a gt 0)) and only eq 2 then begin
+           if nw2 gt 0 and nwg eq 2 and ((b eq 2 or b eq 3)) and only eq 2 then begin
+              theta='<'+theta
+              tbreak=m+'<'+numdec(cr[g].tstart/ks,2)+m
+              reg='$t_{start}$'
+              if cr[g].z gt 0 and cr[g].eiso ne 0 and cr[g].eiso ne 3.7 then egam=m+'<'+egam+m
+           endif 
+           if cr[g].z gt 0 and only gt 0 and b lt 4 then begin
+              z='' & eiso=''
+           endif 
+
+;        if (nwg eq 2 and nw2 gt 0) or (nwg eq 3 and nw3 gt 0) and b eq 1 then $
+;           reg='$t_{b,EI}$'
+;        if nwg eq 2
+           
+           if z ne '' and z ne ' -- ' then begin
+              z=z+'\tablenotemark{'+az[azz]+'}'
+              azz=azz+1
+              grbs=[grbs,grb]
+;              print,grb,z
+           endif 
+           
+;           if only eq 0 or b eq 4 then begin 
+           alpha=m+numdec(cr[g].alpha,2)+'^{+'+numdec(cr[g].alphaerr[1],2)+'}_{-'+numdec(cr[g].alphaerr[0],2)+'}'+m
+           beta=m+numdec(cr[g].beta,2)+'^{+'+numdec(cr[g].betaerr[1],2)+'}_{-'+numdec(cr[g].betaerr[0],2)+'}'+m
+;           endif else begin
+;              alpha=''
+;              beta=''
+          if only ne 0 and b lt 4 then $
+              class=''
+;           endelse 
+           type_jb,cr,g,wjb=wjb,wonlyspread=wonlyspread,wonlynospread=wonlynospread,wonlynorm=wonlynorm,wonlyeinorm=wonlyeinorm,wonlystruc=wonlystruc,wonlyjb=wonlyjb,wonlyism=wonlyism,wonlywind=wonlywind,wonlypg2=wonlypg2,wonlyp12=wonlyp12,wonlynu2=wonlynu2,wonlynu3=wonlynu3,/silent,nsig=nsig,nothing=nothing
+           res=''
+           if wonlyspread[0] ne -1 then res=res+' Sp'
+           if wonlynospread[0] ne -1 then res=res+' NSp' 
+           if wonlynorm[0] ne -1 then res=res+' Uni'
+           if wonlyeinorm[0] ne -1 then res=res+' \textbf{EI}'
+           if wonlystruc[0] ne -1 then res=res+' Str'
+           if wonlyism[0] ne -1 then res=res+' ISM'
+           if wonlywind[0] ne -1 then res=res+' Wind'
+           if wonlynu2[0] ne -1 then res=res+' $\nu_1$'
+           if wonlynu3[0] ne -1 then res=res+' $\nu_2$'
+           if wonlyp12[0] ne -1 then res=res+' $p_{12}$'
+           if wonlypg2[0] ne -1 then res=res+' $p_2$'
+           if nothing[0] ne -1 then res=res+' none'
+           
+           if cr[g].z eq 0 then xi=' '+' \xi' else xi=''
+           printf,lun,grb+s+class+s+reg+s+alpha+s+beta+s+tbreak+s+z+s+eiso+s+m+theta+xi+m+s+egam+s+res+' \\'
+           
+           ;;if 3+EI or w0 or (23 or 123 and bronze) and first round 
+           if nw gt 0 or (nwg ge 2 and (b eq 2 or b eq 3)) and only eq 0 then begin 
+              if nw gt 0 then begin
+                 g=jbei1[w]
+                 theta=cr[g].theta
+;              if bold then reg='\boldmath{$t_{b,EI}$}' else 
+                 reg='$t_{b,EI}$'
+              endif 
+              if nwg ge 2 and (b eq 2 or b eq 3) then theta=cr[g].theta_lastdet
+              only=1
+              grb='          '
+              goto,doagain
+           endif
+           if nwg eq 1 and wjb[0] ne -1 and only eq 0 and b ne 4 then begin
+              theta=cr[g].theta_tstart
+              only=1
+              grb='          '
+              goto,doagain
+           endif 
+           ;;if 2 of w23 and w23 and bronze and second round then
+           if nw2 gt 0 and nwg eq 2 and (b eq 2 or b eq 3) and only eq 1 then begin
+              only=2
+              g=jbei3a[w2a]
+              theta=cr[g].theta_tstart
+              grb='          '
+              goto,doagain
+           endif
+           if b eq 1 and nw2 gt 0 and nwg eq 2 and only ne 3 then begin
+              reg='$t_{b,EI}$'
+              g=jbei3a[w2a]
+              theta=cr[g].theta_tstart
+              tbreak=m+'<'+numdec(cr[g].tstart/ks,2)+m
+              only=3
+              grb='          '
+              print,b,nw2,nwg,only
+              oga=1
+;              stop
+              goto,doagain
+           endif
+;           if nwg eq 2 and b eq 1 and wonlyeinorm[0] ne -1 then begin
+;              reg='$t_{b,EI}$'
+;           endif            
+;           if b eq 1 and only eq 0 then begin
+;              only=1
+;              theta=cr[g].theta_lastdet
+;              grb='          '
+;              goto,doagain
+;           endif 
+           if nwg eq 2 and nw2 gt 0 and nw3a gt 0 and b eq 1 and only eq 1 then begin 
+              only=2
+              theta=cr[g].theta_tstart
+              grb='          '
+              goto,doagain
+           endif 
+           if b eq 4 then begin
+              theta=cr[g].theta_lastdet
+           endif 
+           
+;; if 2 of w23 or 3 of w123 and EI consistent then  second round then
+;        if (nwg eq 2 and nw2 gt 0) or (nwg eq 3 and nw3 gt 0) and b eq 1 then begin 
+;           reg='$t_{b,EI}$'
+           
+           
+        endfor 
+        tablenote_grb,grbs[1:*],tablenote
+        printf,lun
+        printf,lun,'\enddata'
+        printf,lun,'\tablenotetext{\dag}{Abbreviations for Uniform jet (Uni), Spreading jet (Sp), non-spreading jet (NSp), $1<p<2$ ($p_{12}$), $p>2$ ($p_2$), $\nu<\nu_c$ ($\nu_1$), $\nu>\nu_c$ ($\nu_2$)} '
+        printf,lun,comments
+        printf,lun,tablenote
+        printf,lun,'\end{deluxetable}'
+        close,lun
+        free_lun,lun
+     endfor 
+     stop
+  endif 
+;skip4:     
+  
+
+  
+  stop
+  return
+end 

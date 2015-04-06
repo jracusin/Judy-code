@@ -1,0 +1,152 @@
+@fit_functions
+pro spec_model_2jets
+  
+  h=4.1356692d-18               ;kev s
+  nu_opt=1e-3/h
+  nu_x03=0.3/h
+  nu_x1=1/h
+  nu_x10=10./h
+  p=2.4
+  nu=10^(findgen(100)/12)*1d13
+  
+  xrange=[1e13,1e20]
+  yrange=[1e-8,1]
+  
+  begplot,name='~/Desktop/GRB080319B/spec_scheme.eps',/color,font='helvetica',/encaps,/cmyk
+  
+  !y.margin=[4,3]
+  multiplot2,/reset,/default
+  multiplot2,[1,3],/init
+  
+  ;;;50s < t < 800s
+  ;;Wide Jet Reverse Shock + Narrow Jet Forward Shock
+  par1=[5.e-7,-1./3.,1d14,1./2.,1d15,p/2.]
+  wjrs=bkn2pow(nu,par1)
+  
+  par2=[1.e-9,-1./3,1d17,(p-1.)/2.,nu_x10,p/2.]
+  njfs1=bkn2pow(nu,par2)
+  
+  multiplot2
+  plot,xrange,yrange,xrange=xrange,yrange=yrange,/nodata,/xlog,/ylog,xminor=9,xsty=5,ytickf='loglabels',charsize=1.
+  x=findgen(9)-5
+  eng=10^x
+  freq=eng/h
+  engname='10!U'+ntostr(fix(x))+'!N'
+  w=where(eng eq 1)
+  engname[w]='1'
+  
+  polyfill,[1d14,1d15,1d15,1d14],[yrange[0],yrange[0],yrange[1],yrange[1]],color=!yellow,transp=0.1
+  polyfill,[nu_x03,nu_x10,nu_x10,nu_x03],[yrange[0],yrange[0],yrange[1],yrange[1]],color=!lightblue,transp=0.1
+  
+  axis,xaxis=1,xtickv=freq,xtickname=engname,xticks=9,xminor=9,charsize=1.
+  axis,xticks=7,xminor=9,charsize=1.
+  xyouts,1e16,8,'Energy (keV)',/data,charsize=1.
+  
+  oplot,nu,wjrs,color=!red
+  oplot,nu,njfs1,color=!purple
+  oplot,nu,(wjrs+njfs1)
+  xyouts,1.5e14,1e-1,'Optical',/data,charsize=1
+  xyouts,2.e17,1e-1,'X-ray',/data,charsize=1
+  oplot,[1e14,1e14],[yrange[0],yrange[1]],line=2  ,color=!red
+  xyouts,1.e14,5e-6,!tsym.nu+'!Lc,WJ,RS!N~t!U-1!N',charsize=1.
+  arrow,1e14,5e-6,6e13,5e-6,/data,color=!red
+  oplot,[1e15,1e15],[yrange[0],yrange[1]],line=2,color=!red
+  xyouts,1.2e15,5e-7,!tsym.nu+'!Lm,WJ,RS!N~t!U-1!N',charsize=1.
+  arrow,1e15,5e-7,6e14,5e-7,/data,color=!red
+  oplot,[1e17,1e17],[yrange[0],yrange[1]],line=2,color=!purple
+  xyouts,1.2e17,5e-7,!tsym.nu+'!Lm,NJ,FS!N~t!U-3/2!N',charsize=1.
+  arrow,1e17,5e-7,4e16,5e-7,/data,color=!purple
+  oplot,[nu_x10,nu_x10],[yrange[0],yrange[1]],line=2,color=!purple
+  xyouts,3e17,5e-8,!tsym.nu+'!Lc,NJ,FS!N~t!U1/2!N',charsize=1.
+  arrow,nu_x10,5e-8,4e18,5e-8,/data,color=!purple
+  
+  xyouts,2e13,0.02,!tsym.nu+'!U1/3!N',color=!red,charsize=1
+  xyouts,2e14,0.02,!tsym.nu+'!U-1/2!N',color=!red,charsize=1,charthick=2
+  xyouts,3e17,1e-5,!tsym.nu+'!U-p/2!N',color=!red,charsize=1,charthick=2
+  xyouts,2e13,7e-5,!tsym.nu+'!U1/3!N',color=!purple,charsize=1
+  xyouts,2e17,5e-4,!tsym.nu+'!U(1-p)/2!N',charsize=1,charthick=2,color=!purple
+  xyouts,5e18,3e-5,!tsym.nu+'!U-p/2!N',charsize=1,charthick=2,color=!purple
+  
+  legend,['50s<t<800s','Wide RS','Narrow FS','Wide FS','Sum'],box=0,/top,/right,textcolor=[!p.color,!red,!purple,!blue,!p.color],charsize=1.
+  
+  ;;;800s < t < 40 ks
+  ;;Narrow Jet Forward Shock + Wide Jet Forward Shock
+  par1=[4.e-8,-1./3,1d15,(p-1)/2.,10.*nu_x10,p/2.]
+  njfs2=bkn2pow(nu,par1)
+  
+  par2=[1.e-7,-1./3.,1d14,(p-1)/2.,1d16,p/2.]
+  wjfs=bkn2pow(nu,par2)
+  multiplot2
+  plot,xrange,yrange,xrange=xrange,yrange=yrange,/nodata,/xlog,/ylog,ytitle='Flux Density',/xsty,xminor=9,ytickf='loglabels',charsize=1
+  polyfill,[1d14,1d15,1d15,1d14],[yrange[0],yrange[0],yrange[1],yrange[1]],color=!yellow,transp=0.1
+  polyfill,[nu_x03,nu_x10,nu_x10,nu_x03],[yrange[0],yrange[0],yrange[1],yrange[1]],color=!lightblue,transp=0.1
+  oplot,[1d14,1e15],[1.0e-8,1.0e-8]
+  oplot,[1d17,1e18],[1.0e-8,1.0e-8]
+  axis,xticks=7,xminor=9,xaxis=1,charsize=1.
+  axis,xticks=7,xminor=9,xaxis=0,charsize=1.
+  
+  oplot,nu,njfs2,color=!purple
+  oplot,nu,wjfs,color=!blue
+  oplot,nu,(njfs2+wjfs)
+  
+  oplot,[1e14,1e14],[yrange[0],yrange[1]],line=2,color=!blue
+  xyouts,1.2e14,5e-6,!tsym.nu+'!Lm,WJ,FS!N~t!U-3/2!N',charsize=1.
+  arrow,1e14,5e-6,4e13,5e-6,/data,color=!blue
+  oplot,[1e16,1e16],[yrange[0],yrange[1]],line=2,color=!blue
+  xyouts,1.e15,5e-7,!tsym.nu+'!Lc,WJ,FS!N~t!U1/2!N',charsize=1.
+  arrow,1e16,5e-7,1.5e16,5e-7,/data,color=!blue
+  oplot,[1e15,1e15],[yrange[0],yrange[1]],line=2,color=!purple
+  xyouts,1.2e15,5e-8,!tsym.nu+'!Lm,NJ,FS!N~t!U-3/2!N',charsize=1.
+  arrow,1e15,5e-8,4e14,5e-8,/data,color=!purple
+  oplot,[10.*nu_x10,10.*nu_x10],[yrange[0],yrange[1]],line=2,color=!purple
+  xyouts,2e18,5e-7,!tsym.nu+'!Lc,NJ,FS!N~t!U1/2!N',charsize=1.
+  arrow,10.*nu_x10,5e-7,4e19,5e-7,/data,color=!purple  
+  
+  xyouts,2e13,0.02,!tsym.nu+'!U1/3!N',color=!blue,charsize=1
+  xyouts,1.5e15,6e-5,!tsym.nu+'!U(1-p)/2!N',color=!blue,charsize=1,charthick=2
+  xyouts,3e17,6e-6,!tsym.nu+'!U-p/2!N',color=!blue,charsize=1,charthick=2
+  xyouts,2e13,2e-4,!tsym.nu+'!U1/3!N',color=!purple,charsize=1
+  xyouts,2e17,2e-4,!tsym.nu+'!U(1-p)/2!N',charsize=1,charthick=2,color=!purple
+  xyouts,3e19,6e-6,!tsym.nu+'!U-p/2!N',charsize=1,charthick=2,color=!purple
+  
+  
+  legend,'800s<t<40ks',/top,/right,box=0,charsize=1.
+  
+  ;;; t > 40 ks
+  ;;Wide Jet Forward Shock
+  par1=[3.e-5,-1./3.,1d11,(p-1.)/2.,1d17,p/2.]
+  wjfs=bkn2pow(nu,par1)
+  multiplot2
+  plot,xrange,yrange,xrange=xrange,yrange=yrange,/nodata,/xlog,/ylog,xtitle='Frequency (Hz)',/xsty,xtickf='loglabels',xminor=9,ytickf='loglabels',charsize=1.
+  polyfill,[1d14,1d15,1d15,1d14],[yrange[0],yrange[0],yrange[1],yrange[1]],color=!yellow,transp=0.1
+  polyfill,[nu_x03,nu_x10,nu_x10,nu_x03],[yrange[0],yrange[0],yrange[1],yrange[1]],color=!lightblue,transp=0.1
+  oplot,[1d14,1e15],[1.0e-8,1.0e-8]
+  oplot,[1d17,1e18],[1.0e-8,1.0e-8]
+  axis,xticks=7,xminor=9,xaxis=1,xtickname=replicate(' ',8),charsize=1.
+  axis,xticks=7,xminor=9,xaxis=0,charsize=1.
+  oplot,nu,wjfs,color=!blue
+  
+;  oplot,[1e14,1e14],[yrange[0],yrange[1]],line=2  
+  xyouts,2e13,5e-7,!tsym.nu+'!Lm,WJ,FS!N~t!U-3/2!N',charsize=1.
+  arrow,2e13,5e-7,1e13,5e-7,/data,color=!blue
+  oplot,[1e17,1e17],[yrange[0],yrange[1]],line=2,color=!blue
+  xyouts,9.e15,5e-8,!tsym.nu+'!Lc,WJ,FS!N~t!U1/2!N',charsize=1.
+  arrow,1e17,5e-8,2e17,5e-8,/data,color=!blue  
+  
+;  xyouts,2e13,1e-3,!tsym.nu+'!U1/3!N',color=!blue,charsize=1
+  xyouts,2e14,1e-3,!tsym.nu+'!U(1-p)/2!N',color=!blue,charsize=1,charthick=2
+  xyouts,1e19,3e-7,!tsym.nu+'!U-p/2!N',color=!blue,charsize=1,charthick=2
+  
+  legend,'t>40ks',/top,/right,box=0,charsize=1.
+  
+  multiplot2,/reset,/default
+  endplot
+  
+  print,minmax(wjrs)
+  print,minmax(njfs1)
+  print,minmax(njfs2)
+  print,minmax(wjfs)
+  
+  stop
+  return
+end 

@@ -1,0 +1,24 @@
+/Makefile/1.1.1.1/Tue May 28 20:45:39 2002//
+/Makefile.linux/1.1.1.1/Tue May 28 20:45:39 2002//
+/Makefile.osf/1.1.1.1/Tue May 28 20:45:39 2002//
+/SpatialConstraint.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/SpatialConvex.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/SpatialDomain.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/SpatialEdge.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/SpatialException.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/SpatialIndex.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/SpatialInterface.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/SpatialMarkup.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/SpatialVector.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/echoDomain.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/htmIntersectRadec.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/htmLookupRadec.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/htmMap.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/instances.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/intersect.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/lookup.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/test.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/testvec.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/timeHTM.cpp/1.1.1.1/Tue May 28 20:45:39 2002//
+/BitList.cpp/1.2/Tue May 28 22:35:59 2002//
+D

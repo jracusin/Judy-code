@@ -1,0 +1,92 @@
+<Main Menu Items>
+
+File
+----
+
+   "Screenshot"
+         Saves the plot window to a '.png' file.  The button brings up the usual  
+         dialog for saving and naming saved files, so you can choose where it 
+         should go. The plot area alone is saved, exactly as it appears at the 
+         moment the button is pressed. The PNG format is useful for posting the 
+         current plot on the web.
+         
+   "Print"
+         Prints the plot either to a file or to a printer.  The configuration 
+         can be changed by choosing the "Print Setup..." command.
+         
+         For most UNIX-style operating systems, printing is done via the 'lp' 
+         command to the current default printer, assuming that it can accept 
+         PostScript files. You must set up the printer accordingly outside of 
+         rmfit.
+                                              
+   "PS Configure..."
+         When you print plots to postscript files, you may change the postscript
+         plot configuration using this command. Among the options available are:
+         
+            Paper size: Letter, Legal, A4, etc.
+            Printed image size: Can be typed in directly; however, the more useful
+                way is to resize the white rectangle by dragging. There is detailed 
+                help available. Finally, the image can be centered using buttons 
+                found below the page image and preset image sizes can be called up 
+                by a drop-down menu.
+            Portrait vs. Landscape orientation
+            Ecapsulated PostScript output: for embedding into papers
+            Color output
+            Output filename, path and extension
+            
+         Configuration option sets can be saved and recalled with the 'Config' 
+         button and all the defaults restored with the 'Defaults' button. Select 
+         'Accept' to pass the options to the next plot.
+            
+   "Headers"
+         This displays the FITS header information, and lets you save the header
+         as a text file by choosing the "Save to File" command or "Dismiss"
+         command to close without saving it.
+   
+            Primary     <EXT 0> : FITS file header extension 0
+            Calibration <EXT 1> : FITS file header extension 1
+            Data Table  <EXT 2> : FITS file header extension 2
+            Notes               : Contains the information about the event, 
+                                  detector, or data types, which appears on the 
+                                  left hand side of the Data window.        
+      
+   "Lookup"
+         RMFIT includes several commands which allow you to change the width 
+         and number of the energy and time bins of your data and to change the 
+         background model.  Once you have rebinned your data to your liking 
+         and/or selected a background model, you can save the binning and 
+         background model to a file for recall in a later RMFIT session. 
+         This lookup file can only be used with the current data FITS file, 
+         whose name appears in the main title of the window.  The reason is that 
+         the time binning and selection depends upon the total number of time 
+         bins in the data file, which is not guaranteed to be the same in any 
+         other data file.
+         
+      "Save Lookup"        
+            When you select "Save Lookup", the binning of your data is saved in  
+            the file named by user (*.lu).  This command also saves the range 
+            selection information for the observed spectra, the background 
+            spectra and the selected energies.  Since this is all the 
+            information needed to restore the current RMFIT session, it is 
+            highly recommended that you save the lookups before choosing "Fit 
+            Spectra" commands.  Thus, in case there is any problem during the 
+            display or fitting of your data, all of the work gone into selection 
+            of the data is not lost.
+            
+      "Read Lookup"
+            This command restores a lookup information saved with the "Save 
+            Lookup" command.  The information is restored from the lookup file 
+            selected by user.  After the background spectra selection is read, 
+            RMFIT will calculate the fit coefficients for the selected 
+            background model.  This procedure essentially restores a previous 
+            RMFIT session completely, so that all you need to do is to resume 
+            fitting spectra from a burst by select the "Fit Spectra" command 
+            from the menu.
+            
+      "Erase Current"
+            Erases your current lookup information from the display window.  
+   
+   "Dismiss"
+         This command closes the display window but keeps the file loaded.  To
+         restore the display window, simply select the FITS file listed in the
+         rmfit window and click "Display".

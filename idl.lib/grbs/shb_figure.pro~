@@ -1,0 +1,20 @@
+pro shb_figure
+  
+  csvfile='short_grbs.csv'
+  readcol,!grbs+csvfile,grbname,tid,battime,wt,format='(a,l,d,i)',delim=','
+  ngrbs=n_elements(grbname)
+  
+  cd,!grbs
+  !p.multi=[0,2,5]
+  for i=0,ngrbs-1 do begin
+     dir='GRB'+grbname[i]
+     cd,dir
+     if exist('lc_newout.txt') then $
+        plot_like_qdp,0,0,grbname[i],siglim=2.0,charsize=1.5,title=grbname[i]
+;        replot_xrt_newlc,siglim=1.0,title=grbname[i]
+     cd,'..'
+  endfor 
+  !p.multi=0
+  
+  return
+end 

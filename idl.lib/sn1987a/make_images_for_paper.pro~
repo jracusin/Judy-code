@@ -1,0 +1,60 @@
+pro make_images_for_paper,ps=ps
+  
+  if keyword_set(ps) then begplot,name='sn1987a_images.ps'
+  !p.multi=[0,4,5]
+  !x.margin=[1,1]
+  !y.margin=[1,1]
+  
+  low=0
+  high=0
+  sn1987a_age,age,date=date
+  
+  xoff=10
+  yoff=5
+  for i=0,13 do begin 
+     
+     im=mrdfits('sn1987a'+ntostr(i+1)+'_300-8000_cr.fits',0,hdr,/silent)
+     time=sxpar(hdr,'EXPOSURE')
+;     if i eq 0 then im=im*6.  ;FIDDLED WITH JUST TO GET CONTRAST FOR FIGURE
+;     if i eq 10 then im=im*8.
+     print,time
+     fim=im;*total(im)/time
+;     print,total(im),total(im)/time
+;     lo=min(fim)
+;     low=[low,lo]
+;     hi=max(fim)
+;     high=[high,hi]
+     
+     print,min(fim),max(fim)
+;     low=-3.7990803e-13;-5.41807e-10;-2.5685432e-14
+;     high=1.0830593e-05;0.00940662;2.1443753e-07
+;     low=-2.5685432e-14
+;     high=2.1443753e-07
+     low=-5e-4;-1.53232e-10
+     high=0.00940662*0.3
+     rdis,fim,/silent,xticks=1,yticks=1,xtickname=[' ',' '],ytickname=[' ',' '] ;,high=high,low=low
+;     plot,[0,1],/nodata,xticks=1,yticks=1,xtickname=[' ',' '],ytickname=[' ',' ']
+;     tvscl,fim,i
+     legend,[ntostr(date[0,i])+'-'+ntostr(date[1,i])],position=[-15,190],box=0,charsize=1
+     if i eq 0 then begin 
+        oplot,[175+xoff,175+xoff],[10+yoff,40+yoff]
+        oplot,[170+xoff,175+xoff],[35+yoff,41+yoff]
+        oplot,[175+xoff,180+xoff],[41+yoff,35+yoff]
+        oplot,[145+xoff,175+xoff],[10+yoff,10+yoff]
+        oplot,[144+xoff,150+xoff],[9+yoff,15+yoff]
+        oplot,[144+xoff,150+xoff],[9+yoff,5+yoff]
+        xyouts,170+xoff,45+yoff,'N',charsize=0.7
+        xyouts,127+xoff,5+yoff,'E',charsize=0.7
+        oplot,[72,138],[45,45]
+        xyouts,75,30,'1 arcsec',charsize=0.7
+     endif 
+  endfor
+;  low=min(low[1:*])
+;  high=max(high[1:*])
+;  print,low,high
+  
+  if keyword_set(ps) then endplot
+  !p.multi=0
+stop  
+  return
+end 

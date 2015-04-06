@@ -1,0 +1,20 @@
+function yoni_function,t,p
+  
+  norm1=p[0]
+  t0=p[1]
+  alpha1=p[2]
+  alpha2=p[3]
+  s1=p[4]
+  
+  norm2=p[5]
+  t1=p[6]
+  alpha3=p[7]
+  alpha4=p[8]
+  s2=p[9]
+  
+  f1=norm1/2.*((t/t0)^(s1*alpha1)+(t/t0)^(s1*alpha2))^(-1./s1)
+  f2=norm2/2.*((t/t1)^(s2*alpha3)+(t/t1)^(s2*alpha4))^(-1./s2)
+  
+  yfit=f1+f2
+  return,yfit
+end 

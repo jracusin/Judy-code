@@ -1,0 +1,826 @@
+function pow,t,p,f1,f2
+  norm=p[0]
+  pow1=p[1]
+  if n_elements(p) gt 2 then normt=p[2] else normt=1.
+  yfit=norm*(t/normt)^(-pow1)
+  f1=yfit
+  return,yfit
+end 
+
+function bknpow,t,p,seg=seg,perror=perror,yerror=yerror
+  norm=p[0]
+  pow1=p[1]
+  break1=p[2]
+  pow2=p[3]
+  if n_elements(p) gt 4 then normt=p[4] else normt=1.
+  w1=where(t lt break1,nw1)
+  w2=where(t ge break1,nw2)
+  seg=dblarr(n_elements(t))
+  if nw1 gt 0 then seg[w1]=1
+  if nw2 gt 0 then seg[w2]=2
+  yfit=dblarr(n_elements(t))
+  
+  if normt gt break1 then $ 
+     nnorm=(break1)^(pow2-pow1)*(normt)^(-pow2) else nnorm=norm*(normt)^(-pow1)
+  
+  if nw1 gt 0 then $
+     yfit[w1]=(t[w1])^(-pow1)
+  if nw2 gt 0 then $
+     yfit[w2]=(break1)^(pow2-pow1)*(t[w2])^(-pow2)
+  yfit=yfit/nnorm
+
+  return,yfit
+end 
+
+function bkn2pow,t,p,seg=seg,perror=perror,yerror=yerror
+  norm=p[0]
+  pow1=p[1]
+  break1=p[2]
+  pow2=p[3]
+  break2=p[4]
+  pow3=p[5]
+  if n_elements(p) gt 6 then normt=p[6] else normt=1.
+  w1=where(t lt break1,nw1)
+  w2=where(t ge break1 and t lt break2,nw2)
+  w3=where(t ge break2,nw3)
+  seg=dblarr(n_elements(t))
+  if nw1 gt 0 then seg[w1]=1
+  if nw2 gt 0 then seg[w2]=2
+  if nw3 gt 0 then seg[w3]=3
+  yfit=dblarr(n_elements(t))
+  
+  if normt le break1 then nnorm=(normt)^(-pow1)
+  if normt gt break1 and normt le break2 then $
+     nnorm=(break1)^(pow2-pow1)*(normt)^(-pow2) 
+  if normt gt break2 then $
+     nnorm=(break1)^(pow2-pow1)*(break2)^(pow3-pow2)*(normt)^(-pow3)
+  
+  if nw1 gt 0 then $
+     yfit[w1]=norm*(t[w1])^(-pow1)
+  if nw2 gt 0 then $
+     yfit[w2]=norm*(break1)^(pow2-pow1)*(t[w2])^(-pow2)
+  if nw3 gt 0 then $
+     yfit[w3]=norm*(break1)^(pow2-pow1)*(break2)^(pow3-pow2)*(t[w3])^(-pow3)
+  
+  yfit=yfit/nnorm
+  
+  return,yfit
+end 
+
+function bkn2pow_bkn2pow,t,p,f1,f2
+  
+  if n_elements(p) eq 12 then begin 
+     p1=p[0:5]
+     p2=p[6:11]
+  endif else begin
+     p1=p[0:6]
+     p2=p[7:*]
+  endelse 
+  f1=bkn2pow(t,p1)
+  f2=bkn2pow(t,p2)
+  
+  yfit=f1+f2
+  return,yfit
+end 
+
+function bkn2pow_bkn2pow_bkn2pow,t,p,f1,f2,f3
+  
+  if n_elements(p) eq 18 then begin 
+     p1=p[0:5]
+     p2=p[6:11]
+     p3=p[12:17]
+  endif else begin
+     p1=p[0:6]
+     p2=p[7:13]
+     p3=p[14:*]
+  endelse 
+  f1=bkn2pow(t,p1)
+  f2=bkn2pow(t,p2)
+  f3=bkn2pow(t,p3)
+  
+  yfit=f1+f2+f3
+  return,yfit
+end 
+
+pro model_seds,justplot=justplot,outplot=outplot,ps=ps,geterr=geterr
+  
+  ;;;read in unfolded SEDs
+;  cd,'~/Desktop/GRB080319B/SEDs/ebv0.05nh9/'
+  cd,'~/Desktop/GRB080319B/SEDs/ebv0.05/'
+;  cd,'~/Desktop/GRB080319B/SEDs/ebv0.02nh9/'
+  
+  files=['sed150.txt','sed250.txt','sed350.txt','sed720.txt','sed1500.txt','sed5856.txt','sed1e4.txt','sed3e4.txt','sed6e4.txt','sed2e5.txt','sed5e5.txt']
+  n=n_elements(files)
+  
+;  plot,[1d13,1d21],[1d-9,10],/nodata,/xlog,/ylog,xtitle='Frequency (Hz)',ytitle='Flux (Jy)',/ysty,/xsty,xminor=9,yminor=9,yticks=10,xticks=8,ytickf='loglabels'
+  
+  add=''
+  if keyword_set(justplot) then begin
+     land=1
+     add='_jp'
+  endif else land=0
+  if keyword_set(ps) then begplot,name='seds_2compjet'+add+'.eps',/color,font='helvetica',land=land,/encaps,/cmyk
+  
+;  z1=1.+0.937
+  z1=1.
+  time=[150,250,350,720,1500,5856,1e4,3d4,6.3d4,2d5,5d5]/z1
+  times=['150','250','350','720','1500','5900','10!U4!N','3'+!tsym.times+'10!U4!N','6'+!tsym.times+'10!U4!N','2'+!tsym.times+'10!U5!N','5'+!tsym.times+'10!U5!N']
+  h=4.1356692d-18
+  vband=5.55e14
+  xband=2./h
+  x=10^(findgen(100)/8)*1d9
+  
+  ;;LC dependent
+  aopt1=2.49
+  tau=1000d
+  aopt2=1.25
+  ax1=1.45
+  xbreak1=2809/z1
+  ax2=2.05
+  ax3=0.946
+  xbreak2=953529d/z1
+  ax4=2.70
+  
+  ;;;SED dependent
+;  pwjfs=2.46  ;;from sed5e5
+;  norm10=2.3819337e-06 ;;from sed5e5
+;  numwjfs=4.62e13  ;;from sed2e5
+  pwjfs=1.963       ;;from sed5e5
+  norm10=1.7052e-8  ;;from sed5e5
+  numwjfs=2e14      ;;from sed350
+  nucwjfs=1.36245d16            ;1.2926688e15 ;;from sed5e5
+  pwjrs=3.0
+  norm1b=0.0017506383
+  s32=1.0                      ;3./2.
+  
+  colors=[!red,!green,!blue,!cyan,!magenta,!salmon,!orange,!lightgreen,!turquoise,!royalblue,!purple]
+  if keyword_set(outplot) then begin
+     multiplot2,[2,3],/init
+     b=2
+     erase
+  endif else b=1
+  
+  for i=0,n-1 do begin
+     if not keyword_set(justplot) then begin
+        title=times[i]+' s'
+        if i lt n-1 then begin 
+           title1=times[i]+' s' 
+           colors1=colors[i+1]
+        endif else begin
+           title1=''
+           colors1=0
+        endelse 
+     endif 
+     if keyword_set(outplot) and i mod 2 eq 0 then multiplot2
+     if not keyword_set(justplot) or (keyword_set(justplot) and i eq 0) and not keyword_set(outplot) then $
+        plot,[1d9,1d21],[1d-9,10],/nodata,/xlog,/ylog,xtitle='Frequency (Hz)',ytitle='Flux Density (Jy)',/ysty,/xsty,xminor=9,yminor=9,yticks=10,xticks=12,ytickf='loglabels',title=title,xmargin=[15,0]
+     
+     if keyword_set(outplot) and i mod 2 eq 0 then begin
+        xtitle=''
+        xtickf=''
+        ytitle=''
+        ytickf=''
+        if i eq 8 or i eq 10 then begin
+           xtitle='Frequency (Hz)' 
+           xtickf='loglabels2'
+        endif
+        if i eq 0 or i eq 4 or i eq 8 then begin 
+           ytitle='Flux Density (Jy)' 
+           ytickf='loglabels'
+        endif
+        plot,[1d9,1d21],[1d-9,10],/nodata,/xlog,/ylog,xtitle=xtitle,ytitle=ytitle,/ysty,/xsty,xminor=9,yminor=9,yticks=10,xticks=12,ytickf=ytickf,charsize=1.,xtickf=xtickf
+;        legend,[title,title1],box=0,/top,/right,textcolor=[colors[i],colors1]
+        legend,title,box=0,/top,/right,textcolor=colors[i]
+        if i eq 0 then legend,['Wide RS','Narrow FS','Wide FS'],line=[1,2,3],box=0,/bottom,/left,charsize=1
+     endif 
+     if keyword_set(justplot) then legend,[times+' s'],/top,/right,textcolor=colors,box=0
+     
+     readcol,files[i],nu,flux,fluxerr,format='(d,d,d)'
+     if not keyword_set(justplot) then begin 
+        if not keyword_set(outplot) then $
+           legend,['Wide RS','Narrow FS','Wide FS'],line=[1,2,3],box=0,/top,/right
+        tt=time[i]/time[0]
+        tt9=time[i]/time[9]
+        tt10=time[i]/time[10]
+        tt2=time[i]/time[2]
+        tt1=time[i]/time[1]
+        case i of
+           0: begin
+           ;;;SED T+150           
+              parname=['norm1','nu1/3','nu_c_wjrs','nu1/2','nu_m_wjrs','pwjrs/2','vband',$
+                       'norm2','nu1/3','nu_m_njfs','(p-1)/2','nu_c_njfs','pnj/2','xband',$
+                       'norm3','nu1/3','nu_m_wjfs','(p-1)/2','nu_c_wjfs','pwjfs/2','xband']
+;              par=[1.,-1./3.,1e14,0.5,1d16,pwjrs/2.,vband,$
+;                   1.e-2,-1./3.,8d16,0.8,2d18,1.2,xband,$
+;                   norm10*tt10^(-ax3),-1./3.,numwjfs*tt^(-s32),(pwjfs-1.)/2.,nucwjfs*tt10^(1./2),pwjfs/2.,xband]                   
+              par=[1.,-1./3.,1e14,0.5,6d15,pwjrs/2.,vband,$
+                   norm1b*tt1^(-ax1),-1./3.,1d17,0.8,2d18,1.1,xband,$
+                   norm10*tt10^(-ax3),-1./3.,numwjfs*tt^(-s32),(pwjfs-1.)/2.,nucwjfs*tt10^(1./2),pwjfs/2.,xband]                   
+              
+              model='bkn2pow_bkn2pow_bkn2pow'
+              parinfo=parinfo_struct(n_elements(par))
+              parinfo.value=par
+              parinfo.parname=parname
+           ;;;WJ RS
+              parinfo[0].limits=[0,0]
+              parinfo[0].limited=[1,0]
+              parinfo[[1,3]].fixed=1
+              parinfo[2].fixed=1
+              parinfo[4].fixed=1
+;              parinfo[5].fixed=1
+;           parinfo[4].limits=[1d15,1d17]
+;           parinfo[4].limited=[1,1]
+              parinfo[2].fixed=1
+              parinfo[6].fixed=1
+           ;;;NJ FS
+;              parinfo[7].limits=[0,0]
+;              parinfo[7].limited=[1,0]
+              parinfo[7].fixed=1
+              parinfo[8].fixed=1
+              parinfo[9].fixed=1
+;              parinfo[9].limits=[1e14,1e18]
+;              parinfo[9].limited=[1,1]
+              parinfo[10].tied='p[12]-0.5'
+              parinfo[11].limits=[par[9],0]
+              parinfo[11].limited=[1,0]
+;              parinfo[12].fixed=1
+              parinfo[13].fixed=1
+           ;;;WJ FS
+              parinfo[14].fixed=1
+              parinfo[15].fixed=1
+              parinfo[16].fixed=1
+              parinfo[[17,19]].fixed=1
+              parinfo[18].fixed=1
+              parinfo[20].fixed=1
+           end 
+           1: begin
+           ;;;SED T+250           
+              parname=['norm1','nu1/3','nu_c_wjrs','nu1/2','nu_m_wjrs','pwj/2','vband',$
+                       'norm2','nu1/3','nu_m_njfs','(p-1)/2','nu_c_njfs','pnj/2','xband',$
+                       'norm3','nu1/3','nu_m_wjfs','(p-1)/2','nu_c_wjfs','pwjfs/2','xband']
+              par=[norm0a*tt^(-aopt1),-1./3.,nucrs*tt^(-1),0.5,numrs*tt^(-1),pwjrs/2.,vband,$
+                   norm1b*tt1^(-ax1),-1./3.,numnjfs*tt^(-s32),(pnj-1.)/2.,nucnjfs*tt^0.5,pnj/2.,xband,$
+                   norm10*tt10^(-ax3),-1./3.,numwjfs*tt^(-s32),(pwjfs-1.)/2.,nucwjfs*tt10^(1./2),pwjfs/2.,xband]                   
+              model='bkn2pow_bkn2pow_bkn2pow'
+              parinfo=parinfo_struct(n_elements(par))
+              parinfo.value=par
+              parinfo.parname=parname
+           ;;;WJ RS
+              parinfo[0].fixed=1
+              parinfo[[1,3,5]].fixed=1
+              parinfo[2].fixed=1
+              parinfo[4].fixed=1
+;           parinfo[4].limits=[1d15,1d17]
+;           parinfo[4].limited=[1,1]
+              parinfo[6].fixed=1
+           ;;;NJ FS
+;              parinfo[7].fixed=1
+              parinfo[9].fixed=1
+;              parinfo[9].limits=[1e14,1e18]
+;              parinfo[9].limited=[1,1]
+              parinfo[11].fixed=1
+              parinfo[[8,10,12]].fixed=1
+              parinfo[13].fixed=1
+           ;;;WJ FS
+              parinfo[14].fixed=1
+              parinfo[[15,17,19]].fixed=1
+;              parinfo[16].limits=[1e8,newp[16]]
+;              parinfo[16].limited=[1,1]
+              parinfo[16].fixed=1
+              parinfo[18].fixed=1
+;           parinfo[16].limits=[1e12,1e15]
+;           parinfo[16].limited=[1,1]
+;           parinfo[18].limits=[1e16,1e20]
+;           parinfo[18].limited=[1,1]
+;           parinfo[14].tied='p[0]*1.01'
+              parinfo[20].fixed=1              
+           end 
+           2: begin
+           ;;;SED T+350
+              parname=['norm1','nu1/3','nu_c_wjrs','nu1/2','nu_m_wjrs','pwj/2','vband',$
+                       'norm2','nu1/3','nu_m_njfs','(p-1)/2','nu_c_njfs','pnj/2','xband',$
+                       'norm3','nu1/3','nu_m_wjfs','(p-1)/2','nu_c_wjfs','pwjfs/2','xband']
+              par=[norm0a*tt^(-aopt1),-1./3.,nucrs*tt^(-1),0.5,numrs*tt^(-1),pwjrs/2.,vband,$
+                   norm1b*tt1^(-ax1),-1./3.,numnjfs*tt^(-s32),(pnj-1.)/2.,nucnjfs*tt^0.5,pnj/2.,xband,$
+                   norm10*tt10^(-ax3),-1./3.,numwjfs*tt^(-s32),(pwjfs-1.)/2.,nucwjfs*tt10^(1./2),pwjfs/2.,xband]                   
+              model='bkn2pow_bkn2pow_bkn2pow'
+              parinfo=parinfo_struct(n_elements(par))
+              parinfo.value=par
+              parinfo.parname=parname
+           ;;;WJ RS
+              parinfo[0].fixed=1
+              parinfo[[1,3,5]].fixed=1
+              parinfo[2].fixed=1
+              parinfo[4].fixed=1
+;           parinfo[4].limits=[1d15,1d17]
+;           parinfo[4].limited=[1,1]
+              parinfo[6].fixed=1
+           ;;;NJ FS
+              parinfo[7].fixed=1
+              parinfo[9].fixed=1
+;              parinfo[9].limits=[1e14,1e18]
+;              parinfo[9].limited=[1,1]
+              parinfo[11].fixed=1
+              parinfo[[8,10,12]].fixed=1
+              parinfo[13].fixed=1
+           ;;;WJ FS
+              parinfo[14].fixed=1
+              parinfo[[15,17,19]].fixed=1
+;              parinfo[16].limits=[1e8,newp[16]]
+;              parinfo[16].limited=[1,1]
+              parinfo[16].fixed=1
+              parinfo[18].fixed=1
+;           parinfo[16].limits=[1e12,1e15]
+;           parinfo[16].limited=[1,1]
+;           parinfo[18].limits=[1e16,1e20]
+;           parinfo[18].limited=[1,1]
+;           parinfo[14].tied='p[0]*1.01'
+              parinfo[20].fixed=1
+           end 
+           3: begin
+           ;;;SED T+720
+              parname=['norm1','nu1/3','nu_c_wjrs','nu1/2','nu_m_wjrs','pwjrs/2','vband',$
+                       'norm2','nu1/3','nu_m_njfs','(p-1)/2','nu_c_njfs','pnj/2','xband',$
+                       'norm3','nu1/3','nu_m_wjfs','(p-1)/2','nu_c_wjfs','pwjfs/2','xband']
+              par=[$;norm0a*exp(-time[i]/tau)/exp(-time[3]/tau),$
+                  norm0a*tt^(-aopt1),-1./3.,nucrs*tt^(-1),0.5,numrs*tt^(-1),pwjrs/2.,vband,$
+                   norm1b*tt1^(-ax1),-1./3.,numnjfs*tt^(-s32),(pnj-1.)/2.,nucnjfs*tt^0.5,pnj/2.,xband,$
+                   norm10*tt10^(-ax3),-1./3.,numwjfs*tt^(-s32),(pwjfs-1.)/2.,nucwjfs*tt10^(1./2),pwjfs/2.,xband]                   
+;                   norm10*tt10^(-ax3),-1./3.,1d14,(pwjfs-1.)/2.,1d16,pwjfs/2.,xband]
+              model='bkn2pow_bkn2pow_bkn2pow'
+              parinfo=parinfo_struct(n_elements(par))
+              parinfo.value=par
+              parinfo.parname=parname
+           ;;;WJ RS
+              parinfo[0].fixed=1
+              parinfo[[1,3,5]].fixed=1
+              parinfo[2].fixed=1
+              parinfo[4].fixed=1
+;           parinfo[4].limits=[1d14,1d17]
+;           parinfo[4].limited=[1,1]
+              parinfo[6].fixed=1
+           ;;;NJ FS
+              parinfo[7].fixed=1
+              parinfo[9].fixed=1
+;              parinfo[9].limits=[1e14,1e18]
+;              parinfo[9].limited=[1,1]
+              parinfo[[8,10,12]].fixed=1
+              parinfo[11].fixed=1
+              parinfo[13].fixed=1
+           ;;;WJ FS
+              parinfo[14].fixed=1
+              parinfo[[15,17,19]].fixed=1
+;              parinfo[16].limits=[1e8,newp[16]]
+;              parinfo[16].limited=[1,1]
+              parinfo[16].fixed=1
+              parinfo[18].fixed=1
+;           parinfo[16].limits=[1e12,1e15]
+;           parinfo[16].limited=[1,1]
+;           parinfo[18].limits=[1e16,1e20]
+;           parinfo[18].limited=[1,1]
+;           parinfo[14].tied='p[0]*1.01'
+              parinfo[20].fixed=1
+           end 
+           4: begin
+           ;;;SED T+1500
+              parname=['norm1','nu1/3','nu_c_wjrs','nu1/2','nu_m_wjrs','pwjrs/2','vband',$
+                       'norm2','nu1/3','nu_m_njfs','(p-1)/2','nu_c_njfs','pnj/2','xband',$
+                       'norm3','nu1/3','nu_m_wjfs','(p-1)/2','nu_c_wjfs','pwjfs/2','xband']
+              par=[norm0a*exp(-time[i]/tau)/exp(-time[3]/tau),$
+;norm0a*tt^(-aopt1),
+                   -1./3.,nucrs*tt^(-1),0.5,numrs*tt^(-1),pwjrs/2.,vband,$
+                   norm1b*tt1^(-ax1),-1./3.,numnjfs*tt^(-s32),(pnj-1.)/2.,nucnjfs*tt^0.5,pnj/2.,xband,$
+                   norm10*tt10^(-ax3),-1./3.,numwjfs*tt^(-s32),(pwjfs-1.)/2.,nucwjfs*tt10^(1./2),pwjfs/2.,xband]
+;                   norm10*tt10^(-ax3),-1./3.,1d14,(pwjfs-1.)/2.,1d16,pwjfs/2.,xband]
+              model='bkn2pow_bkn2pow_bkn2pow'
+              parinfo=parinfo_struct(n_elements(par))
+              parinfo.value=par
+              parinfo.parname=parname
+           ;;;WJ RS
+;              parinfo[0].fixed=1
+              parinfo[[1,3,5]].fixed=1
+              parinfo[2].fixed=1
+              parinfo[4].fixed=1
+;           parinfo[4].limits=[1d14,1d17]
+;           parinfo[4].limited=[1,1]
+              parinfo[6].fixed=1
+           ;;;NJ FS
+              parinfo[7].fixed=1
+              parinfo[9].fixed=1
+;              parinfo[9].limits=[1e14,1e18]
+;              parinfo[9].limited=[1,1]              
+              parinfo[[8,10,12]].fixed=1
+              parinfo[11].fixed=1
+              parinfo[13].fixed=1
+           ;;;WJ FS
+              parinfo[14].fixed=1
+              parinfo[[15,17,19]].fixed=1
+              parinfo[18].fixed=1
+;              parinfo[16].limits=[1e8,newp[16]]
+;              parinfo[16].limited=[1,1]
+              parinfo[16].fixed=1
+;           parinfo[14].tied='p[0]*2.52'
+              parinfo[20].fixed=1
+           end 
+           5: begin
+           ;;;SED T+5856
+              parname=['norm1','nu1/3','nu_c_wjrs','nu1/2','nu_m_wjrs','pwjrs/2','vband',$
+                       'norm2','nu1/3','nu_m_njfs','(p-1)/2','nu_c_njfs','pnj/2','xband',$
+                       'norm3','nu1/3','nu_m_wjfs','(p-1)/2','nu_c_wjfs','pwjfs/2','xband']
+              par=[norm4a*exp(-time[i]/tau)/exp(-time[3]/tau),$
+                                ;norm0a*tt^(-aopt1),
+                   -1./3.,nucrs*tt^(-1),0.5,numrs*tt^(-1),pwjrs/2.,vband,$
+                   norm1b*xbreak1^(ax2-ax1)*time[i]^(-ax2)/time[1]^(-ax1),-1./3.,numnjfs*tt^(-s32),(pnj-1.)/2.,nucnjfs*tt^0.5,pnj/2.,xband,$
+                   norm10*tt10^(-ax3),-1./3.,numwjfs*tt^(-s32),(pwjfs-1.)/2.,nucwjfs*tt10^(1./2),pwjfs/2.,xband]
+              model='bkn2pow_bkn2pow_bkn2pow'
+              parinfo=parinfo_struct(n_elements(par))
+              parinfo.value=par
+              parinfo.parname=parname
+           ;;;WJ RS
+              parinfo[0].fixed=1
+              parinfo[[1,3,5]].fixed=1
+              parinfo[2].fixed=1
+              parinfo[4].fixed=1
+;           parinfo[4].limits=[1d14,1d17]
+;           parinfo[4].limited=[1,1]
+              parinfo[6].fixed=1
+           ;;;NJ FS
+              parinfo[7].fixed=1
+              parinfo[9].fixed=1
+;              parinfo[9].limits=[1e14,1e18]
+;              parinfo[9].limited=[1,1]              
+              parinfo[[8,10,12]].fixed=1
+              parinfo[11].fixed=1
+              parinfo[13].fixed=1
+           ;;;WJ FS
+              parinfo[14].fixed=1
+              parinfo[[15,17,19]].fixed=1
+;              parinfo[16].limits=[1e8,newp[16]]
+;              parinfo[16].limited=[1,1]
+              parinfo[16].fixed=1
+              parinfo[18].fixed=1
+;           parinfo[14].tied='p[0]*13.7'
+              parinfo[20].fixed=1
+           end 
+           6: begin
+           ;;;SED T+1e4
+              parname=['norm1','nu1/3','nu_c_wjrs','nu1/2','nu_m_wjrs','pwjrs/2','vband',$
+                       'norm2','nu1/3','nu_m_njfs','(p-1)/2','nu_c_njfs','pnj/2','xband',$
+                       'norm3','nu1/3','nu_m_wjfs','(p-1)/2','nu_c_wjfs','pwjfs/2','xband']
+              par=[norm4a*exp(-time[i]/tau)/exp(-time[3]/tau),$
+                                ;norm0a*tt^(-aopt1),
+                   -1./3.,nucrs*tt^(-1),0.5,numrs*tt^(-1),pwjrs/2.,vband,$
+                   norm1b*xbreak1^(ax2-ax1)*time[i]^(-ax2)/time[1]^(-ax1),-1./3.,$
+                   numnjfs*tt^(-s32),(pnj-1.)/2.,nucnjfs*tt^0.5,pnj/2.,xband,$
+                   norm10*tt10^(-ax3),-1./3.,numwjfs*tt^(-s32),(pwjfs-1.)/2.,nucwjfs*tt10^(1./2),pwjfs/2.,xband]
+              model='bkn2pow_bkn2pow_bkn2pow'
+              parinfo=parinfo_struct(n_elements(par))
+              parinfo.value=par
+              parinfo.parname=parname
+           ;;;WJ RS
+              parinfo[0].fixed=1
+              parinfo[[1,3,5]].fixed=1
+              parinfo[2].fixed=1
+              parinfo[4].fixed=1
+;           parinfo[4].limits=[1d14,1d17]
+;           parinfo[4].limited=[1,1]
+              parinfo[6].fixed=1
+           ;;;NJ FS
+              parinfo[7].fixed=1
+              parinfo[[8,10,12]].fixed=1
+;           parinfo[9].limits=[1e15,1e17]
+;           parinfo[9].limited=[1,1]
+              parinfo[9].fixed=1
+;              parinfo[9].limits=[1e15,1e18]
+;              parinfo[9].limited=[1,1]              
+              parinfo[11].fixed=1
+              parinfo[13].fixed=1
+           ;;;WJ FS
+              parinfo[14].fixed=1
+              parinfo[[15,17,19]].fixed=1
+;              parinfo[16].limits=[1e8,newp[16]]
+;              parinfo[16].limited=[1,1]
+              parinfo[16].fixed=1
+              parinfo[18].fixed=1
+;           parinfo[14].tied='p[0]*33.4'
+              parinfo[20].fixed=1
+           end 
+           7: begin
+           ;;;SED T+3e4
+              parname=['norm1','nu1/3','nu_c_wjrs','nu1/2','nu_m_wjrs','pwjrs/2','vband',$
+                       'norm2','nu1/3','nu_m_njfs','(p-1)/2','nu_c_njfs','pnj/2','xband',$
+                       'norm3','nu1/3','nu_m_wjfs','(p-1)/2','nu_c_wjfs','pwjfs/2','xband']
+              par=[norm4a*exp(-time[i]/tau)/exp(-time[3]/tau),$
+                                ;norm0a*tt^(-aopt1),
+                   -1./3.,nucrs*tt^(-1),0.5,numrs*tt^(-1),pwjrs/2.,vband,$
+                   norm1b*xbreak1^(ax2-ax1)*time[i]^(-ax2)/time[1]^(-ax1),-1./3.,$
+                   numnjfs*tt^(-s32),(pnj-1.)/2.,nucnjfs*tt^0.5,pnj/2.,xband,$
+                   norm10*tt10^(-ax3),-1./3.,numwjfs*tt^(-s32),(pwjfs-1.)/2.,nucwjfs*tt10^(1./2),pwjfs/2.,xband]
+              model='bkn2pow_bkn2pow_bkn2pow'
+              parinfo=parinfo_struct(n_elements(par))
+              parinfo.value=par
+              parinfo.parname=parname
+           ;;;WJ RS
+              parinfo[0].fixed=1
+              parinfo[[1,3,5]].fixed=1
+              parinfo[2].fixed=1
+              parinfo[4].fixed=1
+;           parinfo[4].limits=[1d14,1d17]
+;           parinfo[4].limited=[1,1]
+              parinfo[6].fixed=1
+           ;;;NJ FS
+              parinfo[7].fixed=1
+              parinfo[[8,10,12]].fixed=1
+              parinfo[9].fixed=1
+;              parinfo[9].limits=[1e11,1e18]
+;              parinfo[9].limited=[1,1]              
+;           parinfo[9].limits=[1e14,1e17]
+;           parinfo[9].limited=[1,1]
+              parinfo[11].fixed=1
+              parinfo[13].fixed=1
+           ;;;WJ FS
+              parinfo[14].fixed=1
+              parinfo[[15,17,19]].fixed=1
+;              parinfo[16].limits=[1e8,newp[16]]
+;              parinfo[16].limited=[1,1]              
+              parinfo[16].fixed=1
+              parinfo[18].fixed=1
+;           parinfo[14].tied='p[0]*33.4'
+              parinfo[20].fixed=1
+           end 
+           8: begin
+           ;;;SED T+6.3e4
+              parname=['norm1','nu1/3','nu_c_wjrs','nu1/2','nu_m_wjrs','pwjrs/2','vband',$
+                       'norm2','nu1/3','nu_m_njfs','(p-1)/2','nu_c_njfs','pnj/2','xband',$
+                       'norm3','nu1/3','nu_m_wjfs','(p-1)/2','nu_c_wjfs','pwjfs/2','xband']
+              par=[norm4a*exp(-time[i]/tau)/exp(-time[3]/tau),$
+                                ;norm0a*tt^(-aopt1),
+                   -1./3.,nucrs*tt^(-1),0.5,numrs*tt^(-1),pwjrs/2.,vband,$
+                   norm1b*xbreak1^(ax2-ax1)*time[i]^(-ax2)/time[1]^(-ax1),-1./3.,numnjfs*tt^(-s32),(pnj-1.)/2.,nucnjfs*tt^0.5,pnj/2.,xband,$
+                   norm10*tt10^(-ax3),-1./3.,numwjfs*tt^(-s32),(pwjfs-1.)/2.,nucwjfs*tt10^(1./2),pwjfs/2.,xband]
+              model='bkn2pow_bkn2pow_bkn2pow'
+              parinfo=parinfo_struct(n_elements(par))
+              parinfo.value=par
+              parinfo.parname=parname
+           ;;;WJ RS
+              parinfo[0].fixed=1
+              parinfo[[1,3,5]].fixed=1
+              parinfo[2].fixed=1
+              parinfo[4].fixed=1
+;           parinfo[4].limits=[1d14,1d17]
+;           parinfo[4].limited=[1,1]
+              parinfo[6].fixed=1
+           ;;;NJ FS
+              parinfo[7].fixed=1
+              parinfo[[8,10,12]].fixed=1
+              parinfo[9].fixed=1
+;              parinfo[9].limits=[1e10,1e18]
+;              parinfo[9].limited=[1,1]              
+;           parinfo[9].limits=[1e14,1e17]
+;           parinfo[9].limited=[1,1]
+              parinfo[11].fixed=1
+              parinfo[13].fixed=1
+           ;;;WJ FS
+              parinfo[14].fixed=1
+              parinfo[[15,17,19]].fixed=1
+;              parinfo[16].limits=[1e8,newp[16]]
+;              parinfo[16].limited=[1,1]              
+              parinfo[16].fixed=1
+              parinfo[18].fixed=1
+;           parinfo[14].tied='p[0]*33.4'
+              parinfo[20].fixed=1
+           ;;;mm
+           nu=[97.98e9,nu]
+           flux=[0.41e-3,flux]
+           fluxerr=[0.12e-3,fluxerr]
+           end 
+           9: begin
+           ;;;SED T+2e5
+              parname=['norm1','nu1/3','nu_c_wjrs','nu1/2','nu_m_wjrs','pwjrs/2','vband',$
+                       'norm2','nu1/3','nu_m_njfs','(p-1)/2','nu_c_njfs','pnj/2','xband',$
+                       'norm3','nu1/3','nu_m_wjfs','(p-1)/2','nu_c_wjfs','pwjfs/2','xband']
+              par=[norm4a*exp(-time[i]/tau)/exp(-time[3]/tau),$
+                                ;norm0a*tt^(-aopt1),
+                   -1./3.,nucrs*tt^(-1),0.5,numrs*tt^(-1),pwjrs/2.,vband,$
+                   norm1b*xbreak1^(ax2-ax1)*time[i]^(-ax2)/time[1]^(-ax1),-1./3.,numnjfs*tt^(-s32),(pnj-1.)/2.,nucnjfs*tt^0.5,pnj/2.,xband,$
+                   norm10*tt10^(-ax3),-1./3.,numwjfs*tt^(-s32),(pwjfs-1.)/2.,nucwjfs*tt10^(1./2),pwjfs/2.,xband]
+              model='bkn2pow_bkn2pow_bkn2pow'
+              parinfo=parinfo_struct(n_elements(par))
+              parinfo.value=par
+              parinfo.parname=parname
+           ;;;WJ RS
+              parinfo[0].fixed=1
+              parinfo[[1,3,5]].fixed=1
+              parinfo[2].fixed=1
+              parinfo[4].fixed=1
+;           parinfo[4].limits=[1d14,1d17]
+;           parinfo[4].limited=[1,1]
+              parinfo[6].fixed=1
+           ;;;NJ FS
+              parinfo[7].fixed=1
+              parinfo[[8,10,12]].fixed=1
+              parinfo[9].fixed=1
+;              parinfo[9].limits=[1e10,1e18]
+;              parinfo[9].limited=[1,1]              
+;           parinfo[9].limits=[1e14,1e17]
+;           parinfo[9].limited=[1,1]
+              parinfo[11].fixed=1
+              parinfo[13].fixed=1
+           ;;;WJ FS
+              parinfo[14].fixed=1
+;           parinfo[16].limits=[1e8,newp[16]]
+;           parinfo[16].limited=[1,1]
+              parinfo[16].fixed=1
+;              parinfo[15].fixed=1
+              parinfo[[15,17,19]].fixed=1
+              parinfo[18].fixed=1
+;           parinfo[14].tied='p[0]*33.4'
+;              parinfo[17].tied='p[19]-0.5'
+;           parinfo[18].limits=[1e16,1e17]
+;           parinfo[18].limited=[1,1]
+              parinfo[20].fixed=1
+           ;;;radio
+           nu=[4.86e9,nu]
+           flux=[189e-6,flux]
+           fluxerr=[39e-6,fluxerr]
+           end 
+           10: begin
+              parname=['norm1','nu1/3','nu_c_wjrs','nu1/2','nu_m_wjrs','pwjrs/2','vband',$
+                       'norm2','nu1/3','nu_m_njfs','(p-1)/2','nu_c_njfs','pnj/2','xband',$
+                       'norm3','nu1/3','nu_m_wjfs','(p-1)/2','nu_c_wjfs','pwjfs/2','xband']
+              par=[norm4a*exp(-time[i]/tau)/exp(-time[3]/tau),$
+                                ;norm0a*tt^(-aopt1),
+                   -1./3.,nucrs*tt^(-1),0.5,numrs*tt^(-1),pwjrs/2.,vband,$
+                   norm1b*xbreak1^(ax2-ax1)*time[i]^(-ax2)/time[1]^(-ax1),-1./3.,numnjfs*tt^(-s32),(pnj-1.)/2.,nucnjfs*tt^0.5,pnj/2.,xband,$
+                   norm10*tt10^(-ax3),-1./3.,numwjfs*tt^(-s32),(pwjfs-1.)/2.,nucwjfs*tt10^(1./2),pwjfs/2.,xband]
+              model='bkn2pow_bkn2pow_bkn2pow'
+              parinfo=parinfo_struct(n_elements(par))
+              parinfo.value=par
+              parinfo.parname=parname
+           ;;;WJ RS
+              parinfo[0].fixed=1
+              parinfo[[1,3,5]].fixed=1
+              parinfo[2].fixed=1
+              parinfo[4].fixed=1
+;           parinfo[4].limits=[1d14,1d17]
+;           parinfo[4].limited=[1,1]
+              parinfo[6].fixed=1
+           ;;;NJ FS
+              parinfo[7].fixed=1
+              parinfo[[8,10,12]].fixed=1
+              parinfo[9].fixed=1
+;              parinfo[9].limits=[1e10,1e18]
+;              parinfo[9].limited=[1,1]              
+;           parinfo[9].limits=[1e14,1e17]
+;           parinfo[9].limited=[1,1]
+              parinfo[11].fixed=1
+              parinfo[13].fixed=1
+           ;;;WJ FS
+              parinfo[14].fixed=1
+;              parinfo[16].limits=[1e8,newp[16]]
+;              parinfo[16].limited=[1,1]
+              parinfo[16].fixed=1
+              parinfo[15].fixed=1
+              parinfo[[17,19]].fixed=1
+;              parinfo[19].fixed=1
+              parinfo[18].fixed=1
+;              parinfo[17].tied='p[19]-0.5'
+              parinfo[20].fixed=1
+              
+;           parname=['norm1','pow1','vband']
+;           par=[1.,1.,vband]
+;           model='pow'
+;           parinfo=parinfo_struct(n_elements(par))
+;           parinfo.value=par
+;           parinfo.parname=parname
+;           parinfo[2].fixed=1
+           ;;;radio
+           nu=[4.86e9,nu]
+           flux=[111e-6,flux]
+           fluxerr=[28e-6,fluxerr]
+           
+;           p=[1e-8,-1./3.,1e11,0.5,1e16,1.0]
+;              parinfo=parinfo_struct(n_elements(p))
+;              parinfo.value=p
+;              parinfo[1].fixed=1
+;              parinfo[3].tied='p[5]-0.5'
+;              parinfo[4].fixed=1
+;              newp=mpfitfun('bkn2pow',nu,flux,fluxerr,p,parinfo=parinfo,perror=perror)
+;              print,newp
+;              yfit=bkn2pow(x,newp)
+;              oplot,x,yfit
+;              oplot,nu,flux,psym=1
+;              stop
+;              delchi0=chisqr_cvf(0.1,3)
+;              print,delchi0
+;              conf_error,nu,flux,fluxerr,newp,perror,'bkn2pow',perror,par=[2,3,5],fixed=[1,4],delchi0=delchi0
+              
+           end 
+        endcase 
+        
+        if (keyword_set(outplot) and i mod 2 eq 0) or not keyword_set(outplot) then oploterror,nu,flux,fluxerr,errcolor=colors[i],color=colors[i],psym=5,/nohat,symsize=0.7
+     
+;     p=[flux[0]*100,0.8d]
+;     parinfo=parinfo_struct(n_elements(p))
+;     parinfo[0].limits=[0,0]
+;;     parinfo[0].limited=[1,0]
+;     parinfo.value=p
+        
+        wfree=where(parinfo.fixed eq 0,nfree)
+        if nfree gt 0 then begin 
+           newp=mpfitfun(model,nu,flux,fluxerr,par,yfit=yfit,nprint=100,parinfo=parinfo)      
+        endif else newp=par
+        
+        
+        if keyword_set(geterr) then begin 
+           p=newp[7:13]
+           parinfo=parinfo_struct(7)
+           parinfo[[1,2,6]].fixed=1
+           parinfo[3].tied='p[5]-0.5'
+           w=where(nu gt 1d16 and nu lt 1d20)
+           
+           newp2=mpfitfun('bkn2pow',nu[w],flux[w],fluxerr[w],p,yfit=yfit,nprint=100,parinfo=parinfo,perror=perror2)
+           oplot,x,bkn2pow(x,newp2)
+           
+           delchi0=chisqr_cvf(0.1,3)
+           print,delchi0
+           conf_error,nu[w],flux[w],fluxerr[w],newp2,perror2,'bkn2pow',perror,par=[3,4,5],fixed=[1,2,6],delchi0=delchi0;,/doplot
+           colprint,newp2,perror[0,*],perror[1,*]
+           
+           w=where(nu gt 1d16 and nu lt 3e18)
+           p=[1.,0.7,xband]
+           newp3=mpfitfun('pow',nu[w],flux[w],fluxerr[w],p,yfit=yfit,nprint=100,perror=perror3)
+           oplot,x,pow(x,newp3)
+           conf_error,nu[w],flux[w],fluxerr[w],newp3,perror3,'pow',perror,par=1,fixed=2,delchi0=delchi0 ;,/doplot
+           colprint,newp3,perror[0,*],perror[1,*]
+           
+           
+           stop
+        endif 
+        
+        
+        
+;     newp[[2,4,8,10]]=newp[[2,4,8,10]]*vband
+        if i eq 0 then begin
+           pnj=newp[12]*2.
+           pwjrs=newp[5]*2.
+           nucrs=newp[2]
+           numrs=newp[4]
+           norm0a=newp[0]
+           norm0b=newp[7]
+           nucnjfs=newp[11]
+           numnjfs=newp[9]
+        endif 
+        if i eq 4 then norm4a=newp[0]
+;        if i eq 1 then norm1b=newp[7]
+        if (keyword_set(outplot) and i mod 2 eq 0) or not keyword_set(outplot) then begin 
+           tmp=execute('yfit='+model+'(x,newp,f1,f2)')
+           oplot,x,yfit,color=colors[i]
+           oplot,x,f1,line=1,color=colors[i]
+           if i ne 10 then oplot,x,f2,line=2,color=colors[i]
+;     if i ge 3 and i lt 10 then begin
+           if n_elements(newp) gt 14 then begin
+              tmp=execute('yfit='+model+'(x,newp,f1,f2,f3)')
+              oplot,x,f3,line=3,color=colors[i]
+           endif 
+;        oplot,[vband,vband],[1e-9,10],line=1
+;        oplot,[xband,xband],[1e-9,10],line=1
+;        oplot,[1d13,1d21],[newp[0],newp[0]],line=1
+;        oplot,[1d13,1d21],[newp[7],newp[7]],line=1
+        endif 
+        print,time[i]
+        colprint,indgen(n_elements(newp)),parinfo.parname,newp,parinfo.fixed
+        
+        if not keyword_set(outplot) then begin 
+           k=get_kbrd(10)
+           if k eq 's' then stop
+        endif 
+     endif else begin
+        if i eq 8 then begin
+           ;;;mm
+           nu=[97.98e9,nu]
+           flux=[0.41e-3,flux]
+           fluxerr=[0.12e-3,fluxerr]
+        endif 
+        if i eq 9 then begin
+           ;;;radio
+           nu=[4.86e9,nu]
+           flux=[189e-6,flux]
+           fluxerr=[39e-6,fluxerr]
+        endif 
+        if i eq 10 then begin 
+           ;;;radio
+           nu=[4.86e9,nu]
+           flux=[111e-6,flux]
+           fluxerr=[28e-6,fluxerr]
+        endif 
+        oploterror,nu,flux,fluxerr,errcolor=colors[i],color=colors[i],psym=5,/nohat,symsize=0.7 
+     endelse 
+  endfor 
+  
+  multiplot,/reset,/default
+  if keyword_set(ps) then endplot
+  
+  stop
+  return
+end 

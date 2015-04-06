@@ -1,0 +1,215 @@
+                        WMAP IDL Routines               
+                      Version 2 16-August-2006
+
+The high-level WMAP IDL procedures can be divided into four categories:
+
+1. FITS Readers: The following routines will read the the temperature (I) maps,
+                  and time-ordered data, respectively. 
+
+   FITS_READ_MAP - Read a HEALPIX formatted temperature map FITS file
+                   (e.g. wmap_imap_r9_3yr_V1_v2.fits)
+   FITS_READ_COMBINED_MAP - Read a WMAP HEALPIX formatted combined map FITS file
+                   (e.g. wmap_iqumap_r9_3yr_Q1_v2.fits)
+   FITS_READ_TOD - Read a WMAP time-ordered data FITS file into an IDL structure
+                   (e.g. wmap_tod_20030122356_20030132356_calibrated.fits ) 
+
+2. TOD Access: The following  routines can be used to extract specific fields 
+   or manipulate  the time-ordered data 
+
+   Interpolate_Quaternions - Interpolate quaternions extracted from WMAP 
+                   time-ordered data
+   Pckt2Mnemonic() - Returns the physical value associated with a MAP telemetry
+                   mnemonic (including both digital and analog housekeeping
+		   data, as well as science data)
+   Quat_to_sky_coords - Extract a time series of coordinates from an array of 
+                   input quaternions
+   Tod_to_sky_coords - Extract a time series of coordinates from an array of 
+                   time-ordered data records
+
+
+3. Mapping: The following routines will transform a temperature map in HEALPIX
+projection into a flat-map projection and allow the user to draw various
+overlays.
+
+   CIRCOPLOT - Plots a circle of specified radius over an image projection
+   FITS_REPROJ_HEALPIX - Convert a HealPix image to a flatmap projection in a 
+   	           FITS file with World Coordinate System (WCS) information
+   HEALINFO - prints values describing healpix formats of varying resolution
+   HEALPIX_NESTED_VECTORS - Read Cartesian [X,Y,Z] direction vectors for HEALPIX 
+                   pixel scheme
+   GRID_OVERLAY - Plot coordinate grid lines over a projection
+   PLANET_OVERLAY - Mark position of chosen planet on an existing image
+   REPROJ_HEALPIX - Convert a HealPix image to a flatmap projection 
+   SCAN_OVERLAY - Plot the WMAP scan path for a specified time using quaternion 
+   		   data
+
+4 Transformation: The following routines can be used as stand-alone routines to
+convert between different time systems or projections.
+
+ TIMETRANSFORM - Convert between different time formats
+ COORTRANS - Transform between various J2000 coordinate systems
+
+5. WIDGETS 
+
+ MAPVIEW - Interactive widget to display and zoom a Healpix map
+ MAP_DATE - Widget to convert between various MAP dates and times
+
+
+Below are all the available WMAP routines in alphabetical order
+
+AIHK_Arch2Mnemonic() - Returns the physical value associated with an analog
+   instrument housekeeping mnemonic, 
+   extracting the data from an AEU sweep from a time-ordered 
+AIHK_GetMnemonic() -  Returns a physical value associated with a mnemonic, 
+   extracting the data out of a sweep of analog instrument housekeeping telemetry 
+   data.
+AIHK_Pckt2Mnemonic() - Return the physical value associated with an analog
+   instrument housekeeping mnemonic, extracting the data from a DEU telemetry 
+   sweep.
+AIHK_Mnem2Serial - Return the serial number of an analog instrument
+   housekeeping (AIHK) PRT.
+AIHK_Mnem2Serial_List - Returns an array of structures that associates mnemonics
+   with serial numbers for sensor ids.
+AIHK_MnemTime - Returns the time offset into a AIHK packet for the measurement
+   of a given mnemonic.
+AIHK_MnemTimeStamp - Returns an array of time stamps for a given mnemonic in
+   an array of analog instrument housekeeping (AIHK) elements.
+AIHK_Mnem_Coefs -  Returns the conversion coefficients associated with an analog
+   instrument housekeeping  mnemonic. 
+AIHK_Mnemonic - Returns the array index of an analog
+   instrument housekeeping mnemonic.  
+CircOplot - Overplots a circle of requested radius on a Mollweide or
+   Zenithal equal area projection.
+CoorTrans - Transforms input J2000 coordinates into the requested
+   J2000 output coordinate system.
+CW_ImageDraw() - Defines a compound widget containing a scrollable draw widget 
+   to be used to display images.
+CW_ImageFull() - Define a compound widget containing a draw widget to be
+   used to display entire images at reduced resolution.
+CW_ImageBoth() - Define a compound widget to contain both a full resolution 
+   image in a scrollable draw widget and a compressed image
+Date2Jul() - Converts a Gregorian date and time into a reduced Julian date.
+DayOfYear - Determines the day-of-year for a date.
+DefTSRef() - Return the default MAP timestamp reference GMT 
+DIHK_GetMnemonic() - Returns a physical value associated with a mnemonic, 
+   extracting the data out of an array of digital 
+   instrument housekeeping telemetry data.
+DIHK_Pckt2Mnemonic() - Returns the physical value associated with a digital
+   instrument housekeeping mnemonic, 
+   extracting the data from a DEU telemetry packet.
+DIHK_Mnemonic() - Returns the array index of a digital instrument housekeeping 
+    mnemonic.  
+DIHK_Mnem_Coefs -  Returns the conversion coefficients associated with a digital
+   instrument housekeeping (DIHK) mnemonic.  Automatically written.
+DispGMT() - Converts a time formatted as a MAP GMT into a more human-readable form.
+DispTS() - Converts a MAP timestamp into a more human readable format.
+DOY2Date - Converts a year and day-of-year into a five element date vector.
+   This is the reverse of dayofyear.pro
+DOY2Jul - Converts a year and day-of-year into a MAP Reduced Julian day.
+extract_band_index -  Extracts the frequency band and array index value from 
+   an input channel string. Supporting routine for sci_getmnemonic.
+frame_avg() - Computes single or multiple frame averages of science data.
+   Supporting routine for sci_getmnemonic.
+frame_rms() - Computes single or multiple frame rms of science data.
+   Supporting routine for sci_getmnemonic.
+FITS_Read_Combined_Map - Read a WMAP HEALPIX formatted combined map FITS file
+FITS_Read_Map - IDL procedure to read WMAP archive-format temperature sky maps
+FITS_Read_TOD - Read timeordered archive data from a binary FITS table.
+FITS_REPROJ_HEALPIX - Convert a HealPix image to a flatmap projection in a 
+   FITS file with World Coordinate System (WCS) information
+FSC_FileSelect() - Widget to select a file name (from David Fanning's Library)
+Get_DEU_Int_Temp - Converts DEU internal temperature from counts to degrees
+   Centigrade via a lookup table.
+Get_Heal_LUT - Procedure to read and return a user-selectable look-up table.
+Get_Heal_RES() - Function to compute the resolution of a heal-pixelized
+   sky map, given the number of map pixels.
+Get_PRT_Temp - Converts PRT resistance in ohms to temperature in Kelvin,
+   given the PRT serial number.
+Get_Rot_Matrix() - Returns rotation matrix for conversion between the specified
+   input and output coordinate systems.
+GMT2Jul() - Converts a MAP GMT date/time string into a reduced Julian date.
+GMT2TS - Converts a MAP GMT into a MAP timestamp.
+GMT2YMD - Converts the YYYYDDD portion of a MAP GMT string into a string
+   of format YYYYMMDD.
+Grid_Overlay - Overplots coordinate grid on a Mollweide or Stereographic
+   projection.
+HEALinfo - IDL procedure to return or print information on
+   HEALPix resolutions.
+HEALPIX_Nested_Vectors -  IDL procedure to read Cartesian [X,Y,Z] direction 
+   vectors from binary file for HEALPIX pixel scheme, nested pixel order.
+HealPix_to_Image - Convert a 1-d Healpix  map into a 2-d byte-scaled image ready
+    for display
+Interpolate_Quaternions - Interpolate quaternions extracted from WMAP 
+   time-ordered data
+Jul2Date - Converts a reduced Julian date into a Gregorian date and time.
+   Unlike a classic reducted Julian date, the full Julian date is 
+   recovered by adding 2450000.
+Jul2GMT ()- Converts a MAP GMT date/time string into a Julian date.
+Jul2Tel - Converts a MAP Reduced Julian day into a telemetry structure timestamp.
+Jul2TS() - Converts a MAP Reduced Julian day into a time stamp.
+KeyArray() - Breaks a string containing a number of comma-delimited elements
+   into an array of strings.
+KeyFile - Reads a file containing keyword/value pairs into an array of
+   structures, each element of which contains a keyword/value pair.
+KeyParse - Breaks a string into a keyword/value pair.
+LoadCT_012 - load a standard IDL color table with the first three colors 
+       reserved as white, black and grey
+Load_MAP_Params - Reads the contents of the general MAP program parameters 
+   file into an IDL structure.
+MAP_Date - Widget to convert the various MAP time and date formats
+MAPView - Interactive widget to display and zoom a Healpix map
+Mnem_Type() - Function to return the type of mnemonic associated with an input
+   mnemonic, eg. 'AIHK', 'SCI', etc.
+mollweide() - Computes Mollweide angle theta from input latitudes.
+mollweide_xy - Converts longitude and latitude coordinates to x,y positions on
+   a Mollweide projection.
+Now2Jul() - Returns the current system time as a MAP Reduced Julian day.
+Pckt2Mnemonic() - Returns the physical value associated with a MAP telemetry
+   mnemonic.  This is a wrapper routine that calls the appropriate 
+   specific routine depending on mnemonic type.
+Planet_Overlay - Plots a planet's position on an existing skymap within a
+   screen window.
+projxy2coord - Converts (x,y) positions on a Mollweide or Zenithal Equal Area
+   projection to longitude and latitude.
+rotx() - Computes rotation matrix for rotation about x axis.
+rotz() - Computes rotation matrix for rotation about z axis.
+Q2M - Convert quaternions to rotation matrices
+quat_to_sky_coords - Extract a time series of coordinates from an array of 
+      input quaternions
+Reproj_HEALPIX - Convert a HealPix image to a flatmap projection 
+Scan_Overlay - Plot the WMAP scan path for a specified time using quaternion 
+                  data
+Sci_GetMnemonic() - Extracts a channel of radiometer data from an array of 
+   sciencepackets.  Depending on mnemonic prefix,the routine can also 
+   return a frame average or rms.   
+Sci_Mnemonic() - Tests whether or not a given science mnemonic is valid.
+ScrTV - Displays an image in a scrollable draw widget.  This allows the
+   user to examine a full resolution portion of the image, using 
+   the scrollbars to navigate around.
+Reproj_HealPix - Convert a HealPix image to a flatmap projection
+spread_pckt_tjul() -  Propagate science packet times in reduced Julian format to
+   each observation within a packet. Supporting routine for sci_getmnemonic.
+Tel2Jul() - Converts a MAP telemetry structure time stamp into a reduced
+   Julian date.
+TextRead - TextRead reads a non-empty record/line from an open text file.
+   Lines are read until a nonzero length string is read.
+TimeStamp_AddTime - Adds to a MAP Omega time stamp.
+timestamp_diff() - Determine the diffence between two time stamps.
+TimeTransform - Converts one time format into another.
+tod_format() - Defines the time-ordered data (TOD) structure format
+Tod_to_sky_coords - Extract a time series of coordinates from an array of 
+   time-ordered data records
+TS2GMT - Converts a MAP timestamp into a MAP GMT.
+TS2Jul() - Converts a time stamp into a MAP Reduced Julian day.
+Xcolors - Interactively change color tables (from David Fanning's Library)
+zea_xy -  Converts longitude and latitude coordinates to x,y 
+   positions on a Zenithal equal area projection.
+
+The following three routines from the HEALPix V1.2 distribution are included
+for compatibility for users with HEALPix V1.1
+
+wmap_data2gnom - Convert a Healpix  map into in Gnomonic rectangular map
+       (Renamed from data2gnom since there are different calling sequences
+       in HealPix V1.1 and V1.2.)
+euler_matrix_new - Compute the Euler matrix of an arbitrary rotation
+vector_map() - Divide a set of vector norms by their average

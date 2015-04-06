@@ -1,0 +1,55 @@
+pro psfquick,enein,offin,rx,expf,ef,silent=silent
+  rbox=500.                      ; ()
+  ene=enein
+  off=offin
+
+  rx=findgen(rbox*10.)/10.
+  stene=0.1
+  stoff=0.1
+  a2p=2.353
+  iene=ene/stene
+  ioff=off/stoff
+  par=mrdfits('/bulk/pkg/caldb/data/swift/xrt/cpf/psf/swxpsf20010101v004.fits',1,hdrm)
+  c0=par[0].coef0+ioff*par[0].coef1+iene*par[0].coef2+ioff*iene*par[0].coef3 
+  c1=par[1].coef0+ioff*par[1].coef1+iene*par[1].coef2+ioff*iene*par[1].coef3 
+  c2=par[2].coef0+ioff*par[2].coef1+iene*par[2].coef2+ioff*iene*par[2].coef3 
+  c3=par[3].coef0+ioff*par[3].coef1+iene*par[3].coef2+ioff*iene*par[3].coef3 
+  if not keyword_set(silent) then print,c0,c1,c2,c3
+; a me vengono: 0.283024      1.28406      2.69961      1.58899
+
+diff:
+  gau=exp(-(rx^2)/(2*c1^2))
+  kin=(1.+(rx/c2)^2)^(-c3)
+  ef=(c0*gau+(1-c0)*kin)
+;  nomeps='dave.ps'
+;  set_plot,'PS'
+;  device,filename=nomeps
+;  plot,rx*a2p,ef,/xlog,/ylog,xr=[.1,100],xtit='arcsec'
+;  openw,nomelogico,'~/tttpsf.dat',/get_lun
+;  for i=0,n_elements(rx)-1 do printf,nomelogico,rx[i]*a2p,ef[i]
+;  free_lun,nomelogico
+;  device,/close
+;  set_plot,'x'
+
+
+inte:
+  totflux1=2.*!pi*c0*c1*c1+!pi*c2*c2*(1.-c0)/(c3-1.)
+  fk=!pi*c2^2*(1.-c0)/(1.-c3)*((1.+(rx/c2)*(rx/c2))^(1.-c3)-1.) 
+  fg=2.*!pi*c0*c1*c1*(1.-exp(-1.*rx*rx/2./(c1*c1))) 
+  expf=(fk+fg)/totflux1
+
+;  plot,rx*a2p,expf,/xlog,/ylog,xr=[.1,rbox*a2p],xtit='arcsec',ytit='Exposure frac'
+  plot,rx,expf,/xlog,/ylog,xr=[.1,rbox],xtit='pixels',ytit='Exposure frac',/xstyle
+  hew=interpol(rx,expf,0.5)*2.*a2p
+  if not keyword_set(silent) then print,'HEW:',hew
+
+  if not keyword_set(silent) then begin 
+     for i=0,n_elements(rx)-1 do print,rx[i],expf[i]
+     print,'Counts included in the inner 15 pixels: ',expf[150]
+     print,'Counts included in the inner 12 pixels: ',expf[120]
+     print,'Counts included in the inner 8 pixels:',expf[80]
+     print,'Counts included in the inner 2 pixels:',expf[20]
+  endif 
+
+fine:
+end

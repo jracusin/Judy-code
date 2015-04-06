@@ -1,0 +1,5 @@
+pro calc_ximage_ul,seg
+
+evfiles=file_search('00*-xrt/sw*pc*po*cl.evt')
+exfiles=file_search('00*-xrt/sw*pc*po*ex.img')
+

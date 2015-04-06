@@ -1,0 +1,4 @@
+pro fix_psf,ev
+  
+  psf=psf_gaussian(npixel=51,fwhm=8.47,ndim=2,/normal)
+  centroid=f

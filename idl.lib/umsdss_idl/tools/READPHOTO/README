@@ -1,0 +1,46 @@
+
+The proc read_photo_col reads in a 'column' of objects from an Sloan
+tsObj file.  A column consists of the data for all five colors in 
+a column of ccd's.  There are 6 columns of ccd's on the camera.
+
+The column is stored in a series of what I will call 'frames.'  
+A frame is the same size as a 'field.'  However, field zero is the 
+first picture  taken in the run which may not have been saved.  
+Frame zero is the first _saved_ field.  The field, run, and camcol 
+are are not phototags, rather they are stored in the header of each 
+frame.  read_photo_col puts these numbers in the output tags automatically.
+
+; Examples:
+;
+;  Read in a whole column of data and store it in struct.  run 109, camcol 3
+;
+; IDL> file='/sdss3/data4/run109/tsObj-000109-3-0-0011.fit'
+; IDL> read_photo_col, file, struct
+;
+;  Read in a few frames beginning with frame 33
+;
+; IDL> read_photo_col, file, struct, start=33, nframes=20
+
+
+read_photo_col has the following subroutines:
+
+make_default_tags.pro
+make_tags.pro
+make_struct.pro
+tag_type.pro
+
+
+Notes:
+The procedure make_default_tags makes a default set of tags
+to be read from the tsObj file.  This can be altered to 
+read in the tags you want or you can input a list as a keyword
+
+	taglist=taglist
+
+If any new tags are added to the photo output catalogs, then 
+tag_type.pro, which checks if the input tags are good, will have to 
+be altered.
+
+For more details, see the header of the appropriate routines.
+
+

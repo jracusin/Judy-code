@@ -1,0 +1,600 @@
+pro plot_wtpu_outputs,t,ctr,trigtime,tstart,tstop,dir=dir,ps=ps,bigbin=bigbin
+  
+  if keyword_set(bigbin) then add='_bigbin' else add=''
+  if keyword_set(ps) then begplot,name='wt_pu_excl_region_grp40'+add+'.ps',/color
+  
+  if n_elements(dir) eq 0 then dir='./'
+  evtfile=file_search(dir+'seg'+ntostr(indgen(10+1))+'_15_wt.evt')
+  nev=n_elements(evtfile)
+  tstart=dblarr(nev) & tstop=dblarr(nev)
+  for i=0,nev-1 do begin
+     ev=mrdfits(evtfile[i],1)
+     tstart[i]=min(ev.time)-trigtime
+     tstop[i]=max(ev.time)-trigtime
+  endfor 
+  
+  
+  nrad=20
+  if not keyword_set(bigbin) then begin
+     tint1=200.
+     diff1=max(ctr)-min(ctr)
+     ndiff1=round(diff1/tint1+0.5)
+     if ndiff1 gt 0 then begin 
+        low1=(ndiff1-indgen(ndiff1)-1)*tint1
+        high1=(ndiff1-indgen(ndiff1))*tint1
+        w=where(low1 ge 600)
+        low1=low1[w]
+        high1=high1[w]
+     endif 
+     print,minmax(ctr)
+     print,ndiff1
+     
+     tint2=100.
+     diff2=max(ctr)-min(ctr)
+     ndiff2=round(diff2/tint2+0.5)
+     print,ndiff2
+     if ndiff2 gt 0 then begin
+        low2=(ndiff2-indgen(ndiff2)-1)*tint2
+        high2=(ndiff2-indgen(ndiff2))*tint2
+        w=where(high2 le 600)
+        low2=low2[w]
+        high2=high2[w]
+     endif 
+     
+     if max(ctr) gt 600. then begin
+        low=[low1,low2]
+        high=[high1,high2]
+     endif else begin
+        low=low1
+        high=low2
+     endelse 
+     
+  endif else begin 
+     diff=max(ctr)-min(ctr)
+     tint=round(diff/300.+0.5)*100.
+     ndiff=round(diff/tint+0.5)
+     low=(ndiff-indgen(ndiff)-1)*tint
+     high=(ndiff-indgen(ndiff))*tint
+  endelse 
+  
+  ndiff=n_elements(low1)
+  nctr=n_elements(low)
+  j=indgen(nrad)
+  i=indgen(nctr)
+  
+  erase
+  multiplot2,/init,[1,3]        ;[2,round(nctr/2.)]
+  for k=nctr-1,0,-1 do begin 
+     add='_'+ntostr(j)
+     datfile=file_search(dir+'seg'+ntostr(k+1)+add+'wt_Pow.dat')
+     if k lt 2 then xtitle='pixels' else xtitle=''
+     if k mod 2 eq 1 then ytitle='PhInd' else ytitle=''
+     if exist(datfile[0]) and datfile[0] ne '' then begin 
+
+        read_specfit_wtpu,k+1,spec,dir=dir,datfile=datfile
+        multiplot2
+        plot,j,spec.pow,psym=1,xtitle=xtitle,ytitle=ytitle,/yno,yrange=[1,2]
+        for p=0,nrad-1 do begin
+           oplot,[j[p],j[p]],[spec[p].pow-spec[p].pow_err[0],spec[p].pow+spec[p].pow_err[1]]
+           oplot,[j[p]-0.5,j[p]+0.5],[spec[p].pow,spec[p].pow]
+        endfor 
+        meanspec=mean(spec[14:*].pow)
+        print,meanspec
+        oplot,j,replicate(meanspec,nrad),color=!red,line=2
+        legend,ntostr(fix(low[k]))+'-'+ntostr(fix(high[k]))+' cts/s',/bottom,/right,box=0
+     endif 
+  endfor 
+  multiplot2,/reset,/default
+  
+  if keyword_set(ps) then endplot
+  stop
+  return
+end 
+  
+pro read_specfit_wtpu,segs,specstr,dir=dir,datfiles=datfiles
+  
+  if n_params() eq 0 then begin
+     print,'syntax - read_specfit_wtpu,specstr,dir=dir'
+     return
+  endif 
+  
+  d2=dblarr(2)
+  specstr=create_struct('seg',0,$
+                        'pixel',0,$
+                        'mode','',$
+                        'nev',0L,$
+                        'z',0.,$
+                        'nhgal',0d,$
+                        'nh',0d,$
+                        'nh_err',d2,$
+                        'pow',0d,$
+                        'pow_err',d2,$
+                        'norm',0d,$
+                        'norm_err',d2,$
+                        'chisq',0d,$
+                        'dof',0L,$
+                        'flux',0d,$
+                        'flux_err',d2,$
+                        'unabs_flux',0d,$
+                        'rate',0d,$
+                        'pu_corr',0d,$
+                        'exptime',0d)
+  
+  if n_elements(dir) eq 0 then dirs='spec/' else dirs=dir+'/'
+  if n_elements(datfiles) eq 0 then datfiles=file_search(dirs+'seg'+ntostr(segs)+'_*dat')
+  n=n_elements(datfiles)
+  specstr=replicate(specstr,n)
+  pix=strarr(n)
+  
+  for i=0,n-1 do begin
+     file=datfiles[i]
+     segpos=strpos(file,'seg')
+     seg=strmid(file,segpos+3,2)
+     spos=strpos(seg,'_')
+     wpos=where(spos ne -1,nwpos)
+     if nwpos gt 0 then seg=strmid(seg,0,1)
+     wtpos=strpos(file,'wt_Pow')
+     pix[i]=strmid(file,wtpos-2,2)
+     lpos=strpos(pix[i],'_')
+     wpos=where(lpos ne -1,nwpos)
+     if nwpos gt 0 then pix[i]=strmid(pix[i],1,1)
+     
+     openr,lun,file,/get_lun
+     line=readline(lun)
+     
+     if line[0] ne 'N_ev' then begin 
+        specstr[i].nh_err=[line[1],line[2]]
+        
+        line=readline(lun)
+        specstr[i].pow_err=[line[1],line[2]]
+        
+        line=readline(lun)
+        specstr[i].norm_err=[line[1],line[2]]
+        line=readline(lun)
+
+        specstr[i].nhgal=line[1]
+        line=readline(lun)
+        specstr[i].nh=line[1]
+        line=readline(lun)
+        if line[0] eq 'z' then begin
+           specstr[i].z=line[1]
+           line=readline(lun)
+        endif 
+
+        specstr[i].pow=line[1]
+        
+        line=readline(lun)
+        specstr[i].norm=line[1]
+        line=readline(lun)
+
+        specstr[i].chisq=line[1]
+        
+        line=readline(lun)
+        specstr[i].dof=line[1]
+        
+        line=readline(lun)
+        specstr[i].flux=line[1]
+
+        line=readline(lun)
+        specstr[i].flux_err=[line[1],line[2]]
+
+        line=readline(lun)
+        specstr[i].unabs_flux=line[1]
+
+        line=readline(lun)
+        specstr[i].rate=line[1]
+        
+        line=readline(lun)
+        specstr[i].nev=line[1]
+     endif else begin 
+        specstr[i].nev=line[1]
+        if n_elements(line) eq 3 then $
+           specstr[i].nev2=line[2]
+     endelse 
+     
+     if not eof(lun) then begin
+        line=readline(lun)
+        if strtrim(line[0],2) eq 'exptime' then begin
+           specstr[i].exptime=line[1]
+           if n_elements(line) eq 3 then specstr[i].exptime2=line[2]
+        endif 
+     endif 
+     
+     if not eof(lun) then begin
+        line=readline(lun)
+        if strtrim(line[0],2) eq 'exptime' then begin
+           specstr[i].exptime=line[1]
+           if n_elements(line) eq 3 then specstr[i].exptime2=line[2]
+        endif 
+     endif 
+        
+     specstr[i].seg=seg
+     specstr[i].pixel=pix[i]
+     
+     close,lun
+     free_lun,lun
+  
+     specstr[i].nh_err=abs(specstr[i].nh-specstr[i].nh_err)
+     specstr[i].norm_err=abs(specstr[i].norm-specstr[i].norm_err)
+     specstr[i].pow_err=abs(specstr[i].pow-specstr[i].pow_err)
+     specstr[i].flux_err=abs(specstr[i].flux-specstr[i].flux_err)
+     
+  endfor 
+  specstr=specstr[sort(specstr.pixel)]
+  
+  return
+end 
+
+pro run_xspec,j,z,mode,phaname,nh,n_ev,exp_time,add=add,nhfreeze=nhfreeze
+  ;;xspec script
+  ;; models to fit
+  ;;;;  pow,pow+bb,pow+pow,cutoffpow,band
+  ;; loop through models and change output names or append to output file?
+  
+  
+  ;;important parameters
+  ;;nHgal & nH for all
+  
+  for mo=0,0 do begin 
+     parname=['nHgal','nH']
+     parname_err=['nhgalerr','nH_err']
+     guess=[1,1.]
+     np=2
+     if z eq 0 then begin 
+        model='mo wabs*wabs'
+        zz=0
+     endif else begin
+        model='mo wabs*zwabs'
+        parname=[parname,'z']
+        parname_err=['nhgalerr','nH_err','z_err']
+        guess=[guess,1]
+        zz=3
+     endelse 
+     
+     momo='Pow'
+     model=model+'*pow'
+     parname=[parname,'PhInd','norm']
+     parname_err=[parname_err,'Pow_err','norm_err']
+     guess=[guess,1,1]
+
+     np=n_elements(parname)
+     impar=indgen(np)
+     imparerr=[1,indgen(np-3)+zz]
+     
+;     print,impar
+;     print,imparerr
+;     print,parname,parname_err
+     
+     xbfile='xspec'+ntostr(j+1)+add+'.batch'
+     openw,lun,xbfile,/get_lun
+
+     printf,lun,'data '+phaname
+     printf,lun,'ignore 0.-0.3'
+     printf,lun,'ignore bad'
+
+     printf,lun,'query yes'
+     
+     printf,lun,model
+     for b=0,np-1 do printf,lun,ntostr(guess[b])
+     
+     npar=n_elements(impar)
+     np0=ntostr(npar)
+     printf,lun
+     nimpar=n_elements(impar)
+     nimparerr=n_elements(imparerr)
+     if z eq 0 then begin 
+        printf,lun,'newpar 1 '+ntostr(nh)+' 0 '
+     endif else begin 
+        printf,lun,'newpar 1 '+ntostr(nh)+' 0 '
+        printf,lun,'newpar 3 '+ntostr(z)
+     endelse
+     if n_elements(nhfreeze) gt 0 then begin
+        if nhfreeze ne 0 then printf,lun,'newpar 2 '+ntostr(nhfreeze)+' 0 '
+     endif 
+     printf,lun
+     printf,lun
+     ;;sets nH guess & lower limit to galactic
+     printf,lun,'fit 1000'
+     printf,lun,'fit 1000'
+     printf,lun,'fit 1000'
+     printf,lun,'cpd /ps'
+     printf,lun,'setplot en'
+     printf,lun,'plot ld res'
+     printf,lun,'exec mv pgplot.ps '+phaname+'_'+momo+'.ps'
+     printf,lun
+     ;;tcl stuff
+     datfile='seg'+ntostr(j+1)+add+mode+'_'+momo+'.dat'
+     printf,lun,'set fileid [open '+datfile+' w]'
+           ;;;errors
+     np=ntostr(npar+1)
+     for p=0,nimparerr-1 do begin 
+        pp=ntostr(imparerr[p]+1)
+        printf,lun,'error stop 100,,maximum 20.0 '+pp
+        printf,lun,'tclout error '+pp
+        printf,lun,'set err'+pp+' [string trim $xspec_tclout]'
+        printf,lun,'regsub -all { +} $err'+pp+' { } cerr'+pp+''
+        printf,lun,'set lerr'+pp+' [split $cerr'+pp+']'
+        printf,lun,'puts $fileid "'+parname_err[imparerr[p]]+' [lindex $lerr'+pp+' 0] [lindex $lerr'+pp+' 1]"'
+     endfor 
+     
+                ;;; fit params
+     for p=0,n_elements(impar)-1 do begin 
+        pp=ntostr(impar[p]+1)
+        printf,lun,'tclout param '+pp
+        printf,lun,'set par'+pp+' [string trim $xspec_tclout]'
+        printf,lun,'regsub -all { +} $par'+pp+' { } cpar'+pp
+        printf,lun,'set lpar'+pp+' [split $cpar'+pp+']'
+
+        printf,lun,'puts $fileid "'+parname[impar[p]]+' [lindex $lpar'+pp+' 0]"'
+     endfor 
+     
+                ;;;stats
+     printf,lun,'tclout stat'
+     printf,lun,'set stt [string trim $xspec_tclout]'
+     printf,lun,'regsub -all { +} $stt { } cstt'
+     printf,lun,'set lstt [split $cstt]'
+     printf,lun,'puts $fileid "chisq [lindex $lstt 0]"'
+     
+     printf,lun,'tclout dof'
+     printf,lun,'set df [string trim $xspec_tclout]'
+     printf,lun,'regsub -all { +} $df { } cdf'
+     printf,lun,'set ldf [split $cdf]'
+     printf,lun,'puts $fileid "dof [lindex $ldf 0]"'
+
+                ;;;flux
+     printf,lun,'flux 0.3 10. err 10000 90'
+     printf,lun,'tclout flux 1'
+     printf,lun,'set flx [string trim $xspec_tclout]'
+     printf,lun,'regsub -all { +} $flx { } cflx'
+     printf,lun,'set lflx [split $cflx]'
+
+     printf,lun,'puts $fileid "flux [lindex $lflx 0]"'
+     printf,lun,'puts $fileid "flux_err [lindex $lflx 1] [lindex $lflx 2]"'
+     
+                ;;;unabs flux
+     printf,lun,'newpar 1 0 1 0 0 1e4 1e4'
+     printf,lun,'newpar 2 0 1 0 0 1e4 1e4'
+     printf,lun,'flux 0.3 10.0 err 10000 90'
+     printf,lun,'tclout flux 1'
+     printf,lun,'set flx [string trim $xspec_tclout]'
+     printf,lun,'regsub -all { +} $flx { } cflx'
+     printf,lun,'set lflx [split $cflx]'
+
+     printf,lun,'puts $fileid "unabs_flux [lindex $lflx 0]"'
+     
+                ;;;rate
+     printf,lun,'show rate'
+     printf,lun,'tclout rate 1'
+     printf,lun,'set rte [string trim $xspec_tclout]'
+     printf,lun,'regsub -all { +} $rte { } crte'
+     printf,lun,'set lrte [split $crte]'
+     printf,lun,'puts $fileid "rate [lindex $lrte 0]"'
+     printf,lun,'puts $fileid "model_rate [lindex $crte 2]"'
+     printf,lun,'close $fileid'
+     printf,lun,'exit'
+     printf,lun
+
+     close,lun
+     free_lun,lun
+
+     print,'XSPEC'
+     spawn,'xspec - '+xbfile+' > xspec'+ntostr(j+1)+add+'.out'
+     
+;  datfile='seg'+ntostr(j+1)+mode+'.dat'
+     openu,lun,datfile,/get_lun,/append
+     printf,lun,'N_ev '+ntostr(n_ev)
+     printf,lun,'exptime '+ntostr(exp_time)
+;  if corr ge 0 then printf,lun,'pu_corr '+ntostr(corrfact[corr])
+     close,lun
+     free_lun,lun
+     
+  endfor   
+
+  return
+end 
+
+pro wt_pileup,xrtdatadir,xrtoutdir,t,ctr,srcra,srcdec,bgra,bgdec,trigtime,z=z,bigbin=bigbin
+  
+  backadir='../'
+  evfile=backadir+file_search(xrtoutdir+'/sw*xwtw2po_cl.evt')
+  attfiles=backadir+file_search(xrtdatadir+'/auxil/*sat.fits*')
+  hkfiles=backadir+file_search(xrtoutdir+'/*hdtc.hk*')
+  attfile=attfiles[0]
+  hdfile=hkfiles[0]
+  
+  print,evfile,attfile,hdfile
+  
+  outdir='wt_pileup40_bigbin'
+;  if not exist(outdir) then spawn,'mkdir '+outdir
+  cd,outdir
+  
+  if n_elements(z) eq 0 then z=0
+  ;;;MAKE REGION FILES EXCLUDING PILE-UP REGIONS
+  regfiles='src_excl'+ntostr(indgen(20))+'.reg'
+ 
+  find_wt_srcdetpos,evfile[0],srcra,srcdec,srcx,srcy,pa
+  roll=pa-90
+;  srcx=srcra & srcy=srcdec
+  srcx=round(srcx) & srcy=round(srcy)
+  x1=srcx & x2=srcx & y1=srcy & y2=srcy
+  r0=20. & r1=r0 & r2=r0
+  cosr=cos((90-roll)*!dtor) & sinr=sin((90-roll)*!dtor)
+  plot,[srcx-20,srcx+20],[srcy-20,srcy+20],/nodata,/iso,/yno
+  plots,srcx,srcy,psym=2
+  color=[!white,!red,!green,!blue,!yellow,!orange,!magenta,!cyan,!pink,!sienna,!purple,!salmon,!turquoise,!grey,!dodgerblue,!forestgreen,!lightblue,!red,!green,!blue,!yellow,!orange]
+  for i=0,19 do begin 
+     if i eq 0 then begin 
+        write_regfile,regfiles[i],srcx,srcy,40,20,roll=roll-90,/box,/det 
+     endif else begin 
+        ;;if even
+;;         if i mod 2 eq 0 then begin
+;;            r1=20-i/2.
+;;            x1=srcx-(20.-r1/2.)*cosr
+;;            y1=srcy+(20.-r1/2.)*sinr
+;;         endif
+;;         if i eq 1 then begin
+;;            r1=20.
+;;            x1=srcx-(20.-r1/2.)*cosr
+;;            y1=srcy+(20.-r1/2.)*sinr
+;;         endif 
+;;         if i ne 0 and r2 eq 20 then begin
+;;            r2=20-fix((i-1)/2.)-1.
+;;            x2=srcx+(20.-r2/2.)*cosr
+;;            y2=srcy-(20.-r2/2.)*sinr
+;;         endif 
+           
+;;         ;;if odd
+;;         if i mod 2 eq 1 then begin
+;;            r2=20-fix(i/2.)-1.
+;;            x2=srcx+(20.-r2/2.)*cosr
+;;            y2=srcy-(20.-r2/2.)*sinr
+;;         endif 
+;;         xx=[x1,x2]
+;;         yy=[y1,y2]
+;;         r=[r1,r2]
+;;         pa=[roll,roll]
+        
+;        write_regfile,regfiles[i],xx,yy,[20,20],r,roll=pa,/box,/det
+        write_regfile,regfiles[i],srcx,srcy,[40,i],20,roll=roll-90,/box,/det
+;        tvbox,[r1,20.],x1,y1,angle=(90-roll),/data,color=color[i]
+;        tvbox,[r2,20.],x2,y2,angle=(90-roll),/data,color=color[i]
+        
+;        oplot,[x1,x2],[y1,y2],psym=2,color=color[i]
+
+        
+     endelse
+  endfor
+  
+  bgreg='bg.reg'
+  a2p=2.36
+  write_regfile,bgreg,bgra,bgdec,40*a2p,20*a2p,roll=roll-90,/box
+  
+    ;;nH - get galactic nH
+  spawn,'nh 2000. '+ntostr(srcra)+' '+ntostr(srcdec)+' > nhgal.out'
+  readcol,'nhgal.out',blah1,format='(a)',delim='&'
+  blah1=blah1[n_elements(blah1)-1]
+  blah1=str_sep(blah1,' ')
+  nh=blah1[n_elements(blah1)-1]*1e-22
+  
+  respfile='/bulk/pkg/caldb/data/swift/xrt/cpf/rmf/swxwt0s6_20010101v010.rmf'
+  
+  if not keyword_set(bigbin) then begin 
+     tint1=200.
+     diff1=max(ctr)-min(ctr)
+     ndiff1=round(diff1/tint1+0.5)
+     if ndiff1 gt 0 then begin 
+        low1=(ndiff1-indgen(ndiff1)-1)*tint1
+        high1=(ndiff1-indgen(ndiff1))*tint1
+        w=where(low1 ge 600)
+        low1=low1[w]
+        high1=high1[w]
+     endif 
+     print,minmax(ctr)
+     print,ndiff1
+  
+     tint2=100.
+     diff2=max(ctr)-min(ctr)
+     ndiff2=round(diff2/tint2+0.5)
+     print,ndiff2
+     if ndiff2 gt 0 then begin
+        low2=(ndiff2-indgen(ndiff2)-1)*tint2
+        high2=(ndiff2-indgen(ndiff2))*tint2
+        w=where(high2 le 600)
+        low2=low2[w]
+        high2=high2[w]
+     endif 
+     
+     if max(ctr) gt 600. then begin
+        low=[low1,low2]
+        high=[high1,high2]
+     endif else begin
+        low=low1
+        high=low2
+     endelse 
+
+  endif else begin
+     diff=max(ctr)-min(ctr)
+     tint=round(diff/300.+0.5)*100.
+     ndiff=round(diff/tint+0.5)
+     low=(ndiff-indgen(ndiff)-1)*tint
+     high=(ndiff-indgen(ndiff))*tint
+  endelse 
+  
+  ndiff=n_elements(low)     
+  tlow=dblarr(ndiff) & thigh=tlow
+  ;;;;!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  for i=0,ndiff-1 do begin
+     
+     if i eq 0 then begin
+        w=where(ctr gt low[i] and ctr lt high[i],nw)
+        tlow[i]=min(t[w])
+     endif else begin 
+        w=where(t ge thigh[i-1] and ctr gt low[i] and ctr lt high[i],nw) 
+        tlow[i]=thigh[i-1]
+     endelse 
+     thigh[i]=max(t[w])
+
+     print,low[i],high[i],nw,tlow[i],thigh[i]
+
+     ;;;need only 1 bg set of files
+     print,'BG XSELECT'
+     make_xselect_file,i,evfile,0,tlow[i]+trigtime,thigh[i]+trigtime,'wt',bgreg,bgxselfile,bgevname,bgphaname,/bg
+     spawn,'xselect @'+bgxselfile +' > xselect'+ntostr(i+1)+'.out'
+     
+     nhfreeze=0.
+     ;;;make xselect files filtering using different exclusion regions
+     for j=19,0,-1 do begin 
+        add='_'+ntostr(j)
+        print,'XSELECT',j
+        make_xselect_file,i,evfile,0,tlow[i]+trigtime,thigh[i]+trigtime,'wt',regfiles[j],xselfile,srcevname,phaname,/src,add='_'+ntostr(j)+'_'
+        spawn,'xselect @'+xselfile +' > xselect'+ntostr(i+1)+add+'.out'
+        
+        hdr=headfits(srcevname)
+        nev=sxpar(hdr,'NEVENTS')
+        exptime=sxpar(hdr,'EXPOSURE')
+           
+        phaname2=phaname+'.grpmin40'
+        arfname='seg'+ntostr(i+1)+add+'_wt.arf'
+        
+        fappend='fappend '+evfile+'+3 '+srcevname
+        spawn,fappend
+;        stemout='seg'+ntostr(i+1)+add+'_wt'
+        stemout='seg'+ntostr(i+1)+'_wt'
+        if j eq 19 then begin 
+           xrtexpomap='xrtexpomap infile='+srcevname+' attfile='+attfile+' hdfile='+hdfile+' outdir=./ stemout='+stemout+' clobber=yes > xrtexpomap.out'
+           print,xrtexpomap
+           spawn,xrtexpomap
+        endif 
+        expomap=stemout+'_ex.img'
+;        lcfile=stemout+'.lc'
+        
+;        xrtproducts='xrtproducts infile='+srcevname+' outdir=./ regionfile='+regfiles[j]+ 'stemout=DEFAULT gtifile=time_filter.flt expofile='+expomap+' arffile='+arfname+' lcfile='+lcfile
+        
+        grp='40'
+        grppha='grppha infile="'+phaname+'" outfile="'+phaname2+'" chatter=0 comm="chkey ANCRFILE '+arfname+' & chkey RESPFILE '+respfile+' & chkey BACKFILE '+bgphaname+' & group min '+grp+' & exit" clobber=yes > grppha.out'
+        print,grppha
+        spawn,grppha
+
+
+        xrtmkarf='xrtmkarf outfile='+arfname+' phafile='+phaname+' srcx=-1 srcy=-1 psfflag=yes clobber=yes expofile='+expomap+' > xrtmkarf.out'
+        print,xrtmkarf
+        spawn,xrtmkarf
+        
+        run_xspec,i,z,'wt',phaname2,nh,nev,exptime,add=add,nhfreeze=nhfreeze
+        if j eq 19 then begin 
+           read_specfit_wtpu,i+1,specstr,dir='./'
+           nhfreeze=specstr[n_elements(specstr)-1].nh
+        endif 
+     endfor 
+     
+  endfor 
+  
+  ;;;filter LC based on count rate bins 100-200, 200-300, etc
+  ;;;make spectra for each bin with different exclusion regions
+  ;;;use annulus or 2 boxes, annulus for now
+  ;;;fit each spectrum to abs pow
+  ;;;plot gamma vs. exclusion pixels 
+  
+  cd,'..'
+  return
+end 

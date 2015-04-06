@@ -1,0 +1,540 @@
+DATA WINDOW HELP
+
+<Spectrum and Time History Displays>
+
+After a dataset is loaded, RMFIT displays the burst spectrum and burst history, 
+allowing you to toggle between them.  Using these two plots and their associated 
+commands, you can select subsets of the data for display and further processing, 
+e.g., spectral model fitting. 
+The energy range you select in the burst spectrum window is displayed in the 
+burst history window, similarly the sum of the "observed" time intervals 
+selected in the burst history window is displayed in the burst spectrum window.  
+The burst history window is also used to choose background intervals which are
+used to create the background model. You can also change the binning of the data 
+in each of these windows. The data selections and binning combinations you make 
+in the burst spectrum and burst history windows determine the data available for 
+fitting via the Fit Spectra option. The details of the selection and combination 
+options are covered in the following. 
+
+
+<Main Menu Items>
+
+File
+----
+
+   "Print"
+         Prints the plot either to a file or to a printer.  The configuration 
+         can be changed by choosing the "Print Setup..." command.
+         
+         For most UNIX-style operating systems, printing is done via the 'lp' 
+         command to the current default printer, assuming that it can accept 
+         PostScript files. You must set up the printer accordingly outside of 
+         rmfit.
+                                              
+   "PS Configure..."
+         When you print plots to postscript files, you may change the postscript
+         plot configuration using this command. Among the options available are:
+         
+            Paper size: Letter, Legal, A4, etc.
+            Printed image size: Can be typed in directly; however, the more useful
+                way is to resize the white rectangle by dragging. There is detailed 
+                help available. Finally, the image can be centered using buttons 
+                found below the page image and preset image sizes can be called up 
+                by a drop-down menu.
+            Portrait vs. Landscape orientation
+            Ecapsulated PostScript output: for embedding into papers
+            Color output
+            Output filename, path and extension
+            
+         Configuration option sets can be saved and recalled with the 'Config' 
+         button and all the defaults restored with the 'Defaults' button. Select 
+         'Accept' to pass the options to the next plot.
+            
+   "Headers"
+         This displays the FITS header information, and lets you save the header
+         as a text file by choosing the "Save to File" command or "Dismiss"
+         command to close without saving it.
+   
+            Primary     <EXT 0> : FITS file header extension 0
+            Calibration <EXT 1> : FITS file header extension 1
+            Data Table  <EXT 2> : FITS file header extension 2
+            Notes               : Contains the information about the event, 
+                                  detector, or data types, which appears on the 
+                                  left hand side of the Data window.        
+      
+   "Lookup"
+         RMFIT includes several commands which allow you to change the width 
+         and number of the energy and time bins of your data and to change the 
+         background model.  Once you have rebinned your data to your liking 
+         and/or selected a background model, you can save the binning and 
+         background model to a file for recall in a later RMFIT session. 
+         This lookup file can only be used with the current data FITS file, 
+         whose name appears in the main title of the window.  The reason is that 
+         the time binning and selection depends upon the total number of time 
+         bins in the data file, which is not guaranteed to be the same in any 
+         other data file.
+         
+      "Save Lookup"        
+            When you select "Save Lookup", the binning of your data is saved in  
+            the file named by user (*.lu).  This command also saves the range 
+            selection information for the observed spectra, the background 
+            spectra and the selected energies.  Since this is all the 
+            information needed to restore the current RMFIT session, it is 
+            highly recommended that you save the lookups before choosing "Fit 
+            Spectra" commands.  Thus, in case there is any problem during the 
+            display or fitting of your data, all of the work gone into selection 
+            of the data is not lost.
+            
+      "Read Lookup"
+            This command restores a lookup information saved with the "Save 
+            Lookup" command.  The information is restored from the lookup file 
+            selected by user.  After the background spectra selection is read, 
+            RMFIT will calculate the fit coefficients for the selected 
+            background model.  This procedure essentially restores a previous 
+            RMFIT session completely, so that all you need to do is to resume 
+            fitting spectra from a burst by select the "Fit Spectra" command 
+            from the menu.
+            
+      "Erase Current"
+            Erases your current lookup information from the display window.  
+   
+   "Dismiss"
+         This command closes the display window but keeps the file loaded.  To
+         restore the display window, simply select the FITS file listed in the
+         rmfit window and click "Display".
+
+   
+Options
+-------
+
+   "Show rmfit Window"
+         Restores the rmfit window as is (i.e, if it is minimized, it restores
+         as minimized so will not show up on the screen). If not minimized, the 
+         rmfit window will come to the front.
+         
+         *** In case the rmfit window has been CLOSED, there is no way to ***
+         *** restore the window!                                          ***
+         
+   "Colors"
+         This allows you to interactively select color tables for the following.
+   
+            Background
+            Foreground
+            History
+            Spectrum
+            Background Model
+   
+         *** Currently, it is not possible to save the changed colors,   *** 
+         *** and when you change your plot configuration with the "Plot  ***
+         *** Configuration" command any changes the color configuration  ***
+         *** are lost. Finally, printing in color is difficult with the  ***
+         *** default color set.                                          ***
+   
+   "Plot Configuration"
+        This selection initiates a menu to change plotting parameters.  These
+         parameters will affect all subsequent plots.  You must reset the values
+         by clicking "Default" to turn off any changes you make.  The preview is 
+         available to see the changes made.  The configurations can be saved as 
+         *.cfg file and can be loaded through "Config" button.
+    
+   "Show Current Selections"
+         This command displays the current time and energy selection  
+         on the left bottom of the window (gray area).  This way, you will be 
+         able to see the exact values for the selections made.  In case you have
+         multiple numbers of discontinuous selections, "Show Current Selections"
+         shows only the first boundary of the first selection and the last
+         boundary of the last selection.
+      
+   "Show Keyboard Bindings"
+         Some of the commands are bound to certain keys on the keyboard, and 
+         this shows you a list of them.  Panning and zooming out are very useful
+         features that are only available on the keyboard.
+                  
+   "Refresh Plot"
+         Will re-issue the plot command to update the current display. Useful
+         if you change the energy range selection, RMFIT will correctly display
+         your background model.
+         
+   "Export Data"
+         You can export variables to a *.sav files.
+
+
+<Other Menu Items>
+
+"Toggle"
+      This command lets you toggle between the burst history and burst spectrum.
+   
+"Zoom"
+      Commands that affect the viewing region of the data displays. 
+      When the resolution of your data is great, you may have difficulty 
+      selecting a single bin with the cursor in the manner described under the 
+      commands "Select Source" and "Rebin". To ease the selection of bins, you 
+      may reduce the number of bins displayed with the "Zoom" command. 
+
+      "----- TEAROFF"
+            Separates the "Zoom" subcommand buttons in another window so that
+            you can choose the commands without going through the pull-down 
+            menu.
+            
+      "Zoom"
+            Select "Zoom" and RMFIT will wait for you to select two points on 
+            the plot with the mouse. These two points should be the diagonal 
+            corners of a box which includes all the data you wish to display.
+            To aid selection, the lower left corner of the plot will display the 
+            current cursor position. In addition, after the first point is
+            selected, a dotted box will follow the cursor, as an indication of 
+            the region of the plot which will be expanded.  After you select the 
+            second point, RMFIT will redraw the plot.  If you wish to exit the 
+            command without redrawing, select a point on the plot to the left of 
+            the left vertical axis (the message in the lower left-hand corner of 
+            the plot window reads "EXIT").  If you wish to "RESET" and start 
+            over, select a point on the plot to the right of the right vertical 
+            axis.  This will reset the plot to the original range that you   
+            started with.  You can also "RESET to Default Range" by selecting a 
+            point in the upper margin.  The plot will revert to the default 
+            selection (the entire range), and you can start all over.  
+            You may enter selections through the keyboard by clicking in the 
+            lower margin ("Numerical Entry").  If you click in this area of the 
+            plot, RMFIT will prompt you to type two numbers to bound the 
+            selection interval.  When you "Accept", the selected interval will 
+            be the smallest one that encompasses the bin(s) containing the 
+            numbers entered; whereas, "Accept Exact" will take the exact values 
+            for the interval boundaries.  
+            
+      "X Zoom"
+            This zoom takes effect only on the X-axis ranges.  When you select
+            "X Zoom", RMFIT will wait for you to select two points on the plot
+            with the mouse.  Once you select the first point, RMFIT shows a line
+            indicating your selection, and as soon as you select the second
+            point, RMFIT will redraw the plot.  "RESET", "RESET to Default
+            Range", "EXIT", and "Numerical Entry" follow the above descriptions.
+            
+      "Y Zoom"
+            This zoom takes effect only on the Y-axis ranges in the same manner
+            as "X Zoom" above.
+            
+      "Zoom In: Selection"
+            If you have previously made selections from the data, you can 
+            immediately jump to a view of the entire selection by choosing this 
+            command. This is the best method for switching between an overview 
+            of the entire dataset (see "Zoom out: Full Range" below) and your 
+            selected data. If you have not specifically made any selections, the 
+            default selection is the entire dataset, so for this case, the 
+            command is identical to the "Zoom out: Full Range" command. 
+            You can also use this command to see if there are any selection
+            regions outside the current view of the data. In the burst history 
+            plot, the command works on the selected source intervals, not on the 
+            selected background intervals. 
+       
+      "Zoom Out: Full Range"
+            When you have zoomed in on your data and you wish to display all of 
+            the data again, select the "Zoom out: Full range" entry.
+                  
+      "Full Screen"
+            Select this button to expand the plot to full screen size.  Click on
+            the plot to close the Full Screen window.
+
+   
+"Rebin"
+      You will frequently want to combine time bins via the "Combine Bins" or, 
+      better, the "Signal to Noise" commands to generate spectra with better
+      statistics. As described below, the "Signal to Noise" command combines
+      time bins until a desired signal to noise ratio is attained in the
+      background-subtracted data. These combined time intervals should generate 
+      more consistent results when a given spectral model is applied to each 
+      in turn, via the "Batch Fit Selection" procedure, described  under the 
+      "Fit Spectra" command.
+      
+      "----- TEAROFF"
+            Separates the "Rebin" subcommand buttons in another window so that
+            you can choose the commands without going through the pull-down 
+            menu.
+            
+      "Temporal Resolution"
+            You can rebin your burst history into different time bins using this
+            command.  When you select "Temporal Resolution", RMFIT will ask you
+            to enter data resolution(s) you wish to rebin the data with (in 
+            sec).  The resolution you enter has to be an integer multiple of the  
+            original binning of the data. 
+             
+            e.g. BATSE MER data has 16ms resolution for the first ~33 sec and 
+                 64ms resolution thereafter.  If you enter data resolution of 
+                 32ms (= 0.032 sec) at the prompt, RMFIT will combine every 
+                 two bins of the 16ms bins and the 64ms bins remain unchanged. 
+                 If you enter 128ms (= 0.128 sec) data resolution, every four
+                 16ms-bins and every two 64ms-bins will be combined 
+                 respectively. 
+                  
+      "Signal to Noise"
+            You may want to bin your data so that each data point has roughly 
+            the same level of statistical significance above background.  After 
+            a background model has been computed, the "Signal to Noise" command 
+            lets you bin your data so that the rate in each bin has an error bar 
+            smaller than a size you specify.  When you select "Signal to Noise",
+            RMFIT will prompt for you to enter a desired Signal to Noise Ratio 
+            (SNR) for the background-subtracted data.  RMFIT will attempt to 
+            reduce the size of your data's error bars by combining bins.  The 
+            choice of SNR will involve some trial and error.  For the burst
+            history window, SNRs are calculated based upon the total number of 
+            energy bins selected in the burst spectrum window, and vice versa.
+            Thus, if only one energy bin has been selected (spanning 5 keV), 
+            you would supply a correspondingly smaller SNR than if the entire 
+            energy range (roughly 2 MeV) were selected, in order to obtain an 
+            equivalent time binning.  As a rough guide for the BATSE HER data, 
+            if most of the energy range is selected (the overflow channels at 
+            the high end, as well as channels below the LLD, should usually be
+            excluded for spectroscopic analysis), a number above 15 will usually 
+            produce spectra which have enough significance above background to 
+            be fit reliably.  
+
+      "Full Resolution"
+            When you select the "Full resolution" entry, RMFIT will display your
+            data with the binning at which it is stored in the FITS file. 
+            
+      "Refine Bins"
+            Once you have combined a sequence of energy bins, you may wish to 
+            undo the operation and display your data at its full resolution 
+            again.  The "Refine Bins" command allows you to reverse the effect 
+            of the "Combine Bins" or "Temporal Resolution"/"Signal to Noise" 
+            command.
+            
+         "Refine by Half"
+               The "Refine by half" command is a less drastic version of "Refine 
+               Single Bin". It divides a large, combined bin into two smaller 
+               bins, each roughly half the width of the original.
+
+         "Refine Single Bin"
+               Select "Refine Single Bin", and RMFIT will wait for you to select 
+               a bin from the spectrum plot. When you select a bin, RMFIT will 
+               redraw the plot with the data within the selected bin displayed 
+               at your file's full resolution. 
+
+      "Combine Bins"
+            The "Combine Bins" command permits you to combine a sequence of bins 
+            into a single bin.  When you select "Combine Bins", a pull-down menu  
+            appears asking what type of binning is desired.  
+            You can always undo the binning (i.e, go back to the original 
+            resolution) by choosing "Full Resolution" or "Refine Bins" described 
+            above.
+         
+         "Source Intervals"
+               After you make your selection(s) with "Select Source" command,  
+               you can combine all continuously selected bins into one bin by 
+               choosing this command.  If you have multiple number of 
+               discontinuous selections, it combines each selection separately.
+               If you choose this command when you do not have any specific
+               selections, it combines the entire data range into one bin.  
+               
+         "Single Bin" & "Combine by..."
+               "Single Bin" means that all the bins selected by the mouse will 
+               be joined into one bin; whereas "Combine by..." will bring up a  
+               box that asks you the numbers of bins to combine into one bin. 
+               If you, for example, choose the number to be 2, it means that 
+               every two bins in the range selected by the mouse will be 
+               combined into one bin.  
+               
+               In both cases, RMFIT will wait for you to mark two bins from the 
+               history/spectrum plot in the manner described in the following 
+               "Select Source Interactive" command.  To clear the current 
+               selection before exiting and start over, move the cursor to a 
+               point on the plot to the right of the right vertical axis, until 
+               the message in the lower left-hand corner reads, "Clear 
+               Selection", and press the mouse button.  "Numerical Entry" works 
+               the same way as described in the "Select Source Interactive" 
+               section below.  When you exit after you are done with your 
+               selection, RMFIT will combine them accordingly. 
+               To exit, move the cursor to a point on the plot to the left of 
+               the left vertical axis, until the message in the lower left-hand 
+               corner reads, "EXIT", and press the mouse button. After pressing 
+               the button once, it still keeps you in the "Combine Bins" mode,
+               and you can further combine bins as many times as you need.  When  
+               you are done with combining, just click on the "EXIT" point 
+               twice, and it will let you out of the mode and keep the last 
+               binning. After you exit, RMFIT will redraw the history/spectrum  
+               plot with the selected range of bins replaced by the selected 
+               binning pattern.
+               
+            
+"Select Source"
+      To select only a portion of your data's energy channels or time bins, use 
+      the "Select Source" command. 
+      
+      "----- TEAROFF"
+            Separates the "Select Source" subcommand buttons in another window 
+            so that you can choose the commands without going through the 
+            pull-down menu.
+            
+      "Source Interactive"
+            When you choose "Source Interactive", RMFIT will wait for you to 
+            select a range of bins.
+            
+            Select the first bin in the range by positioning the cursor over the 
+            bin in the plot and pressing the mouse button.  Select the last bin 
+            in the same way. Numbers in the lower left-hand corner of the plot 
+            track the position of the mouse cursor, which can be used if a 
+            particular value is to be selected.  If you move the cursor below 
+            the bottom axis of the plot, the message in the lower left-hand 
+            corner of the plot will change to "Numerical Entry".  If you click 
+            the mouse button in this area of the plot, RMFIT will prompt you to 
+            type two numbers to bound the selection interval.   When you 
+            "Accept", the selected interval will be the smallest one that 
+            encompasses the bin(s) containing the numbers entered.  RMFIT will 
+            respond to the selection by displaying the actual values of the 
+            edges of the selected interval.  If you make a mistake and want to 
+            start over, move the cursor past the right-hand vertical axis of the 
+            plot, until the message in the lower left-hand corner of the plot 
+            reads, "Clear Selection", and press the mouse button.  This will 
+            clear ALL the selections that you have made.  
+            
+            After you select the two bins, RMFIT will move the vertical lines on 
+            the plot so that they bound the range of channels you have selected. 
+            You may continue to select ranges of bins by clicking on two bins on 
+            the plot, setting up additional non-overlapping (and possibly 
+            discontinuous) selections.  This may be useful when you want to 
+            compare the rates at one energy range with rates at other energies. 
+            You exit the command by selecting a point on the plot to the left of 
+            the left vertical axis, so that the message in the lower left-hand 
+            corner of the plot reads, "EXIT".   The selection(s) will be 
+            highlighted.   If you are working in the burst spectrum window, the 
+            rates in the selected channels are averaged to produce the history 
+            displayed in the burst history window when toggled.  
+                                     
+      "Source by Signal to Noise"
+      
+         *** This function is not yet implemented for the energy spectrum ***
+            
+            When you want to select only the time bins with the signal to noise 
+            ratio greater than a certain value, you can do so by choosing this
+            command.  After selecting the two bins as described in "Source
+            Interactive" above, it prompts you a box saying "Enter the sigma 
+            level above background" upon exiting the selection mode. The default  
+            sigma value is 5.5.  After you enter the value and click "OK", RMFIT 
+            selects the bins accordingly within the two bins specified priorly 
+            and highlights the selections.
+
+                          
+"Adjust Source"
+      You can adjust your selections with this command instead of re-selecting
+      them all over, when you want to make small changes to your selections.
+      
+      "----- TEAROFF"
+            Separates the "Adjust Source" subcommand buttons in another window 
+            so that you can choose the commands without going through the 
+            pull-down menu.
+            
+      "< Shift Selection"
+            The entire selected region moves over by one bin to the left. Very 
+            useful if one bin is selected and you want to see successive time 
+            histories of single energy channels.
+            
+      "> Shift Selection"
+            Shifts the ENTIRE selection one bin to the RIGHT.
+            
+      "< Left Selection"
+            Shifts only the LEFT boundary of the selection one bin to the LEFT.
+            
+      "> Left Selection"
+            Shifts only the LEFT boundary of the selection one bin to the RIGHT.
+       
+      "< Right Selection"
+            Shifts only the RIGHT boundary of the selection one bin to the LEFT.
+       
+      "> Right Selection"
+            Shifts only the RIGHT boundary of the selection one bin to the RIGHT.
+
+   
+"Fit Background"
+
+   *** "Fit Background" is valid only in the burst history window ***
+   
+      The "Fit Background" command is used to create the background model, which 
+      is used to produce background-subtracted source spectra. Each selected 
+      range of bins in the background intervals will be displayed as a white-
+      dashed histogram. The default, which is no background intervals, can be
+      returned to at any time by selecting a point on the plot to the right of 
+      the right vertical axis ("Clear Selections").  "Numerical Entry" works the
+      same way as described above in "Select Source Interactive" section.  After 
+      the selection is complete, or when you desire to return to the menu, say 
+      to zoom in or out to better select other portions of the background, 
+      select a point on the plot to the left of the left vertical axis ("EXIT").
+
+      You will be asked to choose the order of the background model to be used 
+      for the fit. The coefficients of the background model are computed at this 
+      time, after which the background model, integrated over energy, will be 
+      displayed as a line plotted over the time histogram. This line will appear 
+      dotted (light blue colored) where it has been interpolated or extrapolated 
+      beyond the time bins selected for the background model fit, and, in 
+      particular, will be interpolated through the burst interval. This allows
+      the user to visually estimate the amount of signal above background for 
+      the source spectra, as well as visually evaluate the appropriateness of 
+      the background model. While a continuous background model is shown on the 
+      plot, background subtraction is done by averaging the background model 
+      over the accumulation time of each source data interval. 
+
+      You will also be given a plot of reduced chi^2 for the background model 
+      versus energy channel over the selected energy range to verify that the 
+      background fit is satisfactory. 
+      
+         *** If you choose "Cancel", RMFIT will erase all the background ***
+         *** information even the background model that existed prior to ***
+         *** your choosing "Fit Background".  We strongly suggest saving ***
+         *** your background model as a lookup file whenever you make    ***
+         *** one. Otherwise, there is no way to retrieve the lost one!!  ***
+
+      You can change the order of the background model without changing the
+      background intervals selection by again choosing the "Fit Background"
+      command and immediately "EXIT"ing.
+             
+      The background model is created, for each channel, by fitting a polynomial 
+      of the selected order to the data.  The average of the polynomial over 
+      each time bin is calculated and compared to the data, and the polynomial 
+      coefficients are optimized so as to minimize chi^2.
+      For all except the strongest bursts at low energies, selection of the
+      background model needs to be done with care.  Lower orders probably lead 
+      to a more stable and robust background model, but models of low order 
+      frequently cannot reproduce the observed background time variations.  
+
+      You must balance systematic errors in the background model caused by 
+      choosing more data than can be fit with a polynomial versus the large 
+      statistical error bars caused by basing the background model upon a small 
+      interval of data.  If your source time intervals are an extrapolation, 
+      rather than an interpolation, of the background model, it would be wise to 
+      select a low order.  
+
+
+
+Spectral Fitting:
+-----------------
+
+For more complete description of the spectral fitting features, please refer to 
+the SPECTRAL FITTING HELP.
+
+"Fit Spectra"
+      "----- TEAROFF"
+            Separates the "Fit Spectra" subcommand buttons in another window so 
+            that you can choose the commands without going through the 
+            pull-down menu.
+            
+      "Fit One Spectrum"
+            Fits only one specific spectrum.  RMFIT will wait for you to choose
+            one time bin and will start the fitting procedure.
+         
+      "Fit Interval"
+            Performs time-integrated fits of a time interval selected.  RMFIT
+            will wait for you to choose the time interval and start fitting.
+            
+      "Fit Selections"
+            Performs time-integrated fits of your current source selection.
+      
+      "Batch Fit Selections"
+            Fits each spectrum within the selection separately and displays the
+            spectral evolutions of fit parameters.
+
+
+"Fit Plotter"
+      Restores the Fit Display window if already open, otherwise it opens the
+      Fit Display window for the purpose of displaying the saved fit results
+      (*.par file).  It asks you to choose *.par file for display.
+
+      
+--------------------------- END OF DATA WINDOW HELP ----------------------------

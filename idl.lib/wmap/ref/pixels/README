@@ -1,0 +1,7 @@
+MAP_REF/pixels
+
+The FITS files in this directory give the Cartesian [X,Y,Z] direction vectors
+for a HealPix pixel scheme.    There are 7 files for HealPix resolutions ranging
+from 3 (768 output pixels) to 9 (3145728 output pixels)
+
+These files are read by the procedure HealPix_Nested_vectors.

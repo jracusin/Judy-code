@@ -1,0 +1,141 @@
+@fit_functions
+pro make_sed_plot,ps=ps
+  
+  if keyword_set(ps) then begplot,name='sed_evol.ps',/color,/land
+  file='~/Desktop/GRB080319B/SEDs/sed_table.txt'
+  readcol,file,model,evb,nh,gamma1,ebk1,gamma2,ebk2,gamma3,chidof,format='(a,a,a,a,a,a,a,a,a)',delim='||',skip=1
+  
+  sed=create_struct('time','','pl_norm',0.,'pl_gam1',0.,'pl_gam1err',0.,$
+                    'bpl_norm',0.,'bpl_gam1',0.,'bpl_gam1err',0.,'bpl_ebk',0.,$
+                    'bpl_ebkerr',0.,'bpl_gam2',0.,'bpl_gam2err',0.,$
+                    'bplf_norm',0.,'bplf_gam1',0.,'bplf_gam1err',0.,$
+                    'bplf_ebk',0.,'bplf_ebkerr',0.,$
+                    'bplf_gam2',0.,'bplf_gam2err',0.,$
+                    'b2pl_norm',0.,$
+                    'b2pl_gam1',0.,'b2pl_gam1err',0.,'b2pl_ebk1',0.,'b2pl_ebk1err',0.,$
+                    'b2pl_gam2',0.,'b2pl_gam2err',0.,'b2pl_ebk2',0.,'b2pl_ebk2err',0.,$
+                    'b2pl_gam3',0.,'b2pl_gam3err',0.)
+  sed=replicate(sed,7)
+  m=[5,5,5,4,4,4,4]
+  tot=0.
+  for i=0,6 do begin
+     j=tot+1
+     sed[i].time=strmid(model[j-1],4,10)
+     g=str_sep(gamma1[j],'+/-')
+     sed[i].pl_gam1=g[0]*1.
+     sed[i].pl_gam1err=g[1]*1.
+     g=str_sep(gamma1[j+1],'+/-')
+     sed[i].bpl_gam1=g[0]*1.
+     sed[i].bpl_gam1err=g[1]*1.
+     g=str_sep(ebk1[j+1],'+/-')
+     sed[i].bpl_ebk=g[0]*1.
+     sed[i].bpl_ebkerr=g[1]*1.
+     g=str_sep(gamma2[j+1],'+/-')
+     sed[i].bpl_gam2=g[0]*1.
+     sed[i].bpl_gam2err=g[1]*1.
+     if i le 2 then begin 
+        g=str_sep(gamma1[j+2],'+/-')
+        sed[i].bplf_gam1=g[0]*1.
+        sed[i].bplf_gam1err=g[1]*1.
+        sed[i].bplf_gam2=sed[i].bplf_gam1+0.5
+        sed[i].bplf_gam2err=sed[i].bplf_gam1err
+     endif else begin 
+        g=str_sep(gamma2[j+2],'+/-')
+        sed[i].bplf_gam2=g[0]*1.
+        sed[i].bplf_gam2err=g[1]*1.
+        sed[i].bplf_gam1=sed[i].bplf_gam2-0.5
+        sed[i].bplf_gam1err=sed[i].bplf_gam2err
+     endelse 
+     g=str_sep(ebk1[j+2],'+/-')
+     sed[i].bplf_ebk=g[0]*1.
+     sed[i].bplf_ebkerr=g[1]*1.
+     if i le 2 then begin 
+        g=str_sep(gamma1[j+3],'+/-')
+        sed[i].b2pl_gam1=g[0]*1.
+        sed[i].b2pl_gam1err=g[1]*1.
+        g=str_sep(ebk1[j+3],'+/-')
+        sed[i].b2pl_ebk1=g[0]*1.
+        sed[i].b2pl_ebk1err=g[1]*1.
+        g=str_sep(gamma2[j+3],'+/-')
+        sed[i].b2pl_gam2=g[0]*1.
+        sed[i].b2pl_gam2err=g[1]*1.
+        g=str_sep(ebk2[j+3],'+/-')
+        sed[i].b2pl_ebk2=g[0]*1.
+        sed[i].b2pl_ebk2err=g[1]*1.
+        g=str_sep(gamma3[j+3],'+/-')
+        sed[i].b2pl_gam3=g[0]*1.
+        sed[i].b2pl_gam3err=g[1]*1.
+     endif 
+     tot=tot+m[i]
+  endfor 
+  
+  sed.pl_norm=[1.,1.,1.,2.645e-2,1.735e-3,4.164e-4,6.804e-5]
+  sed.bpl_norm=[1.,1.,1.,9.796e-1,6.902e-1,2.865e-2,3.756e-4]
+  sed.bplf_norm=[1.,1.,1.,5.203e-1,1.414e-1,7.257e-3,1.478e-3]
+  sed.b2pl_norm=[1.,1.,1.,0,0,0,0]
+  
+  eng=[(findgen(100)+1)*1e-4,(findgen(100)+1)*1e-2,findgen(100)+1]
+  colors=[!red,!orange,!cyan,!green,!blue,!magenta,!purple]
+  erase
+  multiplot2,[2,2],/init
+  model=['Power-Law','Broken Power-Law','Broken Power-Law ('+!tsym.delta_cap+!tsym.gamma_cap+'=0.5)','Triple Broken Power-Law']
+  
+  for j=0,3 do begin 
+     multiplot2
+     xtickname=replicate(' ',6)
+     if j eq 2 then xtickname=['10!U-4!N','10!U-3!N','10!U-2!N','10!U-1!N','1','10',' ']
+     if j eq 3 then xtickname=['10!U-4!N','10!U-3!N','10!U-2!N','10!U-1!N','1','10','100']
+     if j eq 2 or j eq 3 then xtitle='Energy (keV)' else xtitle=''
+     if j eq 0 or j eq 2 then begin 
+        ytitle='E!U2!N F(E) (kev ph cm!U-2!N s!U-1!N)' 
+        ytickname=['10!U-6!N','10!U-5!N','10!U-4!N','10!U-3!N','10!U-2!N','10!U-1!N','1','10','100']
+     endif else begin
+        ytitle=''
+        ytickname=replicate(' ',5)
+     endelse 
+     plot,[1e-4,100.],[1e-6,100],/nodata,/xlog,/ylog,ysty=1,xticks=6,xminor=9,xtickname=xtickname,xtitle=xtitle,ytitle=ytitle,yticks=8,ytickname=ytickname,yminor=9
+     
+     if j eq 3 then begin
+        legend,[sed.time],textcolor=colors,box=0,/bottom,/right
+     endif 
+     legend,model[j],/top,/left,box=0
+     
+     
+     for i=0,6 do begin 
+        go=1
+        norm=1.                 ;10^(7-i)*1d
+        case j of 
+           0: begin
+              p=[sed[i].pl_norm,sed[i].pl_gam1]
+              f=pow(eng,p)
+           end 
+           1: begin
+              p=[sed[i].bpl_norm,sed[i].bpl_gam1,sed[i].bpl_ebk,sed[i].bpl_gam2]
+              f=bknpow(eng,p)
+           end 
+           2: begin
+              p=[sed[i].bplf_norm,sed[i].bplf_gam1,sed[i].bplf_ebk,sed[i].bplf_gam2]
+              f=bknpow(eng,p)
+           end 
+           3: begin 
+              if sed[i].b2pl_gam1 ne 0. then begin            
+                 p=[sed[i].b2pl_norm,sed[i].b2pl_gam1,sed[i].b2pl_ebk1,sed[i].b2pl_gam2,sed[i].b2pl_ebk2,sed[i].b2pl_gam3]
+                 f=bkn2pow(eng,p)
+              endif else go=0
+           end
+        endcase 
+        if go eq 1 then begin 
+           oplot,eng,eng^2*f,color=colors[i]
+           print,minmax(f)
+        endif 
+        
+     endfor 
+  endfor 
+  multiplot2,/reset,/default
+  
+  if keyword_set(ps) then endplot
+  
+  stop
+  
+  return
+end 

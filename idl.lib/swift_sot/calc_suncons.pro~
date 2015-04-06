@@ -1,0 +1,13 @@
+pro calc_suncons,ra,dec,today
+  
+  if n_params() eq 0 then begin
+     print,'syntax - calc_sunpos,ra,dec,today'
+     print,'              date format: [2007,01,01]'
+     return
+  endif 
+  
+  now=systime(/julian)-2400000.5
+  
+  sunpos,now,sra,sdec
+  
+  sep=separation(sra,sdec,ra,dec)

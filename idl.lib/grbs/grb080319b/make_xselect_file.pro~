@@ -1,0 +1,61 @@
+pro make_xselect_file,j,evfiles,w,tmin,tmax,mode,regfile,xselfile,evname,phaname,src=src,bg=bg,pu=pu,noregion=noregion
+  
+  nw=n_elements(w)
+  if keyword_set(pu) then pus='pu' else pus=''
+  if keyword_set(src) then begin 
+     phaname=pus+'seg'+ntostr(j+1)+mode+'.pha'
+     evname=pus+'seg'+ntostr(j+1)+mode+'.evt'
+     xselfile='xsel'+ntostr(j+1)+'.xco'
+  endif 
+  if keyword_set(bg) then begin 
+     phaname=pus+'seg'+ntostr(j+1)+mode+'bg.pha'
+     evname=pus+'seg'+ntostr(j+1)+mode+'bg.evt'
+     xselfile='xsel'+ntostr(j+1)+'bg.xco'
+  endif 
+  ;;xselect script
+
+  openw,lun,xselfile,/get_lun
+  printf,lun
+  printf,lun
+  printf,lun,'clear all'
+  printf,lun,'yes'
+  printf,lun
+  printf,lun,'query yes'
+  printf,lun
+  printf,lun,'read ev '+evfiles[w[0]]
+  printf,lun,'./'
+  printf,lun
+  if nw gt 1 then printf,lun,'read ev '+evfiles[w[1:*]]
+  printf,lun
+  printf,lun
+  printf,lun,'ext cu'
+  
+  if not keyword_set(noregion) then begin 
+     printf,lun,'filter region '+regfile   
+     printf,lun,'ext cu'
+  endif 
+
+  printf,lun,'filter time file time_filter.flt'
+  openw,flun,'time_filter.flt',/get_lun
+  printf,flun,sigfig(tmin,12)+'  '+sigfig(tmax,12)
+  close,flun
+  free_lun,flun
+
+  printf,lun,'ext cu'
+  printf,lun,'ext spec'
+  printf,lun,'save spec'
+  printf,lun,phaname
+  printf,lun
+  printf,lun
+  printf,lun,'ext ev'
+  printf,lun,'save ev'
+  printf,lun,evname
+  printf,lun,'yes'
+  printf,lun
+  printf,lun
+  
+  printf,lun,'exit'
+  printf,lun
+  close,lun
+  free_lun,lun                 
+end

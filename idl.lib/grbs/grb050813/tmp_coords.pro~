@@ -1,0 +1,18 @@
+pro tmp_coords,evt,ra,dec
+  
+  ra=dblarr(303)
+  dec=dblarr(303)
+  
+  scra=241.98599
+  scdec=11.261900
+  roll=286.14099
+
+  for i=0,302 do begin
+     coordinates,evt[i].rawx,evt[i].rawy,scra,scdec,roll,0,0,0,0,rahms,decdms,ratmp,dectmp,raw=1,/notam
+     ra[i]=ratmp
+     dec[i]=dectmp
+     
+  endfor 
+  
+  return
+end 

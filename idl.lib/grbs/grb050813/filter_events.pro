@@ -1,0 +1,13 @@
+pro filter_events,evt,bp,t
+  
+  w=where(evt.grade le 12 and evt.status[1] eq 0 and evt.status[0] ne 64 and evt.status[0] ne 65,nw)
+  t=0
+  for i=0L,nw-1 do begin 
+     q=where(evt[w[i]].rawx eq bp.rawx and evt[w[i]].rawy eq bp.rawy,nq)
+     if nq eq 0 then t=[t,w[i]]
+     
+  endfor 
+  t=t[1:*]
+help,t
+  return
+end 

@@ -1,0 +1,23 @@
+pro get_2sig_ul,ctr,sig,newerr
+  
+  f=10^(-round(alog10(sig)))
+  x=indgen(1000)/1000.*10./f-5./f;*(f/100.)-(f/100.)/2.
+  
+  z=(x-ctr)/(sig)
+  
+  y=exp(-z^2/2.)
+  dx=x[1]-x[0]
+  norm0=1./total(y*dx)
+  y=norm0*y
+  c=where(x gt 0,nc)
+  norm1=1./total(y[c]*dx)
+  y=y*norm1
+  t=dblarr(nc)
+  for i=0,nc-1 do t[i]=total(y[c[0:i]]*dx)
+  tmp=min(abs(t-0.955),m)
+  print,t[m],x[c[m]]
+  
+  newerr=x[c[m]]-(ctr+sig)
+  
+  return
+end 

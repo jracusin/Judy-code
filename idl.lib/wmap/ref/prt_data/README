@@ -1,0 +1,10 @@
+This directory contains device-independent (XDR) IDL savesets, giving
+information about resistance data.    Currently contains 2 files:
+
+1. prt_splinedata.xdr - Contains B-spline coefficients for interpolating the
+conversion between ohms and temperature for PRTs (Platinum resistance
+Thermometer).   Used by GET_PRT_TEMP.PRO
+
+2. deu_internal_temps_lut.xdr - Contains a lookup table to convert from
+internal temperature counts to degrees C in the DEU (digitial electronics
+unit).  Called by GET_DEU_INT_TEMP

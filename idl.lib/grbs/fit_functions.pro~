@@ -1,0 +1,641 @@
+function bkn3pow,t,p,seg=seg,perror=perror,yerror=yerror
+  norm=p[0]
+  pow1=p[1]
+  break1=p[2]
+  pow2=p[3]
+  break2=p[4]
+  pow3=p[5]
+  break3=p[6]
+  pow4=p[7]
+  w1=where(t lt break1,nw1)
+  w2=where(t ge break1 and t lt break2,nw2)
+  w3=where(t ge break2 and t lt break3,nw3)
+  w4=where(t ge break3,nw4)
+  seg=dblarr(n_elements(t))
+  if nw1 gt 0 then seg[w1]=1
+  if nw2 gt 0 then seg[w2]=2
+  if nw3 gt 0 then seg[w3]=3
+  if nw4 gt 0 then seg[w4]=4
+  yfit=dblarr(n_elements(t))
+  if nw1 gt 0 then $
+     yfit[w1]=norm*t[w1]^(-pow1)
+  if nw2 gt 0 then $
+     yfit[w2]=norm*break1^(pow2-pow1)*t[w2]^(-pow2)
+  if nw3 gt 0 then $
+     yfit[w3]=norm*break1^(pow2-pow1)*break2^(pow3-pow2)*t[w3]^(-pow3)
+  if nw4 gt 0 then $
+     yfit[w4]=norm*break1^(pow2-pow1)*break2^(pow3-pow2)*break3^(pow4-pow3)*t[w4]^(-pow4)
+
+  if n_elements(perror) gt 0 then begin
+     normerr=perror[0]
+     pow1err=perror[1]
+     break1err=perror[2]
+     pow2err=perror[3]
+     break2err=perror[4]
+     pow3err=perror[5]
+     break3err=perror[6]
+     pow4err=perror[7]
+     yerror=dblarr(n_elements(t))
+     if nw1 gt 0 then begin 
+        dydn=t^(-pow1)
+        dyda=-norm*alog(t)*t^(-pow1)
+        yerr2=normerr^2*dydn^2+pow1err^2*dyda^2
+        yerror[w1]=sqrt(yerr2[w1])
+     endif 
+     if nw2 gt 0 then begin 
+        dydn=break1^(pow2-pow1)*t^(-pow2)
+        dydp1=-norm*alog(break1)*break1^(pow2-pow1)*t^(-pow2)
+        dydp2=-norm*alog(t)*alog(break1)*break1^(pow2-pow1)*t^(-pow2)
+        dydb1=norm*t^(-pow2)*(pow2-pow1)*break1^(pow2-pow1-1)
+        yerr2=normerr^2*dydn^2+pow1err^2*dydp1^2+pow2err^2*dydp2^2+break1err*dydb1^2
+        yerror[w2]=sqrt(yerr2[w2])
+     endif 
+     if nw3 gt 0 then begin 
+        dydn=break1^(pow2-pow1)*break2^(pow3-pow2)*t^(-pow3)
+        dydp1=-norm*alog(break1)*break1^(pow2-pow1)*break2^(pow3-pow2)*t^(-pow3)
+        dydp2=-norm*alog(break1)*alog(break2)*break1^(pow2-pow1)*break2^(pow3-pow2)*t^(-pow3)
+        dydp3=-norm*alog(t)*alog(break2)*break1^(pow2-pow1)*break2^(pow3-pow2)*t^(-pow3)
+        dydb1=norm*t^(-pow3)*(pow2-pow1)*break1^(pow2-pow1-1)*break2^(pow3-pow2)
+        dydb2=norm*t^(-pow3)*(pow3-pow2)*break1^(pow2-pow1)*break2^(pow3-pow2-1)
+        yerr2=normerr^2*dydn^2+pow1err^2*dydp1^2+pow2err^2*dydp2^2+pow3err^2*dydp3^2+break1err*dydb1^2+break2err^2*dydb2^2
+        yerror[w3]=sqrt(yerr2[w3])
+     endif
+     if nw4 gt 0 then begin 
+        dydn=break1^(pow2-pow1)*break2^(pow3-pow2)*break3^(pow4-pow3)*t^(-pow4)
+        dydp1=-norm*alog(break1)*break1^(pow2-pow1)*break2^(pow3-pow2)*break3^(pow4-pow3)*t^(-pow4)
+        dydp2=-norm*alog(break1)*alog(break2)*break1^(pow2-pow1)*break2^(pow3-pow2)*break3^(pow4-pow3)*t^(-pow4)
+        dydp3=-norm*alog(break2)*alog(break3)*break1^(pow2-pow1)*break2^(pow3-pow2)*break3^(pow4-pow3)*t^(-pow4)
+        dydp4=-norm*alog(t)*alog(break3)*break1^(pow2-pow1)*break2^(pow3-pow2)*break3^(pow4-pow3)*t^(-pow4)
+        dydb1=norm*t^(-pow4)*(pow2-pow1)*break1^(pow2-pow1-1)*break2^(pow3-pow2)*break3^(pow4-pow3)
+        dydb2=norm*t^(-pow4)*(pow3-pow2)*break1^(pow2-pow1)*break2^(pow3-pow2-1)*break3^(pow4-pow3)
+        dydb3=norm*t^(-pow4)*(pow3-pow2)*break1^(pow2-pow1)*break2^(pow3-pow2)*break3^(pow4-pow3-1)
+        yerr2=normerr^2*dydn^2+pow1err^2*dydp1^2+pow2err^2*dydp2^2+pow3err^2*dydp3^2+pow4err^2*dydp4^2+break1err*dydb1^2+break2err^2*dydb2^2+break3err^2+dydb3^2
+        yerror[w4]=sqrt(yerr2[w4])
+     endif
+  endif 
+  return,yfit
+end 
+
+function bkn2pow,t,p,seg=seg,perror=perror,yerror=yerror
+  norm=p[0]
+  pow1=p[1]
+  break1=p[2]
+  pow2=p[3]
+  break2=p[4]
+  pow3=p[5]
+  w1=where(t lt break1,nw1)
+  w2=where(t ge break1 and t lt break2,nw2)
+  w3=where(t ge break2,nw3)
+  seg=dblarr(n_elements(t))
+  if nw1 gt 0 then seg[w1]=1
+  if nw2 gt 0 then seg[w2]=2
+  if nw3 gt 0 then seg[w3]=3
+  yfit=dblarr(n_elements(t))
+  if nw1 gt 0 then $
+     yfit[w1]=norm*t[w1]^(-pow1)
+  if nw2 gt 0 then $
+     yfit[w2]=norm*break1^(pow2-pow1)*t[w2]^(-pow2)
+  if nw3 gt 0 then $
+     yfit[w3]=norm*break1^(pow2-pow1)*break2^(pow3-pow2)*t[w3]^(-pow3)
+  if n_elements(perror) gt 0 then begin
+     normerr=perror[0]
+     pow1err=perror[1]
+     break1err=perror[2]
+     pow2err=perror[3]
+     break2err=perror[4]
+     pow3err=perror[5]
+     yerror=dblarr(n_elements(t))
+     if nw1 gt 0 then begin 
+        dydn=t^(-pow1)
+        dyda=-norm*alog(t)*t^(-pow1)
+        yerr2=normerr^2*dydn^2+pow1err^2*dyda^2
+        yerror[w1]=sqrt(yerr2[w1])
+     endif 
+     if nw2 gt 0 then begin 
+        dydn=break1^(pow2-pow1)*t^(-pow2)
+        dydp1=-norm*alog(break1)*break1^(pow2-pow1)*t^(-pow2)
+        dydp2=-norm*alog(t)*alog(break1)*break1^(pow2-pow1)*t^(-pow2)
+        dydb1=norm*t^(-pow2)*(pow2-pow1)*break1^(pow2-pow1-1)
+        yerr2=normerr^2*dydn^2+pow1err^2*dydp1^2+pow2err^2*dydp2^2+break1err*dydb1^2
+        yerror[w2]=sqrt(yerr2[w2])
+     endif 
+     if nw3 gt 0 then begin 
+        dydn=break1^(pow2-pow1)*break2^(pow3-pow2)*t^(-pow3)
+        dydp1=-norm*alog(break1)*break1^(pow2-pow1)*break2^(pow3-pow2)*t^(-pow3)
+        dydp2=-norm*alog(break1)*alog(break2)*break1^(pow2-pow1)*break2^(pow3-pow2)*t^(-pow3)
+        dydp3=-norm*alog(t)*alog(break2)*break1^(pow2-pow1)*break2^(pow3-pow2)*t^(-pow3)
+        dydb1=norm*t^(-pow3)*(pow2-pow1)*break1^(pow2-pow1-1)*break2^(pow3-pow2)
+        dydb2=norm*t^(-pow3)*(pow3-pow2)*break1^(pow2-pow1)*break2^(pow3-pow2-1)
+        yerr2=normerr^2*dydn^2+pow1err^2*dydp1^2+pow2err^2*dydp2^2+pow3err^2*dydp3^2+break1err*dydb1^2+break2err^2*dydb2^2
+        yerror[w3]=sqrt(yerr2[w3])
+     endif
+  endif 
+  return,yfit
+end 
+
+function bknpow,t,p,seg=seg,perror=perror,yerror=yerror
+norm=p[0]
+pow1=p[1]
+break1=p[2]
+pow2=p[3]
+w1=where(t lt break1,nw1)
+w2=where(t ge break1,nw2)
+seg=dblarr(n_elements(t))
+if nw1 gt 0 then seg[w1]=1
+if nw2 gt 0 then seg[w2]=2
+yfit=dblarr(n_elements(t))
+if nw1 gt 0 then $
+yfit[w1]=norm*t[w1]^(-pow1)
+if nw2 gt 0 then $
+yfit[w2]=norm*break1^(pow2-pow1)*t[w2]^(-pow2)
+
+if n_elements(perror) gt 0 then begin
+    normerr=perror[0]
+    pow1err=perror[1]
+    break1err=perror[2]
+    pow2err=perror[3]
+    yerror=dblarr(n_elements(t))
+    if nw1 gt 0 then begin 
+        dydn=t^(-pow1)
+        dyda=-norm*alog(t)*t^(-pow1)
+        yerr2=normerr^2*dydn^2+pow1err^2*dyda^2
+        yerror[w1]=sqrt(yerr2[w1])
+    endif 
+    if nw2 gt 0 then begin 
+        dydn=break1^(pow2-pow1)*t^(-pow2)
+        dydp1=-norm*alog(break1)*break1^(pow2-pow1)*t^(-pow2)
+        dydp2=-norm*alog(t)*alog(break1)*break1^(pow2-pow1)*t^(-pow2)
+        dydb1=norm*t^(-pow2)*(pow2-pow1)*break1^(pow2-pow1-1)
+        yerr2=normerr^2*dydn^2+pow1err^2*dydp1^2+pow2err^2*dydp2^2+break1err*dydb1^2
+        yerror[w2]=sqrt(yerr2[w2])
+    endif 
+endif 
+
+return,yfit
+end 
+
+function pow,t,p,perror=perror,yerror=yerror,terror=terror
+norm=p[0]
+pow1=p[1]
+yfit=norm*t^(-pow1)
+if n_elements(perror) gt 0 then begin
+    normerr=perror[0]
+    powerr=perror[1]
+    dydn=t^(-pow1)
+    dyda=-norm*alog(t)*t^(-pow1)
+    yerr2=normerr^2*dydn^2+powerr^2*dyda^2
+    yerror=sqrt(yerr2)
+endif 
+return,yfit
+end 
+
+function intbkn3pow,t,p,seg=seg,perror=perror,yerror=yerror
+  norm=p[0]
+  pow1=p[1]
+  break1=p[2]
+  pow2=p[3]
+  break2=p[4]
+  pow3=p[5]
+  break3=p[6]
+  pow4=p[7]
+  t1=t[0,*]
+  t2=t[1,*]
+  tm=(t2-t1)/2.+t1
+  td=t2-t1
+  w1=where(tm lt break1,nw1)
+  w2=where(tm ge break1 and tm lt break2,nw2)
+  w3=where(tm ge break2 and tm lt break3,nw3)
+  w4=where(tm ge break3,nw4)
+  seg=dblarr(n_elements(tm))
+  if nw1 gt 0 then seg[w1]=1
+  if nw2 gt 0 then seg[w2]=2
+  if nw3 gt 0 then seg[w3]=3
+  if nw4 gt 0 then seg[w4]=4
+  yfit=dblarr(n_elements(tm))
+  if nw1 gt 0 then $
+     yfit[w1]=norm/(1.-pow1)*(t2[w1]^(1.-pow1)-t1[w1]^(1.-pow1))
+  if nw2 gt 0 then $
+     yfit[w2]=norm*break1^(pow2-pow1)/(1.-pow2)*(t2[w2]^(1.-pow2)-t1[w2]^(1.-pow2))
+  if nw3 gt 0 then $
+     yfit[w3]=norm*break1^(pow2-pow1)*break2^(pow3-pow2)/(1.-pow3)*(t2[w3]^(1.-pow3)-t1[w3]^(1.-pow3))
+  if nw4 gt 0 then $
+     yfit[w4]=norm*break1^(pow2-pow1)*break2^(pow3-pow2)/(1.-pow4)*break3^(pow4-pow3)*(t2[w4]^(1.-pow4)-t1[w4]^(1.-pow4))
+  yfit=yfit/td
+  
+  return,yfit
+end 
+
+function intbkn2pow,t,p,seg=seg,perror=perror,yerror=yerror
+  norm=p[0]
+  pow1=p[1]
+  break1=p[2]
+  pow2=p[3]
+  break2=p[4]
+  pow3=p[5]
+  t1=t[0,*]
+  t2=t[1,*]
+  tm=(t2-t1)/2.+t1
+  td=t2-t1
+  w1=where(tm lt break1,nw1)
+  w2=where(tm ge break1 and tm lt break2,nw2)
+  w3=where(tm ge break2,nw3)
+  seg=dblarr(n_elements(tm))
+  if nw1 gt 0 then seg[w1]=1
+  if nw2 gt 0 then seg[w2]=2
+  if nw3 gt 0 then seg[w3]=3
+  yfit=dblarr(n_elements(tm))
+  if nw1 gt 0 then $
+     yfit[w1]=norm/(1.-pow1)*(t2[w1]^(1.-pow1)-t1[w1]^(1.-pow1))
+  if nw2 gt 0 then $
+     yfit[w2]=norm*break1^(pow2-pow1)/(1.-pow2)*(t2[w2]^(1.-pow2)-t1[w2]^(1.-pow2))
+  if nw3 gt 0 then $
+     yfit[w3]=norm*break1^(pow2-pow1)*break2^(pow3-pow2)/(1.-pow3)*(t2[w3]^(1.-pow3)-t1[w3]^(1.-pow3))
+  yfit=yfit/td
+  
+  return,yfit
+end 
+
+
+function intbknpow,t,p,seg=seg
+  norm=p[0]
+  pow1=p[1]
+  break1=p[2]
+  pow2=p[3]
+  t1=t[0,*]
+  t2=t[1,*]
+  tm=(t2-t1)/2.+t1
+  td=t2-t1
+  w1=where(tm lt break1,nw1)
+  w2=where(tm ge break1,nw2)
+  seg=dblarr(n_elements(tm))
+  if nw1 gt 0 then seg[w1]=1
+  if nw2 gt 0 then seg[w2]=2
+  yfit=dblarr(n_elements(t))
+  if nw1 gt 0 then $
+     yfit[w1]=norm/(1.-pow1)*(t2[w1]^(1.-pow1)-t1[w1]^(1.-pow1))
+  if nw2 gt 0 then $
+     yfit[w2]=norm*break1^(pow2-pow1)/(1.-pow2)*(t2[w2]^(1.-pow2)-t1[w2]^(1.-pow2))
+  yfit=yfit/td
+  
+  return,yfit
+end 
+
+function intpow,t,p,terror=terror
+  norm=p[0]
+  pow1=p[1]
+  t1=t[0,*]
+  t2=t[1,*]
+  tm=(t2-t1)/2.+t1
+  td=t2-t1
+  yfit=norm/(1.-pow1)*(t2^(1.-pow1)-t1^(1.-pow1))
+  yfit=yfit/td
+  
+  return,yfit
+end 
+
+function offset,x,p
+  yfit=x+p
+  return,yfit
+end 
+
+function double_gauss,x,p
+  
+  g1=p[0]*exp(-(x-p[1])^2/(2*p[2]^2))
+  g2=p[3]*exp(-(x-p[4])^2/(2*p[5]^2))
+  yfit=g1+g2
+    
+  return,yfit
+end 
+
+function exp_pow_pow,x,p,fe,fp1,fp2
+  
+  norm1=p[0]
+  expfact=p[1]
+  norm2=p[2]
+  pow1=p[3]
+  norm3=p[4]
+  pow2=p[5]
+  
+  fe=norm1*exp(-x/expfact)
+  fp1=norm2*x^(-pow1)
+  fp2=norm3*x^(-pow2)
+  
+  yfit=fe+fp1+fp2
+  
+  return,yfit
+end 
+
+function int_exp_pow_pow,t,p,fe,fp1,fp2
+  
+  norm1=p[0]
+  expfact=p[1]
+  norm2=p[2]
+  pow1=p[3]
+  norm3=p[4]
+  pow2=p[5]
+  
+  t1=t[0,*]
+  t2=t[1,*]
+  td=t2-t1
+  
+  yfit1=norm1*exp(-t1/expfact)*(-expfact)+norm2*t1^(1.-pow1)/(1.-pow1)+norm3*t1^(1.-pow2)/(1.-pow2)
+  
+  yfit2=norm1*exp(-t2/expfact)*(-expfact)+norm2*t2^(1.-pow1)/(1.-pow1)+norm3*t2^(1.-pow2)/(1.-pow2)
+  
+  yfit=yfit2-yfit1
+  yfit=yfit/td
+
+  return,yfit
+end 
+
+function exp_pow_pow_pow,x,p,fe,fp1,fp2,fp3
+  
+  norm1=p[0]
+  expfact=p[1]
+  norm2=p[2]
+  pow1=p[3]
+  norm3=p[4]
+  pow2=p[5]
+  norm4=p[6]
+  pow3=p[7]
+  
+  fe=norm1*exp(-x/expfact)
+  fp1=norm2*x^(-pow1)
+  fp2=norm3*x^(-pow2)
+  fp3=norm4*x^(-pow3)
+  
+  yfit=fe+fp1+fp2+fp3
+  
+  return,yfit
+end 
+
+function int_exp_pow_pow_pow,t,p,fe,fp1,fp2,fp3
+  
+  norm1=p[0]
+  expfact=p[1]
+  norm2=p[2]
+  pow1=p[3]
+  norm3=p[4]
+  pow2=p[5]
+  norm4=p[6]
+  pow3=p[7]
+    
+  t1=t[0,*]
+  t2=t[1,*]
+  td=t2-t1
+  
+  yfit1=norm1*exp(-t1/expfact)*(-expfact)+norm2*t1^(1.-pow1)/(1.-pow1)+norm3*t1^(1.-pow2)/(1.-pow2)+norm4*t1^(1.-pow3)/(1.-pow3)
+  
+  yfit2=norm1*exp(-t2/expfact)*(-expfact)+norm2*t2^(1.-pow1)/(1.-pow1)+norm3*t2^(1.-pow2)/(1.-pow2)+norm4*t2^(1.-pow3)/(1.-pow3)
+  
+  yfit=yfit2-yfit1
+  yfit=yfit/td
+
+  return,yfit
+end 
+
+function pow_pow_pow,t,p,fp1,fp2,fp3
+  
+  norm1=p[0]
+  pow1=p[1]
+  t0=0.;30.;39.;p[2]
+  norm2=p[2]
+  pow2=p[3]
+  norm3=p[4]
+  pow3=p[5]
+  
+  fp1=norm1*(t-t0)^(-pow1)
+  fp2=norm2*(t)^(-pow2)
+  fp3=norm3*t^(-pow3)
+  
+  yfit=fp1+fp2+fp3
+  
+  return,yfit
+end 
+
+function int_pow_pow_pow,t,p,fp1,fp2,fp3
+  
+  norm1=p[0]
+  pow1=p[1]
+  t0=0.;30.;39.;p[2]
+  norm2=p[2]
+  pow2=p[3]
+  norm3=p[4]
+  pow3=p[5]
+  
+  t1=t[0,*]
+  t2=t[1,*]
+  td=t2-t1
+  
+  yfit1=norm1*(t1-t0)^(1.-pow1)/(1.-pow1)+norm2*(t1)^(1.-pow2)/(1.-pow2)+norm3*t1^(1.-pow3)/(1.-pow3)
+  
+  yfit2=norm1*(t2-t0)^(1.-pow1)/(1.-pow1)+norm2*(t2)^(1.-pow2)/(1.-pow2)+norm3*t2^(1.-pow3)/(1.-pow3)
+  
+  yfit=yfit2-yfit1
+  yfit=yfit/td
+
+  return,yfit
+end 
+
+function exp_pow,x,p,fe,fp1,fp2
+  
+  norm1=p[0]
+  expfact=p[1]
+  norm2=p[2]
+  pow1=p[3]
+  
+  fe=norm1*exp(-x/expfact)
+  fp1=norm2*x^(-pow1)
+  
+  yfit=fe+fp1
+  
+  return,yfit
+end 
+
+function int_exp_pow,t,p,fe,fp1,fp2
+  
+  norm1=p[0]
+  expfact=p[1]
+  norm2=p[2]
+  pow1=p[3]
+  
+  t1=t[0,*]
+  t2=t[1,*]
+  td=t2-t1
+  
+  yfit1=norm1*exp(-t1/expfact)*(-expfact)+norm2*t1^(1.-pow1)/(1.-pow1)
+  
+  yfit2=norm1*exp(-t2/expfact)*(-expfact)+norm2*t2^(1.-pow1)/(1.-pow1)
+  
+  yfit=yfit2-yfit1
+  yfit=yfit/td
+
+  return,yfit
+end 
+
+function pow_pow,x,p,fe,fp1,fp2
+  
+  norm2=p[0]
+  pow1=p[1]
+  norm3=p[2]
+  pow2=p[3]
+  
+  fp1=norm2*x^(-pow1)
+  fp2=norm3*x^(-pow2)
+  
+  yfit=fp1+fp2
+  
+  return,yfit
+end 
+
+function int_pow_pow,t,p,fe,fp1,fp2
+  
+  norm2=p[0]
+  pow1=p[1]
+  norm3=p[2]
+  pow2=p[3]
+  
+  t1=t[0,*]
+  t2=t[1,*]
+  td=t2-t1
+  
+  yfit1=norm2*t1^(1.-pow1)/(1.-pow1)+norm3*t1^(1.-pow2)/(1.-pow2)
+  
+  yfit2=norm2*t2^(1.-pow1)/(1.-pow1)+norm3*t2^(1.-pow2)/(1.-pow2)
+  
+  yfit=yfit2-yfit1
+  yfit=yfit/td
+
+  return,yfit
+end 
+
+function double_sm_bknpow,t,p,f1,f2
+  
+  norm1=p[0]
+  norm2=p[1]
+  tb1=p[2]
+  tb2=p[3]
+  alpha1=p[4]
+  alpha2=p[5]
+  alpha3=p[6]
+  alpha4=p[7]
+  s1=p[8]
+  s2=p[9]
+  
+  f1=norm1*(1./((t/tb1)^(alpha1*s1)+(t/tb1)^(alpha2*s1)))^(1./s1)
+  f2=norm2*(1./((t/tb2)^(alpha3*s2)+(t/tb2)^(alpha4*s2)))^(1./s2)
+  
+  yfit=f1+f2
+  return,yfit
+end 
+
+function double_bknpow,t,p,f1,f2
+  
+  p1=p[0:3]
+  p2=p[4:7]
+  f1=bknpow(t,p1)
+  f2=bknpow(t,p2)
+  
+  yfit=f1+f2
+  return,yfit
+end 
+
+function int_double_bknpow,t,p
+  
+  t1=t[0,*]
+  t2=t[1,*]
+  td=t2-t1
+  
+;  f1=norm1*(1./(tb^(alpha1*s)+tb^(alpha2*s)))^(-s)
+;  f2=norm2*(t2^(1-alpha3)/(1-alpha3)-t1^(1-alpha3)/(1-alpha3))
+  
+  p1=p[0:3]
+  p2=p[4:7]
+  f1=intbknpow(t,p1)
+  f2=intbknpow(t,p2)
+
+  yfit=f1+f2
+  return,yfit
+end 
+
+function yoni_function,t,p,fe,f1,f2
+  
+;  p=[1.,6.,1.,60.,-1.,2.,5.,1.,1000.,-0.5,1.05,0.88]
+  norm1=p[0]
+  expfact=p[1]
+  norm2=p[2]
+  t0=p[3]
+  alpha1=p[4]
+  alpha2=p[5]
+  s1=p[6]
+  
+  norm3=p[7]
+  t1=p[8]
+  alpha3=p[9]
+  alpha4=p[10]
+  s2=p[11]
+  
+;  fe=norm1*exp(-t/expfact)
+  fe=norm1*t^(-expfact)
+  f1=norm2/2.*((t/t0)^(s1*alpha1)+(t/t0)^(s1*alpha2))^(-1./s1)
+  f2=norm3/2.*((t/t1)^(s2*alpha3)+(t/t1)^(s2*alpha4))^(-1./s2)
+  
+  yfit=fe+f1+f2
+
+  return,yfit
+end 
+
+function pow_bknpow,t,p,f1,f2
+  
+  p1=p[0:1]
+  p2=p[2:5]
+  f1=pow(t,p1)
+  f2=bknpow(t,p2)
+  
+  yfit=f1+f2
+  return,yfit
+end 
+
+function pow_bkn2pow,t,p,f1,f2
+  
+  p1=p[0:1]
+  p2=p[2:7]
+  f1=pow(t,p1)
+  f2=bkn2pow(t,p2)
+  
+  yfit=f1+f2
+  return,yfit
+end 
+
+function bknpow_bkn2pow,t,p,f1,f2
+  
+  p1=p[0:3]
+  p2=p[4:9]
+  f1=bknpow(t,p1)
+  f2=bkn2pow(t,p2)
+  
+  yfit=f1+f2
+  return,yfit
+end 
+
+function bkn2pow_bkn2pow,t,p,f1,f2
+  
+  p1=p[0:5]
+  p2=p[6:11]
+  f1=bkn2pow(t,p1)
+  f2=bkn2pow(t,p2)
+  
+  yfit=f1+f2
+  return,yfit
+end 
+
+function bkn2pow_bknpow,t,p,f1,f2
+  
+  p1=p[0:5]
+  p2=p[6:9]
+  f1=bkn2pow(t,p1)
+  f2=bknpow(t,p2)
+  
+  yfit=f1+f2
+  return,yfit
+end 

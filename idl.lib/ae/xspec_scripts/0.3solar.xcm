@@ -1,0 +1,22 @@
+  set custom_value(He0)  0.3 
+  set custom_value(C0)   0.3 
+  set custom_value(N0)   0.3 
+  set custom_value(O0)   0.3 
+  set custom_value(Ne0)  0.3 
+  set custom_value(Mg0)  0.3 
+  set custom_value(Al0)  0.3 
+  set custom_value(Si0)  0.3 
+  set custom_value(S0)   0.3 
+  set custom_value(Ar0)  0.3 
+  set custom_value(Ca0)  0.3 
+  set custom_value(Fe0)  0.3 
+  set custom_value(Ni0)  0.3 
+
+  foreach variable_name [array names custom_value] {
+    if [info exists $variable_name] {
+      set $variable_name $custom_value($variable_name)   
+    } else {
+      puts "ERROR: '$variable_name' is not the name of a variable in the fitting script!"
+      tclexit 98
+    }
+  }      

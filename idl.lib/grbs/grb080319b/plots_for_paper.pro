@@ -1,0 +1,434 @@
+pro plots_for_paper,xrt=xrt,ps=ps,linear=linear
+  
+  dir='~/Desktop/GRB080319B/'
+  cd,dir
+  
+  font='helvetica'
+  if keyword_set(ps) then begplot,name='xrt_lc_spec.eps',/color,/land,font=font,/encaps,/cmyk
+
+;  if keyword_set(xrt) then begin
+  lc=lcout2fits('correct_xrt_lc_bat.txt')
+  
+  xrange=[1,4e6]
+  yrange=[1e-14,1e-5]
+  wt=where(lc.type eq 0,nwt)
+  pc=where(lc.type eq 1,npc)
+  bbat=where(lc.type eq 2,nbat)
+;     goto,skip
+  erase
+  multiplot2,[1,2],/init
+  multiplot2
+  plot,xrange,yrange,/nodata,ytitle='Flux!L (0.3-10.0 keV)!N (erg cm!U-2!N s!U-1!N)',/xlog,/ylog,xrange=xrange,/xsty,yrange=yrange,/ysty,ytickinterval=1,yminor=9,ytickf='loglabels'
+  oploterror,lc[wt].time,lc[wt].src_rate,lc[wt].src_rate_err,psym=3,color=!blue,/nohat,errcolor=!blue
+  for i=0,nwt-1 do oplot,[lc[wt[i]].tstart,lc[wt[i]].tstop],[lc[wt[i]].src_rate,lc[wt[i]].src_rate],color=!blue
+  oploterror,lc[pc].time,lc[pc].src_rate,lc[pc].src_rate_err,psym=3,color=!red,/nohat,errcolor=!red
+  for i=0,npc-1 do oplot,[lc[pc[i]].tstart,lc[pc[i]].tstop],[lc[pc[i]].src_rate,lc[pc[i]].src_rate],color=!red
+  oploterror,lc[bbat].time,lc[bbat].src_rate,lc[bbat].src_rate_err,psym=3,/nohat
+  for i=0,nbat-1 do oplot,[lc[bbat[i]].tstart,lc[bbat[i]].tstop],[lc[bbat[i]].src_rate,lc[bbat[i]].src_rate]
+  
+  trigtime=227599969.0
+  nctsperbin=10000
+;  cd,'manyspec10000'
+;  read_time_specfit,spec,trigtime,dir='~/Desktop/GRB080319B/manyspec'+ntostr(nctsperbin)+'/'
+;  cd,'..'
+
+  spec=mrdfits('~/Desktop/GRB080319B/manyspec'+ntostr(nctsperbin)+'/fitmanyspec10000.fits',1)
+  
+  multiplot2,ydowngap=0.2
+  t=(spec.tmax-spec.tmin)/2.+spec.tmin
+
+  plot,t,spec.pow,psym=3,ytitle=!tsym.gamma_cap,/yno,yrange=[1.5,2.2],/xlog,xrange=xrange,xtitle='Time since trigger (s)',/xsty
+  for i=0,n_elements(spec)-1 do begin
+
+     oplot,[spec[i].tmin,spec[i].tmax],[spec[i].pow,spec[i].pow]
+     oplot,[t[i],t[i]],[spec[i].pow-spec[i].pow_err[0],spec[i].pow+spec[i].pow_err[1]]
+  endfor 
+  multiplot2,/reset,/default
+  if keyword_set(ps) then endplot
+;skip:
+;  endif 
+
+;;   readcol,'composite_lc/normalized_flux.dat',lines,format='(a)',delim='@'
+;;   n=n_elements(lines)
+;;   olc=create_struct('time',0.,'tbin',0.,'tstart',0.,'tstop',0.,'ctr',0.,'ctrerr',0.,'source','')
+;;   olc=replicate(olc,n)
+;;   source=''
+;;   norm=1.e6                       ;e-11
+;;   for i=1,n-1 do begin
+;;      chunks=str_sep(lines[i],' ')
+;;      npos=strpos(lines[i],'!')
+;;      mpos=strpos(lines[i],'NO')
+;;      if (n_elements(chunks) eq 5 or n_elements(chunks) eq 4) and npos eq -1 and mpos eq -1 then begin
+;; ;        print,lines[i]
+;;         olc[i].time=float(chunks[0])
+;;         olc[i].tbin=float(chunks[1])
+;;         olc[i].tstart=olc[i].time-olc[i].tbin
+;;         olc[i].tstop=olc[i].time+olc[i].tbin
+;;         olc[i].ctr=float(chunks[2])*norm
+;;         olc[i].ctrerr=float(chunks[3])*norm
+;;      endif 
+;;      cpos=strpos(lines[i],'!')
+;;      if cpos ne -1 then source=lines[i] ;strmid(lines[i],cpos+1,20)
+;;      olc[i].source=source
+
+;;   endfor 
+;;   wn0=where(olc.time ne 0)
+;;   olc=olc[wn0]
+;; ;  xrange=[10,1e6]
+;;   yrange=[1e-4,1e6]
+;; ;  multiplot2
+;;   usource=olc[uniq(olc.source)].source
+;;   tor=where(olc.source eq usource[1]) ;;Tortora
+;;   olc[tor].time=olc[tor].time-6.1
+;;   rem=where(olc.source eq usource[9] or olc.source eq usource[10] or olc.source eq usource[12] or olc.source eq usource[14] or olc.source eq usource[17])
+;;   olc[rem].time=olc[rem].time-6.8
+  
+  yrange=[1e-5,1e6]
+  readcol,'composite_lc/Normalized_ground_UVOT_FINAL2.txt',time,timebin,rate,raterr,mag,magerr1,magerr2,magul,flux,fluxerr,format='(f,f,f,f,f,f,f,f,f,f,f,f)',/silent
+  olc=create_struct('time',0.,'tbin',0.,'tstart',0.,'tstop',0.,'rate',0.,'rateerr',0.,$
+                    'mag',0.,'magerr',fltarr(2),'flux',0.,'fluxerr',0.,$
+                    'filter','')
+  
+  olc=replicate(olc,n_elements(time))
+  olc.time=time
+  olc.tbin=timebin
+  olc.tstart=olc.time-olc.tbin/2.
+  olc.tstop=olc.time+olc.tbin/2.
+  olc.rate=rate
+  olc.rateerr=raterr
+  olc.mag=mag
+  olc.magerr[0]=magerr1
+  olc.magerr[1]=magerr2
+  olc.flux=flux
+  olc.fluxerr=fluxerr
+
+  readcol,'composite_lc/Normalized_ground_UVOT_FINAL2.txt',lines,delim='@',format='(a)',/silent
+  vpos=strpos(lines,'!')
+  w=where(vpos ne -1,nw)
+  filters=lines[w]
+  for i=0,nw-1 do begin 
+     stpos=strpos(filters[i],'starts')
+     filters[i]=strmid(filters[i],1,stpos-1)
+     stpos=strpos(filters[i],'based ')
+     if stpos ne -1 then $
+        filters[i]=strmid(filters[i],stpos+6,12)
+     stpos=strpos(filters[i],'data')
+     if stpos ne -1 then filters[i]=strmid(filters[i],0,stpos)
+     stpos=strpos(filters[i],'(not')
+     if stpos ne -1 then filters[i]=strmid(filters[i],0,stpos)
+     
+  endfor
+  w=where(filters ne '')
+  filters=filters[w]
+
+  for i=0,n_elements(filters)-1 do begin 
+     fpos=strpos(filters[i],'band')
+     wf=where(fpos ne -1,nwf)
+     if nwf gt 0 then begin
+        filters[i]=strmid(filters[i],0,fpos-1)
+     endif 
+  endfor
+  
+  nolc=n_elements(olc)
+  time=olc[0:nolc-1].time-olc[1:*].time
+  w=where(time gt 0,nw)
+  for i=0,nw do begin
+     if i eq 0 then olc[0:w[i]].filter=filters[i]; else $
+;        olc[w[i-1]+1:w[i]].filter=filters[i]
+     if i gt 0 and i lt nw then olc[w[i-1]+1:w[i]].filter=filters[i]
+     if i eq nw then olc[w[i-1]+1:*].filter=filters[i]
+;     print,filters[i]
+  endfor 
+  
+  w=where(olc.time ne 0)
+  olc=olc[w]
+  w=where(strtrim(olc.filter,2) ne 'UVOT white band' or (strtrim(olc.filter,2) eq 'UVOT white band' and olc.time gt 1000))
+  olc=olc[w]
+  mwrfits,olc,'~/Desktop/GRB080319B/composite_lc/Normalized_ground_UVOT_FINAL2.fits',/create
+
+  xlog=1 & ylog=1
+  
+;  ufilter=olc[uniq(olc.filter)].filter
+  ufilter=filters
+  nu=n_elements(ufilter)
+  
+;  color=[!red,!blue,!green,!orange,!magenta,!cyan,!purple,!yellow,!grey,!pink]
+;  color=[color,color,color]
+  
+  vlam=5402e-8                  ;cm
+  c=3e10 ;cm/s
+  h=4.1356692d-18                ;kev s
+  veng=h*c/vlam
+  ;;KW
+  kwarb=1.e4
+  erg2mj=1d26
+  kweffreq=651. ;keV
+;  norm=erg2mj/((7.e6-20000)/4.13566733d-15)*kwarb
+  kwnorm=erg2mj*h/kweffreq
+  kwlc=create_struct('time',0.,'tbin',0.,'tstart',0.,'tstop',0.,'ctr',0.,'ctrerr',0.)
+  readcol,'composite_lc/GRB080319B_KW_64ms_flux.dat',tkw,tbat,flux,err1,err2,err,format='(f,f,f,f,f,f)'
+  kwlc=replicate(kwlc,n_elements(tbat))
+  kwlc.time=tbat
+  kwlc.ctr=flux*1e-6*kwnorm
+  kwlc.ctrerr=err*1e-6*kwnorm
+  w=where(kwlc.ctr-kwlc.ctrerr gt 1e-5)
+  kwlc=kwlc[w]
+  
+  xrtarb=40.
+  xrteffreq=2d
+;  x=erg2mj/((1e4-300.)/4.13566733d-15)*xrtarb
+  x=erg2mj*h/xrteffreq*xrtarb
+;  x=60612.
+;  x=1e23*1e-3 ;;erg to mJ
+  xrt=[wt,pc]
+  wbef=where(lc[bbat].time lt 100)
+  waf=where(lc[bbat].time gt 100)
+  print,x
+
+  readcol,'composite_lc/wsrt.dat',epoch,telescope,freq,deltat,deltatmid,integ,flux,gcn,format='(a,a,f,a,f,a,a,a)',skip=2,delim=','
+  nr=n_elements(epoch)
+  rlc=create_struct('time',0.,'tstart',0.,'tstop',0.,'telescope','','freq',0.,'flux',0.,'fluxerr',0.)
+  rlc=replicate(rlc,nr)
+  day=86400.
+  rx=1e-3
+  for i=0,nr-1 do begin
+     sdel=float(str_sep(deltat[i],' - '))
+     rlc[i].tstart=sdel[0]*day
+     rlc[i].tstop=sdel[1]*day
+     rlc[i].time=deltatmid[i]*day
+     rlc[i].telescope=telescope[i]
+     rlc[i].freq=freq[i]
+     lpos=strpos(flux[i],'<')
+     if lpos ne -1 then begin 
+        rlc[i].flux=float(strmid(flux[i],lpos+1,6))*rx
+        rlc[i].fluxerr=-1
+     endif else begin 
+        fsep=str_sep(flux[i],' +/- ')
+        rlc[i].flux=fsep[0]*rx
+        rlc[i].fluxerr=fsep[1]*rx
+     endelse 
+  endfor 
+
+;;   blc=create_struct('time',0.,'timebin',0.,'tstart',0.,'tstop',0.,$
+;;                     'mag',0.,'magerr',0.,'flux',0.,'fluxerr',0.,$
+;;                     'telescope','','filter','')
+;;   readcol,'bloom/kait.txt',ktime,kfilter,kexp,kmag,kmagerr,kflux,kfluxerr,delim='&',format='(f,a,f,f,f,f,f)',skip=1
+;;   nk=n_elements(ktime)
+;;   readcol,'bloom/nickel.txt',ntime,nfilter,nexp,nmag,nmagerr,nflux,nfluxerr,delim='&',format='(f,a,f,f,f,f,f)'
+;;   nn=n_elements(ntime)
+;;   readcol,'bloom/pairitel.txt',ptime,pfilter,pexp,pmag,pmagerr,pflux,pfluxerr,delim='&',format='(f,a,f,f,f,f,f)'
+;;   np=n_elements(ptime)
+;;   blc=replicate(blc,nk+nn+np)
+;;   blc.time=[ktime,ntime,ptime]
+;;   blc.timebin=[kexp,nexp,pexp]
+;;   blc.tstart=blc.time-blc.timebin/2.
+;;   blc.tstop=blc.time+blc.timebin/2.
+;;   blc.mag=[kmag,nmag,pmag]
+;;   blc.magerr=[kmagerr,nmagerr,pmagerr]
+;;   blc.flux=[kflux,nflux,pflux]*6e-4
+;;   blc.fluxerr=[kfluxerr,nfluxerr,pfluxerr]*6e-4
+;;   blc.telescope=[replicate('kait',nk),replicate('nickel',nn),replicate('pairitel',np)]
+;;   blc.filter=[kfilter,nfilter,pfilter]
+  
+  ;;;;LETS GET PLOTTING!
+  if keyword_set(ps) then begplot,name='composite_lc/composite_lc.eps',/color,/land,font=font,/encaps,/cmyk
+  
+  simpctable
+  ;;LOG PLOTS
+  plot,xrange,yrange,xlog=xlog,ylog=ylog,yrange=yrange,yminor=9,/nodata,xrange=xrange,ytickinterval=1,xtitle='Time since BAT trigger (s)',ytitle='Flux Density (mJy)',/xsty,xminor=9,ytickf='loglabels',xtickf='loglabels',xmargin=[15,0];,/iso
+  oplot,kwlc.time,kwlc.ctr*kwarb,color=!grey50
+;  oploterror,kwlc.time,kwlc.ctr*kwarb,kwlc.ctrerr*kwarb,color=!grey50,/nohat,errcolor=!grey50,psym=3
+;  colors=[!p.color,!green,!magenta,!forestgreen,!navyblue,!blue,!cyan,!purple,!salmon,!red,!orange,!darkred,!violet,!firebrick,!midnightblue,!turquoise,!seagreen,!orangered]
+;  colors=[!hotpink,!cyan,!purple,!violet,!salmon,!magenta,!navyblue,!darkred,!orange,!firebrick,!orangered,!green,!forestgreen,!royalblue,!turquoise,!seagreen]
+  
+  !purple=!grey80
+  !cyan=!grey70
+  !green=!grey50 
+  colors=[!purple,!purple,!purple,!purple,!cyan,!cyan,!cyan,!purple,!purple,!purple,!purple,!purple,!purple,!green,!green,!green]
+  
+  j=[0,1,2,3,7,8,9,10,11,12,13,14,15,4,5,6]
+  for k=0,nu-1 do begin 
+    i=j[k] 
+     w=where(olc.filter eq ufilter[i]) ; and olc.ctrerr/olc.ctr le 0.6 and olc.ctr-olc.ctrerr gt 0)
+     oploterror,olc[w].time,olc[w].flux,olc[w].tbin,olc[w].fluxerr,psym=3,/nohat,color=colors[i],errcolor=colors[i]
+     
+  endfor 
+  
+;  oploterror,olc.time,olc.flux,olc.tbin,olc.fluxerr,psym=3,color=!green,errcolor=!green,/nohat
+  
+  oploterror,lc[bbat[wbef]].time,lc[bbat[wbef]].src_rate*x,lc[bbat[wbef]].src_rate_err*x,/nohat,psym=3;,color=!yellow,errcolor=!yellow
+  oploterror,lc[bbat[waf]].time,lc[bbat[waf]].src_rate*x,lc[bbat[waf]].src_rate_err*x,/nohat,psym=3;,color=!yellow,errcolor=!yellow
+  for i=0,n_elements(lc[bbat])-1 do oplot,[lc[bbat[i]].tstart,lc[bbat[i]].tstop],[lc[bbat[i]].src_rate,lc[bbat[i]].src_rate]*x;,color=!yellow
+  !blue=!grey40
+  !red=!grey30
+  oploterror,lc[xrt].time,lc[xrt].src_rate*x,lc[xrt].src_rate_err*x,psym=3,/nohat,color=!blue,errcolor=!blue
+  for i=0,n_elements(lc[xrt])-1 do oplot,[lc[xrt[i]].tstart,lc[xrt[i]].tstop],[lc[xrt[i]].src_rate,lc[xrt[i]].src_rate]*x,color=!blue
+  
+  ;;;PLOT RADIO
+  wrnul=where(rlc.fluxerr ne -1,nwrnul)
+  wrul=where(rlc.fluxerr eq -1,nwrul)
+  
+  wsrt=wrnul[where(strtrim(rlc[wrnul].telescope,2) eq 'WSRT',nwsrt)]
+;  ata=wrul[where(strtrim(rlc[wrul].telescope,2) eq 'ATA')]
+  vla=wrnul[where(strtrim(rlc[wrnul].telescope,2) eq 'VLA')]
+ 
+  oploterror,rlc[wsrt].time,rlc[wsrt].flux,rlc[wsrt].fluxerr,color=!red,errcolor=!red,/nohat,psym=3
+  for i=0,nwsrt-1 do oplot,[rlc[wsrt[i]].tstart,rlc[wsrt[i]].tstop],[rlc[wsrt[i]].flux,rlc[wsrt[i]].flux],color=!red
+  
+  ;;plot UP LIM
+  plotsym,1,2,thick=3
+  wsrt=wrul[where(strtrim(rlc[wrul].telescope,2) eq 'WSRT',nwsrt)]
+  oplot,rlc[wsrt].time,rlc[wsrt].flux,color=!red,psym=8
+  for i=0,nwsrt-1 do oplot,[rlc[wsrt[i]].tstart,rlc[wsrt[i]].tstop],[rlc[wsrt[i]].flux,rlc[wsrt[i]].flux],color=!red
+
+;  plots,rlc[ata].time,rlc[ata].flux,color=!red,psym=8
+;  oplot,[rlc[ata].tstart,rlc[ata].tstop],[rlc[ata].flux,rlc[ata].flux],color=!red
+  oploterror,rlc[vla].time,rlc[vla].flux,rlc[vla].fluxerr,color=!red,errcolor=!red,/nohat
+  oplot,[rlc[vla].tstart,rlc[vla].tstop],[rlc[vla].flux,rlc[vla].flux],color=!red
+  !magenta=!grey20
+  !orange=!grey10
+  ;;plot mm
+  oploterror,6.3e4,0.41,0.3e4,0.12,errcolor=!magenta,psym=3,/nohat
+  
+  ;;plot Spitzer
+  oploterror,2.22e4,3.57e-02,0.2e4,3.9e-03,errcolor=!orange,psym=3,/nohat
+  
+;  legend,['Konus-Wind (20 keV-7 MeV)','Swift-BAT (15-350 keV)','Swift-XRT (0.3-10 keV)','TORTORA-V','Pi of the Sky','UVOT-Wh','UVOT-v','UVOT-b','UVOT-u','UVOT-w1','UVOT-m2','UVOT-w2','REM-H','REM-I','Faulkes-I','REM-J','VLT-J','REM-K','VLT-K','Faulkes-SDSS-r','REM-R''Radio'],box=0,/top,/right,textcolor=[!grey50,!yellow,!blue,!green,!magenta,!p.color,!forestgreen,!navyblue,!blue,!cyan,!purple,!salmon,!red,!orange,!darkred,!violet,!firebrick,!midnightblue,!turquoise,!seagreen,!orangered,!red],charsize=1.
+  
+;  legend,['Konus-Wind (20 keV-7 MeV)','Swift-BAT (15-350 keV)','Swift-XRT (0.3-10 keV)','TORTORA-V','Pi of the Sky','UVOT-Wh','UVOT-v','UVOT-b','UVOT-u','UVOT-w1','UVOT-m2','UVOT-w2'],box=0,/top,/center,textcolor=[!grey50,!yellow,!blue,!green,!magenta,!p.color,!forestgreen,!navyblue,!blue,!cyan,!purple,!salmon],charsize=1.
+;  legend,['REM-H','REM-I','Faulkes-I','REM-J','VLT-J','REM-K','VLT-K','Faulkes-SDSS-r','REM-R','WSRT','ATA','VLA'],box=0,/top,/right,textcolor=[!red,!orange,!darkred,!violet,!firebrick,!midnightblue,!turquoise,!seagreen,!orangered,!hotpink,!lightgreen,!darkred],charsize=1.
+;  legend,['Konus-Wind (20 keV-7 MeV)','Swift-BAT (15-350 keV)','Swift-XRT (0.3-10 keV)','Radio'],/top,/center,box=0,textcolor=[!grey50,!black,!blue,!red],charsize=1.5
+  
+  upos=strpos(ufilter,'UVOT')
+  w=where(upos ne -1,nw)
+  ufilt=ufilter
+  for i=0,nw-1 do ufilt[i]=strmid(ufilter[i],upos[i]+5,10)
+
+;  legend,['Konus-Wind','Swift-BAT','Swift-XRT','Radio','mm',ufilt[13:*]],/top,/center,box=0,textcolor=[!grey50,!black,!blue,!red,!dodgerblue,colors[13:*]],charsize=1.8
+;  legend,[ufilt[0:12]],/top,/right,box=0,textcolor=[colors[0:12]],charsize=1.8
+;  legend,[ufilt[6:12]],/top,/right,box=0,textcolor=[colors[6:12]],charsize=1.7
+;  legend,[ufilt[0:5]],/top,/center,box=0,textcolor=[colors[0:5]],charsize=1.7
+  
+  legend,[!tsym.gamma+'-ray (KW) ',!tsym.gamma+'-ray (BAT)','X-ray  ','UV  ','Optical  ','NIR  ','IR  ','mm  ','Radio  '],/top,/right,box=0,textcolor=[!grey50,!black,!blue,!cyan,!purple,!green,!orange,!magenta,!red],charsize=2,spacing=2.4
+  
+  
+  if keyword_set(ps) then endplot  
+
+  ;;;PLOTS STOLEN BLOOM
+;  kait=where(blc.telescope eq 'kait')
+;  nickel=where(blc.telescope eq 'nickel')
+;  pairitel=where(blc.telescope eq 'pairitel')
+;  oploterror,blc[kait].time,blc[kait].flux,blc[kait].timebin/2.,blc[kait].fluxerr,psym=3,errcolor=!purple,/nohat
+;  oploterror,blc[nickel].time,blc[nickel].flux,blc[nickel].timebin/2.,blc[nickel].fluxerr,psym=3,errcolor=!violet,/nohat
+;  oploterror,blc[pairitel].time,blc[pairitel].flux,blc[pairitel].timebin/2.,blc[pairitel].fluxerr,psym=3,errcolor=!magenta,/nohat
+  
+;  kwlc1=create_struct('time',0.,'tbin',0.,'tstart',0.,'tstop',0.,'ctr',0.,'ctrerr',0.)
+;  readcol,'composite_lc/GRB080319B_KW_256ms.dat.txt',tkw,tbat,flux1,flux2,flux3,fluxsum,err1,err2,err3,bgsum,format='(d,d,d,d,d,d,d,d,d,d)',skip=1
+;  kwlc1=replicate(kwlc1,n_elements(tbat))
+;  kwlc1.time=tbat
+;  kwlc1.ctr=flux3;err3;bgsum
+  
+  kwlc2=create_struct('time',0.,'tbin',0.,'tstart',0.,'tstop',0.,'ctr',0.,'ctrerr',0.)
+  readcol,'composite_lc/GRB080319B_KW_64ms.dat.txt',tkw,tbat,flux1,flux2,flux3,fluxsum,err1,err2,err3,bgsum,format='(d,d,d,d,d,d,d,d,d,d)',skip=1
+  kwlc2=replicate(kwlc2,n_elements(tbat))
+  kwlc2.time=tbat
+  kwlc2.ctr=bgsum;*1e-6*kwnorm
+;  kwlc2.ctrerr=errsum;*1e-6*kwnorm
+  w=where(kwlc2.ctr-kwlc2.ctrerr gt 1e-5)
+  kwlc2=kwlc2[w]
+  
+  kwlc=create_struct('time',0.,'tbin',0.,'tstart',0.,'tstop',0.,'ctr',0.,'ctrerr',0.)
+  readcol,'composite_lc/GRB080319B_KW_64ms_flux.dat',tkw,tbat,flux,err1,err2,err,format='(f,f,f,f,f,f)'
+  kwlc=replicate(kwlc,n_elements(tbat))
+  kwlc.time=tbat
+  kwlc.ctr=flux
+  kwlc.ctrerr=err
+  w=where(kwlc.ctr-kwlc.ctrerr gt 1e-5)
+  kwlc=kwlc[w]
+  
+  k=get_kbrd(10)
+  xrange=[-5,80]
+  yrange=[0,600]
+  
+  if keyword_set(ps) then begplot,name='~/Desktop/GRB080319B/composite_lc/lin_lin_lc.eps',/land,font=font,/encaps,/cmyk,/color
+  plot,xrange,yrange,yrange=yrange,/nodata,xrange=xrange,xtitle='Time since BAT trigger (s)',xsty=1,xmargin=[15,8],ymargin=[4,4],ytitle='KW Count Rate (counts/64ms)',ysty=4,ytick_get=ytick_get
+  axis,xrange[0],yaxis=0,ytickname=ytickname,/data,yticks=n_elements(ytick_get)-1,ytitle='KW Count Rate (counts/64ms)',yminor=10
+  
+  oplot,kwlc2.time,kwlc2.ctr,thick=2;,color=!grey50
+  
+  yrange=[0,3e4]
+  plot,xrange,yrange,yrange=yrange,xrange=xrange,ysty=4,ytick_get=ytick_get,xsty=1,xmargin=[15,8],ymargin=[4,4],/nodata,/noerase;,yticks=4
+;  for i=0,nu-1 do begin 
+;     w=where(olc.filter eq ufilter[i])
+  w=where(strtrim(olc.filter,2) eq 'V' and olc.time lt 100)
+  oploterror,olc[w].time,olc[w].flux,olc[w].tbin,olc[w].fluxerr,/nohat,psym=3,errcolor=!grey50;red
+  pi=where(olc[w].tbin ge 5)
+  oploterror,olc[w[pi]].time,olc[w[pi]].flux,olc[w[pi]].tbin,olc[w[pi]].fluxerr,/nohat,psym=3,errcolor=!grey50;blue
+;  endfor 
+;  ytickname=['0','1'+!tsym.times+'10!U4!N','2'+!tsym.times+'10!U4!N','3'+!tsym.times+'10!U4!N','4'+!tsym.times+'10!U4!N']
+  f=ytick_get/1e3
+  print,f
+;  f=[f,f-5]
+;  f=sort(f)
+  ytickname=ntostr(fix(f))
+  axis,xrange[1],yaxis=1,ytickname=ytickname,/data,yticks=n_elements(ytick_get)-1,yminor=10,ytickv=ytick_get,color=!grey50;red
+  xyouts,86,19000,'Flux Density (Jy)',/data,orien=270,color=!grey50;red
+  
+;  mag=reverse((findgen(12)/2.)+5)
+  mag=[5,5.5,6,7,8,9]
+  mmax=10^(-0.4*5.35)
+  f=10^(-0.4*mag)*3.631e6
+  
+;  f=(f-min(f))/(max(f)-min(f))*3.5e+04
+  ytickname=numdec(mag,1)
+  axis,91,yaxis=1,ytickname=ytickname,/data,yticks=n_elements(mag)-1,ytickv=f,color=!grey50,yminor=5
+  xyouts,97,18000,'Magnitude',/data,orien=270,color=!grey50;red
+  
+  legend,['Konus-Wind (18-1160 keV)','TORTORA','Pi of the Sky'],box=0,textcolor=[!p.color,!grey50,!grey50],/top,/right
+  
+  
+;  oploterror,olc[w].time,olc[w].flux,olc[w].tbin,olc[w].fluxerr,psym=3,/nohat,color=colors[i],errcolor=!red
+
+;  plot,kwlc.time,kwlc.ctr,color=!grey50,/noerase,xrange=xrange,yrange=[0,600],ysty=4,ytick_get=ytick_get,xsty=4,xmargin=[10,10]
+;  print,ytick_get
+;  axis,xrange[1],yaxis=1,ytickname=[' ',ntostr(fix(ytick_get[1:*]))],/data,color=!grey50,yticks=n_elements(ytick_get)-1,yminor=9,ytitle='Flux (mJy)'
+  
+  if keyword_set(ps) then endplot
+  stop
+  
+  
+  goto,skipin
+  ;;INSET LINEAR
+  xlog=0
+  yrange=[1e2,1e6]
+  xrange=[-5,80]
+  plot,xrange,yrange,xlog=xlog,ylog=ylog,yrange=yrange,yminor=9,/nodata,xrange=xrange,ytickinterval=1,xtitle='Time since BAT trigger (s)',ytitle='Flux Density (mJy)',/xsty,position=[0.22,0.2,0.53,0.5],/noerase,charsize=1. ;ytickname=['10!U-4!N','10!U-3!N','10!U-2!N','10!U-1!N']
+  oploterror,kwlc.time,kwlc.ctr,kwlc.ctrerr,color=!grey50,/nohat,errcolor=!grey50,psym=3
+;;   for i=0,nu-1 do begin 
+;;      w=where(olc.source eq usource[i])
+;;      norm=1.                    ;(i+1.)/nu*1.
+;;      oploterror,olc[w].time,olc[w].ctr*norm,olc[w].tbin,olc[w].ctrerr*norm,psym=3,/nohat,color=colors[i],errcolor=colors[i]
+;;   endfor 
+;;  oploterror,olc.time,olc.flux,olc.tbin,olc.fluxerr,psym=3,color=!green,errcolor=!green,/nohat
+  
+  for i=0,nu-1 do begin 
+     w=where(olc.filter eq ufilter[i]) ; and olc.ctrerr/olc.ctr le 0.6 and olc.ctr-olc.ctrerr gt 0)
+     oploterror,olc[w].time,olc[w].flux,olc[w].tbin,olc[w].fluxerr,psym=3,/nohat,color=colors[i],errcolor=colors[i]
+  endfor 
+  
+  
+  oploterror,lc[bbat[wbef]].time,lc[bbat[wbef]].src_rate*x,lc[bbat[wbef]].src_rate_err*x,/nohat,psym=3;,color=!yellow,errcolor=!yellow
+  oploterror,lc[bbat[waf]].time,lc[bbat[waf]].src_rate*x,lc[bbat[waf]].src_rate_err*x,/nohat,psym=3;,color=!yellow,errcolor=!yellow
+  for i=0,n_elements(lc[bbat])-1 do oplot,[lc[bbat[i]].tstart,lc[bbat[i]].tstop],[lc[bbat[i]].src_rate,lc[bbat[i]].src_rate]*x;,color=!yellow
+  
+  oploterror,lc[xrt].time,lc[xrt].src_rate*x,lc[xrt].src_rate_err*x,psym=3,/nohat,color=!blue,errcolor=!blue
+  for i=0,n_elements(lc[xrt])-1 do oplot,[lc[xrt[i]].tstart,lc[xrt[i]].tstop],[lc[xrt[i]].src_rate,lc[xrt[i]].src_rate]*x,color=!blue
+  skipin:
+  
+;  multiplot2,/reset,/default
+;  cd,'..'
+
+  
+  stop
+  return
+end 

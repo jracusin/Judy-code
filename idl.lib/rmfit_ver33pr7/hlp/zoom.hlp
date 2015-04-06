@@ -1,0 +1,69 @@
+"Zoom"
+      Commands that affect the viewing region of the data displays. 
+      When the resolution of your data is great, you may have difficulty 
+      selecting a single bin with the cursor in the manner described under the 
+      commands "Select Source" and "Rebin". To ease the selection of bins, you 
+      may reduce the number of bins displayed with the "Zoom" command. 
+
+      "----- TEAROFF"
+            Separates the "Zoom" subcommand buttons in another window so that
+            you can choose the commands without going through the pull-down 
+            menu.
+            
+      "Zoom"
+            Select "Zoom" and RMFIT will wait for you to select two points on 
+            the plot with the mouse. These two points should be the diagonal 
+            corners of a box which includes all the data you wish to display.
+            To aid selection, the lower left corner of the plot will display the 
+            current cursor position. In addition, after the first point is
+            selected, a dotted box will follow the cursor, as an indication of 
+            the region of the plot which will be expanded.  After you select the 
+            second point, RMFIT will redraw the plot.  If you wish to exit the 
+            command without redrawing, select a point on the plot to the left of 
+            the left vertical axis (the message in the lower left-hand corner of 
+            the plot window reads "EXIT").  If you wish to "RESET" and start 
+            over, select a point on the plot to the right of the right vertical 
+            axis.  This will reset the plot to the original range that you   
+            started with.  You can also "RESET to Default Range" by selecting a 
+            point in the upper margin.  The plot will revert to the default 
+            selection (the entire range), and you can start all over.  
+            You may enter selections through the keyboard by clicking in the 
+            lower margin ("Numerical Entry").  If you click in this area of the 
+            plot, RMFIT will prompt you to type two numbers to bound the 
+            selection interval.  When you "Accept", the selected interval will 
+            be the smallest one that encompasses the bin(s) containing the 
+            numbers entered; whereas, "Accept Exact" will take the exact values 
+            for the interval boundaries.  
+            
+      "X Zoom"
+            This zoom takes effect only on the X-axis ranges.  When you select
+            "X Zoom", RMFIT will wait for you to select two points on the plot
+            with the mouse.  Once you select the first point, RMFIT shows a line
+            indicating your selection, and as soon as you select the second
+            point, RMFIT will redraw the plot.  "RESET", "RESET to Default
+            Range", "EXIT", and "Numerical Entry" follow the above descriptions.
+            
+      "Y Zoom"
+            This zoom takes effect only on the Y-axis ranges in the same manner
+            as "X Zoom" above.
+            
+      "Zoom In: Selection"
+            If you have previously made selections from the data, you can 
+            immediately jump to a view of the entire selection by choosing this 
+            command. This is the best method for switching between an overview 
+            of the entire dataset (see "Zoom out: Full Range" below) and your 
+            selected data. If you have not specifically made any selections, the 
+            default selection is the entire dataset, so for this case, the 
+            command is identical to the "Zoom out: Full Range" command. 
+            You can also use this command to see if there are any selection
+            regions outside the current view of the data. In the burst history 
+            plot, the command works on the selected source intervals, not on the 
+            selected background intervals. 
+       
+      "Zoom Out: Full Range"
+            When you have zoomed in on your data and you wish to display all of 
+            the data again, select the "Zoom out: Full range" entry.
+                  
+      "Full Screen"
+            Select this button to expand the plot to full screen size.  Click on
+            the plot to close the Full Screen window.

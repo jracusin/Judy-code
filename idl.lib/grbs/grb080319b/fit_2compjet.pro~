@@ -1,0 +1,98 @@
+@fit_functions
+pro fit_2compjet,ps=ps
+  
+  if keyword_set(ps) then begplot,name='xrt_2comp_fit.ps',/color,/land
+  lc=lcout2fits('correct_xrt_lc_rate.txt')
+  nlc=n_elements(lc)
+  w=where(lc.src_rate_err gt 0 and lc.time lt 1.8e6,nw); and lc.time gt 80,nw)
+  
+  ploterror,lc[w].time,lc[w].src_rate,lc[w].src_rate_err,/nohat,psym=3,/xlog,/ylog,xtitle='Time since BAT trigger (s)',ytitle='Count Rate (0.3-10 keV) (counts s!U-1!N)',yminor=9,yticks=10
+  
+  for i=0,nw-1 do begin
+     oplot,[lc[w[i]].tstart,lc[w[i]].tstop],[lc[w[i]].src_rate,lc[w[i]].src_rate]
+  endfor 
+  
+;  p=[1,3000.,1.5,2.5,1.,1.2,1.]
+;  p=[1.e5,1.5,2000.,2.5,10,1.2,9.e5,4.]
+
+;  pname=['norm1','alpha1','tb1','alpha2','norm2','alpha3','tb2','alpha4']
+  p=[50,1e-2,5000,9e5,1.5,2.5,1,2.5,1,1]*1d
+  pname=['norm1','norm2','tb1','tb2','alpha1','alpha2','alpha3','alpha4','s1','s2']
+  np=n_elements(p)
+  
+  parinfo = parinfo_struct(np)
+  parinfo.value=p
+  parinfo.parname=pname
+  
+  goto,skip
+  parinfo[0].limits=[0,0] ;;norm1
+  parinfo[0].limited=[1,0]
+  parinfo[1].limits=[1,0] ;;pow1
+  parinfo[1].limited=[1,0]
+  parinfo[2].limits=[1000,0] ;;tb1
+  parinfo[2].limited=[1,0]
+  parinfo[3].limits=[1,0] ;;pow2
+  parinfo[3].limited=[1,0]
+  parinfo[4].limits=[0,0] ;;;norm2
+  parinfo[4].limited=[1,0]
+  parinfo[5].limits=[0,0] ;;pow3
+  parinfo[5].limited=[1,0]
+  parinfo[6].limits=[1e5,0] ;;tb2
+  parinfo[6].limited=[1,0]
+  parinfo[7].limits=[1,0] ;;pow4
+  parinfo[7].limited=[1,0]
+  skip:
+  
+  ;;norm
+  parinfo[0].limits=[0,0] ;;norm > 0
+  parinfo[0].limited=[1,0]
+  parinfo[1].limits=[0,0]
+  parinfo[1].limited=[1,0]
+  ;;tbreak
+  parinfo[2].limits=[100,0]
+  parinfo[2].limited=[1,0]
+  parinfo[3].limits=[1e4,max(lc[w].time)]
+  parinfo[3].limited=[1,1]
+  ;;alpha
+  parinfo[4].limits=[0,0]
+  parinfo[4].limited=[0,0]
+  parinfo[5].limits=[0,0]
+  parinfo[5].limited=[0,0]
+  parinfo[6].limits=[0,0]
+  parinfo[6].limited=[1,0]
+  parinfo[7].limits=[2,0]
+  parinfo[7].limited=[1,0]
+  ;;smooth
+  parinfo[8].limits=[0,0]
+  parinfo[8].limited=[1,0]
+  parinfo[9].limits=[0,0]
+  parinfo[9].limited=[1,0]
+  
+  tt=dblarr(2,nw)
+  tt[0,*]=lc[w].tstart
+  tt[1,*]=lc[w].tstop
+  time=lc[w].time
+  
+  ;;;not doing int model!
+  newp=mpfitfun('double_bknpow',time,lc[w].src_rate,lc[w].src_rate_err,p,yfit=yfit,perror=perror,nprint=100,parinfo=parinfo)
+  
+  yfit=double_bknpow(time,newp,f1,f2)
+  oplot,time,yfit,color=!red
+  oplot,time,f1,color=!blue;,line=1
+  oplot,time,f2,color=!green;,line=2
+  
+;  conf_error,tt,lc[w].src_rate,lc[w].src_rate_err,newp,perror,'int_double_bknpow',perror2,pvarunit,bestchisq,yfits,log=log,pmin0=pmin0 ; else $
+  conf_error,time,lc[w].src_rate,lc[w].src_rate_err,newp,perror,'double_bknpow',perror2,pvarunit,bestchisq,yfits,log=log,pmin0=pmin0,/doplot
+  
+  chisq=total(((lc[w].src_rate-yfit)/lc[w].src_rate_err)^2)
+  dof=nw-8
+  
+;  b=[1,2,3,5,6,7]
+  b=[2,3,4,5,6,7,8,9]
+  legend,[pname[b]+'='+sigfig(newp[b],3)+'!S!E+'+sigfig(perror2[1,b],3)+'!R!I-'+sigfig(perror2[0,b],3),!tsym.chi+'!U2!N/dof='+sigfig(chisq,5)+'/'+ntostr(dof)+'='+sigfig(chisq/dof,3)],box=0,/top,/right
+  
+  if keyword_set(ps) then endplot
+  
+  stop
+  return
+end 

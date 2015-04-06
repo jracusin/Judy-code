@@ -1,0 +1,132 @@
+
+MFIT subroutine / function calling tree.
+
+M. S. Briggs, 2009 May 4
+
+
+IDL calls sharable execuable MFIT.
+
+The entry point from IDL is provided by mfit_idl.c.
+
+mfit_idl.c calls mfit_interface.c, which calls
+                  gsl_set_error_handler_off
+                  and the Fortran 95 entry point MFIT:
+
+
+MFIT calls: 
+     BitMask_to_String 
+     M_TEST_INPUT   
+     M_ARG_DUMP       calls Open_DebugOutput_File
+     M_BATCH_GUESS  
+     M_DRM_NONZERO  
+     MPHOT_EVAL_LIST  calls  M_RES_FRAC
+     MPHOT_EVAL_OUT calls Open_DebugOutput_File
+     MGET_DATA_CR_VARI 
+     M_MODEL_PROP   
+     M_DO_FIT        calls: 
+             M_USE_PHOTBINS 
+             M_PVALS     
+             M_LFIT         calls:
+                      M_PHOTONS_MODEL -> see below
+                      MPHOTS_TO_CNTS  
+                      solve_linear_system_with_gsl -> see below
+                      MGET_MODEL_CR_VARI 
+                      M_CALC_CHISQ 
+                      M_validate_matrix  calls gsl_finite
+                      M_validate_vector  calls gsl_finite
+                      Output_Condition_Number  calls 
+                                eigenvalues_symm_matrix_w_gsl -> see below
+                                gsl_finite
+                      
+             M_MRQMIN     calls:
+                      M_MRQCOF_CHISQ     call:
+                                M_USE_PHOTBINS    
+                                M_MODEL_DERIV      calls:
+                                         M_PHOTONS_MODEL -> see below
+                                         MPHOTS_TO_CNTS      
+                                M_PHOTONS_MODEL -> see below
+                                MPHOTS_TO_CNTS    
+                                MGET_MODEL_CR_VARI
+                                M_CALC_CHISQ      
+                      M_MRQCOF_LOGLIKE   calls:
+                                M_USE_PHOTBINS    
+                                M_MODEL_DERIV     calls:
+                                         M_PHOTONS_MODEL -> see below
+                                         MPHOTS_TO_CNTS      
+                                M_PHOTONS_MODEL -> see below
+                                MPHOTS_TO_CNTS    
+                                M_CALC_LOGLIKE  calls gsl_sf_lnfact
+                      solve_linear_system_with_gsl -> see below
+                      M_validate_matrix  calls gsl_finite
+                      M_validate_vector  calls gsl_finite 
+                      Output_Condition_Number   calls
+                                         eigenvalues_symm_matrix_w_gsl -> see below
+                                         gsl_finite
+             invert_matrix_with_gsl -> see below
+                       
+     M_UNDETERMINED 
+     M_USE_PHOTBINS 
+     M_PLOT_SETUP    calls:
+             M_PHOTONS_MODEL -> see below
+             MPHOTS_TO_CNTS   
+             MGET_MODEL_CR_VARI
+             M_USE_PHOTBINS   
+     M_DOF
+     M_CALC_CHISQ
+     M_CALC_LOGLIKE  calls gsl_sf_lnfact
+     M_OUTPUT    calls
+             M_COVAR_OUT   calls 
+                   Open_DebugOutput_File
+             M_RESULTS_1_OUT    calls M_EFORMAT, gsl_cdf_chisq_Q, Open_DebugOutput_File
+             M_RESULTS_2_OUT    calls M_EFORMAT, Open_DebugOutput_File
+     
+
+
+-------------------
+
+invert_matrix_with_gsl calls
+
+solve_linear_system_with_gsl calls
+
+eigenvalues_symm_matrix_w_gsl calls 
+
+-------------------
+
+M_PHOTONS_MODEL calls:
+
+               M_BRAINERD
+               
+               M_IS_CROSS
+               
+               M_IS_Z_CROSS
+               
+               MFIT_USER_FUNC_A
+               
+               MFIT_USER_FUNC_B
+                    
+               M_SOONG
+               
+               M_TANAKA
+               
+               M_VBREMSS  calls GAUNT  calls KURUCZ
+               
+               gsl_sf_erfc
+               
+               integrate_using_gsl calls
+                                   gsl_integration_workspace_alloc
+                                   gsl_integration_qags             calls
+                                                                    M_OTTB_INTG
+               
+               M_SUNYAEV calls 
+                        integrate_using_gsl calls
+                                            gsl_integration_workspace_alloc
+                                            gsl_integration_qags             calls
+                                                                             M_SUNY_INTG
+                                                                             
+               M_TITARCHUK calls 
+                        integrate_using_gsl calls
+                                            gsl_integration_workspace_alloc
+                                            gsl_integration_qags             calls
+                                                                             M_INTG1_TITARCHUK
+                                                                             M_INTG2_TITARCHUK
+                                                                             

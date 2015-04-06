@@ -1,0 +1,86 @@
+"Select Source"
+      To select only a portion of your data's energy channels or time bins, use 
+      the "Select Source" command. 
+      
+      "----- TEAROFF"
+            Separates the "Select Source" subcommand buttons in another window 
+            so that you can choose the commands without going through the 
+            pull-down menu.
+            
+      "Source Interactive"
+            When you choose "Source Interactive", RMFIT will wait for you to 
+            select a range of bins.
+            
+            Select the first bin in the range by positioning the cursor over the 
+            bin in the plot and pressing the mouse button.  Select the last bin 
+            in the same way. Numbers in the lower left-hand corner of the plot 
+            track the position of the mouse cursor, which can be used if a 
+            particular value is to be selected.  If you move the cursor below 
+            the bottom axis of the plot, the message in the lower left-hand 
+            corner of the plot will change to "Numerical Entry".  If you click 
+            the mouse button in this area of the plot, RMFIT will prompt you to 
+            type two numbers to bound the selection interval.   When you 
+            "Accept", the selected interval will be the smallest one that 
+            encompasses the bin(s) containing the numbers entered.  RMFIT will 
+            respond to the selection by displaying the actual values of the 
+            edges of the selected interval.  If you make a mistake and want to 
+            start over, move the cursor past the right-hand vertical axis of the 
+            plot, until the message in the lower left-hand corner of the plot 
+            reads, "Clear Selection", and press the mouse button.  This will 
+            clear ALL the selections that you have made.  
+            
+            After you select the two bins, RMFIT will move the vertical lines on 
+            the plot so that they bound the range of channels you have selected. 
+            You may continue to select ranges of bins by clicking on two bins on 
+            the plot, setting up additional non-overlapping (and possibly 
+            discontinuous) selections.  This may be useful when you want to 
+            compare the rates at one energy range with rates at other energies. 
+            You exit the command by selecting a point on the plot to the left of 
+            the left vertical axis, so that the message in the lower left-hand 
+            corner of the plot reads, "EXIT".   The selection(s) will be 
+            highlighted.   If you are working in the burst spectrum window, the 
+            rates in the selected channels are averaged to produce the history 
+            displayed in the burst history window when toggled.  
+                                     
+      "Source by Signal to Noise"
+      
+         *** This function is not yet implemented for the energy spectrum ***
+            
+            When you want to select only the time bins with the signal to noise 
+            ratio greater than a certain value, you can do so by choosing this
+            command.  After selecting the two bins as described in "Source
+            Interactive" above, it prompts you a box saying "Enter the sigma 
+            level above background" upon exiting the selection mode. The default  
+            sigma value is 5.5.  After you enter the value and click "OK", RMFIT 
+            selects the bins accordingly within the two bins specified priorly 
+            and highlights the selections.
+
+                          
+"Adjust Source"
+      You can adjust your selections with this command instead of re-selecting
+      them all over, when you want to make small changes to your selections.
+      
+      "----- TEAROFF"
+            Separates the "Adjust Source" subcommand buttons in another window 
+            so that you can choose the commands without going through the 
+            pull-down menu.
+            
+      "< Shift Selection"
+            The entire selected region moves over by one bin to the left. Very 
+            useful if one bin is selected and you want to see successive time 
+            histories of single energy channels.
+            
+      "> Shift Selection"
+            Shifts the ENTIRE selection one bin to the RIGHT.
+            
+      "< Left Selection"
+            Shifts only the LEFT boundary of the selection one bin to the LEFT.
+            
+      "> Left Selection"
+            Shifts only the LEFT boundary of the selection one bin to the RIGHT.
+       
+      "< Right Selection"
+            Shifts only the RIGHT boundary of the selection one bin to the LEFT.
+       
+      "> Right Selection"
+            Shifts only the RIGHT boundary of the selection one bin to the RIGHT.

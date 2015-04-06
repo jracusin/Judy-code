@@ -1,0 +1,209 @@
+SPECTRAL FITTING HELP
+
+<Spectral Fitting Commands>
+
+"Spectral Fitting:"
+    This command is the entry point to the FORTRAN/IDL spectral deconvolution
+    package MFIT.
+
+    When any of the options under "Fit Spectra" is selected, RMFIT will check
+    whether you have made a background model before continuing with any fitting
+    procedure. If you haven't, RMFIT will ask if you want to continue.
+    Also, if this is the first invocation of the "Fit Spectra" command for the
+    current FITS data file, RMFIT will search for a Detector Response Matrix
+    (DRM) file whose name is based upon the FITS data file's name (*.drm).  If
+    the file is not found, RMFIT will prompt you to enter the correct DRM file
+    name for the burst.
+
+    If you have more than one dataset loaded, RMFIT will ask you which ones you
+    would like to include in your fitting.  You will be asked to select the
+    desired datasets before each fitting.
+
+       "Fit One Spectrum"
+             When this option is selected, RMFIT will wait for you to select a
+             spectrum from each time history window by positioning the mouse
+             cursor on one of the time bins and clicking the (left) mouse button
+             once, and EXITing.  You may choose any combined Time Bin on the
+             window--it need not be part of a selected Source Interval.  The
+             background-subtracted spectrum corresponding to the time bin you've
+             selected in the burst history window will be used for spectral
+             analysis.
+
+       "Fit Interval"
+             Performs time-integrated fits of a selected time interval.  RMFIT
+             will wait for you to choose the time interval from each data set.
+             It is the user's responsibility to make sure the time intervals
+             match.  If there are no exactly matching intervals, the effective
+             area correction photon model ('40 Eff. Area Corr.') can be used
+             to normalize two or more data sets.
+
+       "Fit Selections"
+             This command gives the user access to selections of data without
+             having to do any extra effort.  It simply adds up ALL the currently
+             selected spectra into one, and enters MFIT.  For multiple data 
+             sets, the remark above concerning matching the time intervals 
+             applies.
+
+       "Batch Fit Selections"
+             Runs MFIT in `batch' mode, applying the currently selected photon
+             model (if any) to each of the spectra in the Source Interval
+             selection (highlighted selection in the burst history window).
+             Keep in mind that your selection may extend outside of the current
+             viewing window, possibly in several discontinuous regions, if you
+             have zoomed in for a closer look at one portion of the time 
+             history.  The parameters of the fits are stored for automatic 
+             display in the Fit Display window and for outputting to a file 
+             ("Fit Results:" command in the Fit Display) as requested.
+
+             In case no previously-selected photon model exists when the "Batch
+             Fit Selections" is chosen, RMFIT will ask you to select the photon
+             model(s).
+
+             When you have more than one dataset loaded, they must have the same
+             number of time bins in order for MFIT to perform the batch fit.
+             If the numbers of bins do not match, RMFIT will ask you whether you
+             would like RMFIT to correct it.  Choosing "Yes" will invoke
+             automatic rebinning of the datasets.  They will be rebinned to 
+             match the dataset with the least number of bins.  This option can 
+             fail, for a number of reasons; in this case, it may be necessary to 
+             go over each burst history and build the matching time intervals by 
+             hand.
+
+             When you do a batch fit, frequently the SNR ratios of the spectra
+             will differ greatly. (This problem can be avoided by using "Rebin"
+             -> "Signal to Noise", but binning the time bins to high SNR may 
+             make the time resolution inadequate.)
+             For some spectra of high SNR, the data will constrain the model so
+             that all of the model parameters are well-determined. Conversely,
+             for spectra of lower SNR the data may not sufficiently constrain 
+             the model to allow determination of all of the parameters.
+
+
+<Spectral Fitting with MFIT>
+
+The MFIT portion of RMFIT does forward-folding spectral fitting using a detector
+response matrix (DRM).  Since it is implemented in FORTRAN, its ``look and feel'' 
+is slightly different from the rest of RMFIT.  MFIT is reached by selecting one 
+of the "Spectral Fitting:" commands, as described above.  RMFIT will automatically 
+read in the DRM the first time a fit is requested.
+
+Fitting is done by the standard forward-folding technique.  A parameterized
+photon flux model is evaluated, the photon model is multiplied by the detector
+response matrix (DRM) to obtain the count rate model, and this count rate model
+is compared to the count rate data. The parameters of the photon flux model are
+varied so as to minimize the deviation between the count rate model and data,
+as determined by the chi^2 function. It is important to remember the fitting is
+done so as to try to match the counts observed by the detector. While spectral 
+values of the ``observed photon flux'' are output, these are calculated from the 
+more fundamental count rate data in a model-dependent manner.
+
+Because the photon flux model usually includes shape parameters which make the
+model nonlinear, the minimization is done via the Levenberg-Marquardt algorithm
+(see Numerical Recipes by Press et al.). One improvement that we have made is
+that chi^2 is evaluated with variances estimated from the model rather than from 
+the data.
+
+To fit the data , select one of the "Spectral Fitting:" commands. Most of them 
+will bring up the 'PhotonModel' dialog. Options on this dialog are available to 
+change the fitting behavior in a few selcte ways. The first option, "Photon Model
+Parameters:", is discussed below along with chosing the photon model. The second 
+optin, "Fitting Statistic:" gives three possible statistcal functions of merit 
+that can be used for evaluating the goodnes of fit to the data. In general, the 
+default option, "Chi^2", is a reasonable choice. Some data sets are extremely 
+sparse, having only a few source photons total; this is certainly the case for 
+most of the Fermi LAT observations of GRBs. Maximum likelihood methods, using 
+Poisson statistics should be used in this case. The "Likelihood" option returns 
+the value -2 log(likelihood) as the merit figure of each fit, which is the 
+standard way to represent likelihood statistics. In the limit of large numbers 
+of source counts, this should be roughhly equivalent to chi^2. Another common 
+representation is the "Cash" statistic, which is likelihood without some of the 
+numerical baggage carried along with the -2 log Likelihood representation. 
+
+The 'PhotonModel' dialog presents an option that controls whether the fitting 
+engine automatically fixes undetermined parameters during a Batch fit. A 
+parameter is considered to be undetermined when the uncertainty is of the order 
+of the value being fitted; sometimes, in this case, it is better to fix the 
+value of the parameter, since it can't be determined by the data. The two options 
+under "Undetermined Values in Batch Fit:" control this. The default behavior 
+is for MFIT to "Automatically Fix" undetermined parameters: for every model 
+parameter where the fitted values vary by a predetermined amount between fit 
+iterations MFIT will fix the parameter at the initial value and continue 
+fitting the other free parameters. The values that control how to determine 
+whether a parameter has become undetermined are contained in the file 
+'mfit_func.info', which is described in the documentation. The other choice, 
+"Leave Free", never fixes free parameters during a batch fit, leaving them to 
+float freely as the fit progresses. In most cases, the uncertainty associated 
+with this value leads to a large uncertainty in the flux. For Batch Fitting 
+associated with the determination of the duration and fluence, this becomes 
+quite a nuisance, so it is better to use the default option.
+
+The spectral model consists of a sum or product of model terms. The terms 
+consist of popular and/or physical spectral forms, such as a power law, a 
+``Comptonized'' spectrum, or a Black Body spectrum.  The list of these terms can 
+be found in PHOTON_MODEL.ps (PostScript format).  Quite frequently, your model 
+will consist of only one term. RMFIT will list the available model terms, asking 
+you to select those you wish to use.  The default may typically show only a portion 
+(possibly the most commonly used ones) of the entire list, which can always be
+restored by selecting "Restore" in the Photon Model window.  Also, unwanted terms 
+can be omitted from the list by selecting "Omit".  Whenever you "Restore" or 
+"Omit" model terms, this will become your default for the rest of your RMFIT 
+session.  Once you select the model term(s), you have an option to "Use 
+defaults" or "Set parameters".  If you wish to change any of the parameters of 
+the selected photon models, you may do so by selecting "Set parameters".  In 
+both cases, when you "Accept", MFIT will perform the nonlinear fit to optimize 
+the parameter values of your model.  This is an iterative process.  Those models 
+that are numbered 40 and higher are multiplicative, in the sense that they are 
+multiplied onto the sum of all chosen terms numbered less than 40, or the constant 
+model f(E) = 1, if none have been chosen.
+
+After the fit is done, the model parameters and their uncertainties, the value
+of chi^2, the number of degrees-of-freedom of the data and model, the value of
+reduced chi^2, photon flux, and energy flux in the preset energy flux interval will 
+be displayed in the Fit Log window.  The estimated parameter uncertainties are
+obtained from the covariance matrix, which is based upon the derivatives for
+chi^2 with respect to the model parameters (see Numerical Recipes by Press et
+al.). The covariance matrix is also output, normalized so that values range
+from -1 (complete anti-correlation) to 0 (uncorrelated) to +1 (complete
+correlation). Also output are the global correlation coefficients, which, for
+each parameter, is the worst case correlation against any linear combination of
+the other varying parameters (see Statistical Methods by W. T. Eadie et al.). 
+The flux interval can be changed with the 'Options' menu 'Set Flux Interval' 
+command.
+
+At this point, if you are not satisfied with the fit, you may modify your fit
+instructions. RMFIT has been designed to do model fitting in a robust and 
+convenient manner, but it will sometimes fail. Nonlinear fitting is much more 
+difficult than linear fitting. The Levenberg-Marquardt algorithm is an iterative 
+process dependent upon the parameter guesses. Typical failure modes are:
+
+1) an error message about a ``singular matrix''
+    (i.e, ``Failed to obtain an inverse for the covariance matrix''); or:
+2) very large estimated parameter uncertainties; or:
+3) absurd parameter values.
+
+The two most common causes of a fitting failure are:
+
+a) one or more parameters have been guessed at values very far from
+    the best value; or:
+b) one is attempting to fit a parameter which is very poorly
+    constrained by the data.
+
+If you suspect problem a), you should fix the values of the parameters you are
+uncertain about (by marking the parameter as "Fixed"), fit the remaining
+parameters, and plot the result in order to obtain guidance about the parameter
+values. Problem a) should never occur for an amplitude parameter because MFIT 
+normally robustly determines the values of these parameters. When you obtain 
+better parameter value guesses, you can then release those parameter to vary to 
+their optimum value (by marking as "Vary"). If you suspect problem b) because of 
+a ``singular matrix'' message or a very large parameter uncertainty, you should 
+fix all doubtful parameters at reasonable values and retry the fit.  After 
+obtaining a good fit, you can then experiment with varying some of the formerly 
+fixed parameters.  Nonlinear fitting requires judgement from the user.  
+Good luck!
+
+
+*** Please refer to FIT DISPLAY HELP for descriptions of the menu options ***
+*** in the Fit Display.                                                   ***
+
+
+------------------------- END OF SPECTRAL FITTING HELP -------------------------

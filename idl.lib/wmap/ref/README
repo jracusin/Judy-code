@@ -1,0 +1,23 @@
+MAP_REF
+
+This is the base directory of MAP_REF, containing reference files used by the
+WMAP IDL software.
+
+The main directory contains two files: 
+
+1. programs.pars - an ASCII file giving parameters of the MAP orbit and
+   other characteristics.    This file is read by the program Load_MAP_Params
+2. map_los.fits - a FITS binary table describing the line-of-sight for each
+   microwave horn in spacecraft coordinates.
+
+
+The MAP_REF directory contains following subdirectories
+
+/luts - Contains lookup tables, in particular for converting between HealPix
+        coordinates and a flat map projection
+/pixels - Contains FITS files for converting HealPix pixels of Cartesian [X,Y,Z]
+          direction vectors
+/planet_overlay - Contains the JPL DE405 ephemeris as a FITS files
+/prt_data - Contains device-independent (XDR) IDL savesets, giving
+            information about resistance data.
+	    

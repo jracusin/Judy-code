@@ -1,0 +1,32 @@
+Spectral Fitting:
+-----------------
+
+For more complete description of the spectral fitting features, please refer to 
+the SPECTRAL FITTING HELP available from the 'Fit Display' window.
+
+"Spectral Fitting:"
+
+      "----- TEAROFF"
+            Separates the "Fit Spectra" subcommand buttons in another window so 
+            that you can choose the commands without going through the 
+            pull-down menu.
+            
+      "Fit One Spectrum"
+            Fits only one specific spectrum.  RMFIT will wait for you to choose
+            one time bin and will start the fitting procedure.
+         
+      "Fit Interval"
+            Performs time-integrated fits of a time interval selected.  RMFIT
+            will wait for you to choose the time interval and start fitting.
+            
+      "Fit Selections"
+            Performs time-integrated fits of your current source selection.
+      
+      "Batch Fit Selections"
+            Fits each spectrum within the selection separately and displays the
+            spectral evolutions of fit parameters.
+
+      "Fit Plotter"
+            Restores the Fit Display window if already open, otherwise it opens the
+            Fit Display window for the purpose of displaying the saved fit results
+            (*.par file).  It asks you to choose *.par file for display.

@@ -1,0 +1,129 @@
+Map Viewer Help:
+
+Map Viewer is an IDL widget-based tool designed to facilitate viewing
+astronomical all-sky maps.  Input files must be all-sky Aitoff
+projections in galactic coordinates stored in FITS format.  Map Viewer
+converts these maps to an internal format which can be reprojected as
+desired to any one of the 12 map projections recognized by IDL.  In
+addition, the projected map can be rotated to any desired angle.  (In
+other words, the projection can be centered at any desired point on the
+sky).  Map Viewer can also transform the maps to either celestial or
+ecliptic coordinate system, and can plot points or lines on top of the
+maps.  Map Viewer was written by Dr. David Burrows of Penn State
+University and is heavily based on the map_demo procedure supplied with
+IDL V3.6.
+
+   Known Bugs:
+	1) When palette is changed, lines and symbols cannot be 
+		displayed until a new map is read in.  No idea why.
+
+
+When map_viewer is started, it opens a PICKFILE widget to permit the
+user to select an input map.  At PSU, this widget defaults to the
+directory containing our library of allsky maps in galactic
+coordinates.  Note that only the Aitoff projection maps within this
+directory will work.  (If you try to display any other maps you will
+get a warning message and will be asked to select a different file.)
+
+Map Viewer will then read in the chosen file and will open its standard
+window, which displays the desired map with a control panel to the
+left.
+
+You can click the left mouse button anywhere on the map to obtain the
+coordinates and intensity of that point, which will appear in the
+bottom two windows of the control panel.  Note that the intensity
+doesn't always correspond exactly to the pixel you think you are
+selecting, because of the way that the maps are stretched when they are
+displayed on the screen.
+
+The control panel has the following buttons, most of which are (I
+think) rather obvious in their operation:
+
+Done: select to close the window and terminate Map Viewer.
+
+Reset: select to reset Map Viewer settings back to original default
+values.
+
+Help: displays this file.
+
+Palette: opens the XLoadct widget to select a color lookup table palette
+	different from the default palette.
+
+Select Map File: opens a PICKFILE widget to permit a new map file to be
+	selected.  The new FITS file will be read in and displayed,
+	along with its FITS header.  Since the FITS header is not
+	displayed on program initiation, this can be used to display
+	the FITS header of the displayed map by reopening it.
+
+Plot Points: contains a pull-down menu permitting you to select from 
+	plotting points (as symbols or numbers) or lines.  Each choice
+	opens a PICKFILE widget in the current directory with the file
+	filter set for the following default file extensions:
+		Symbols: *.pts
+		Numbers: *.pts
+		Lines: *.lines
+	The first line in either type of file gives the coordinate
+	system used for the data pairs which follow:
+
+	File structure for points or lines to plot:
+		1) projection: 'ecliptic', 'galactic', or 'celestial'
+		2) pairs of coordinates in degrees
+	    For files containing lines ('*.lines'), pairs of 
+		-99.0, -99.0 will break the line segment (lift the 'pen').
+
+	Example:
+		galactic
+		10.2 32.8
+		328.0 45.8
+		15.4 -43.2
+
+
+Coord System: opens a pulldown menu that permits you to select a 
+	different coordinate system.  Choices are Galactic, Celestial,
+	or Ecliptic.  The current map will be reprojected in this
+	coordinate system using the Center Longitude and Center
+	Latitude given by the sliders.  Coordinates will be output in
+	the new system.
+
+Measure: Lets you measure the distance in degrees along a great circle
+	connecting two points.  Use the mouse to click on the two
+	points you are interested in.  The coordinates of the two
+	points are displayed in the next-to-bottom window of the
+	control panel as you click on them, and small diamonds are
+	displayed on the map at the selected positions.  The angular
+	distance between the two points is displayed in the bottom
+	window of the control panel.
+
+
+Zoom: Opens a zoom window.  Unlike everything else in this program,
+	this routine prints its output in the IDL text window.  You
+	will be prompted to click the mouse at the position on the map
+	to be zoomed.  The zoom window will be opened.  To exit, click
+	the right mouse button in the zoomed window and then click it
+	again in the main window.
+
+Projections: The left column selects all-sky projections.  See the
+	IDL manual for details of these projections.  The right
+	column selects globe projections: projections of 1/2 of the
+	sky (or less).  The first three in this column are projections 
+	onto globes.  The Satellite projection is rather strange for
+	sky maps, since it is intended to provide the view seen by an
+	Earth-looking satellite.  Gnomonic projections are also known
+	as tangent plane projections, and are commonly used for small
+	fields but not usually for fields as large as 1/2 of the sky.
+	Conic projections are rather strange and appear to display
+	less than a quarter of the sky.
+
+Sliders: The three sliders at the bottom control the Center Longitude,
+	Center Latitude, and Rotation of the projection.  The first
+	two are rather obvious.  The Rotation slider rotates the map
+	in the plane of the display for some projections, but does
+	strange things for others.  It works best for the globe 
+	projections (Stereographic, Orthographic, and Equal Area),
+	but is of limited use for astronomical purposes.
+
+
+If you find any bugs or have questions or problems, please let me know.
+
+David Burrows
+burrows@astro.psu.edu

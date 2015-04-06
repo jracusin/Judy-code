@@ -1,0 +1,89 @@
+Options
+-------
+
+   "Show rmfit Window"
+         Restores the rmfit window as is (i.e, if it is minimized, it restores
+         as minimized so will not show up on the screen). If not minimized, the 
+         rmfit window will come to the front.
+         
+   "Colors"
+         This allows you to interactively select color tables for the following.
+   
+            Background
+            Foreground
+            History
+            Spectrum
+            Background Model
+            
+         Use the sliders or type in hex values to obtain a specific color. 'Accept' 
+         will dave the color and use it for the appropriate element of subsequent 
+         plots. Printing in color requires you to select 'Color' on the 'PS 
+         Configure...' option under the 'File' menu.
+      
+   "Plot Configuration"
+         This selection initiates a menu to change plotting parameters.  These
+         parameters will affect all subsequent plots.  You must reset the values
+         by clicking "Default" to turn off any changes you make.  The preview is 
+         available to see the changes made.  The configurations can be stored as 
+         *.cfg file that can be saved and reloaded through the "Config" button.
+    
+    "Display Default DRM"
+         If a spectral fit has already been performed with the current data file, 
+         the user may have elected to associate the Detector Response Matrix file 
+         with the data file (this option is available when the file is closed by 
+         the user). The menu command will bring up a display of the DRM, if the 
+         associated file can be found; else, a status message will be diplayed. 
+         
+         The DRM Display allows the user to examine the DRM in several ways, 
+         beside the usual zooming, mostly by manipulation of the color table of 
+         the plot (a new command 'Load Color Table' is available from the "Colors"
+         pull-down menu under the "Options" menu, discussed above. All of the pre-
+         set color tables in IDL are available from the dialog that is presented. 
+         Different choices of color tables may bring out different features of the 
+         DRM, since the dynamic range of the color-coded density display may be 
+         too large for some subtle features to be visible. In addition, both a 
+         wire-frame view is available from a toggle ('Lines' vs. 'Colors'), as well 
+         as the 'Flip Axes' button, which flips the entire plot around the major 
+         symmetry axis. 
+    
+    "Reset Response Filename"
+         Resets the DRM filename within the current data file to the default value, 
+         'none'. This is very handy for replacing a DRM by an updated file, as well 
+         as cases where the associated file could not be located; which could happen 
+         if either file were moved without the other.
+    
+    "Reset Background Filename" (PHA Type I Display only)
+         Resets the single-spectrum background filename within the current data file 
+         to the default value, 'none'. This is very handy for replacing the current 
+         background with an updated file, as well as for handling cases where the 
+         associated file could not be located; which could happen if either file were 
+         moved without the other. As indicated above, only single-spectrum PHA type I 
+         FITS file displays have the capability to associate a constant background 
+         file with the current data file (see "Select Background", found under the Help 
+         Menu topic 'Help/Other Menu Items/Background Fitting' for further information).
+         
+Misc
+-------
+
+   "Show Current Selections"
+         This command displays the current time and energy selection  
+         on the left bottom of the window (gray area).  This way, you will be 
+         able to see the exact values for the selections made.  In case you have
+         multiple numbers of discontinuous selections, "Show Current Selections"
+         shows only the first boundary of the first selection and the last
+         boundary of the last selection.
+      
+   "Show Keyboard Bindings"
+         Some of the commands are bound to certain keys on the keyboard, and 
+         this shows you a list of them.  Panning and zooming out are very useful
+         features that are only available on the keyboard.
+                  
+   "Refresh Plot"
+         Will re-issue the plot command to update the current display. Useful
+         if you change the energy range selection, RMFIT will correctly display
+         your background model.
+         
+   "Export Data"
+         You can export data or DRM variables to an IDL *.sav, or ASCII data file. 
+         Such files are useful for subsequent analyses of the data outside of rmfit.
+         

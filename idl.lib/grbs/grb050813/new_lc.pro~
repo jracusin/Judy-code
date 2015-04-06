@@ -1,0 +1,3 @@
+pro new_lc
+  
+  ;filters use temp <-52 and extraction radius of 5 pix

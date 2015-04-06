@@ -1,0 +1,17 @@
+pro make_data_table
+  
+  dir='~/Desktop/GRB080319B/data_tables/'
+  cd,dir
+  
+  readcol,'grb080319b_UVOTphot.txt',time,tbin,rate,raterr,mag,magerr1,magerr2,format='(f,f,f,f,f,f,f)'
+  filters=['white','v','b','u','uvw1','uvm2','uvw2']
+  
+  w=where(time-time[1:*] gt 0)
+  for i=0,5 do begin 
+     magerr=min([magerr1[i],magerr2[i]])
+     writecol,time,tbin*2.,mag,magerr
+  
+  
+  stop
+  return
+end 

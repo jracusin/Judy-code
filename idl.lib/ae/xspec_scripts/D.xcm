@@ -1,0 +1,11 @@
+  set custom_value(kT0)     1.0
+  set custom_value(NH0)     0.1
+  
+  foreach variable_name [array names custom_value] {
+    if [info exists $variable_name] {
+      set $variable_name $custom_value($variable_name)   
+    } else {
+      puts "ERROR: '$variable_name' is not the name of a variable in the fitting script!"
+      tclexit 98
+    }
+  }    

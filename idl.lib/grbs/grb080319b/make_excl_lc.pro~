@@ -1,0 +1,118 @@
+pro cp_goodfiles,seg,excl,n,nocp=nocp
+  
+  dir='~/Desktop/GRB080319B/'
+  wtdir='../wt_pileup40/'
+  cd,dir+'psf_corr'
+  gpha=file_search(wtdir+'seg'+seg+'_'+excl+'_wt.pha.grpmin40')
+  xspec=file_search(wtdir+'xspec'+seg+'_'+excl+'.batch')
+  arf=file_search(wtdir+'seg'+seg+'_'+excl+'_wt.arf')
+  pha=file_search(wtdir+'seg'+seg+'_'+excl+'_wt.pha')
+  evt=file_search(wtdir+'seg'+seg+'_'+excl+'_wt.evt')
+  dat=file_search(wtdir+'seg'+seg+'_'+excl+'wt_Pow.dat')
+  expo=file_search(wtdir+'seg'+seg+'_wt_ex.img')
+  reg=file_search(wtdir+'src_excl'+excl+'.reg')
+  bg=file_search(wtdir+'*bg*')
+  sky=file_search(wtdir+'seg'+seg+'_wt_skyinstr.img.gz')
+  spawn,'cp '+wtdir+'*bg* .'
+  
+  n=n_elements(gpha)
+  
+  if not keyword_set(nocp) then begin 
+     for i=0,n-1 do begin
+        print,i+1
+        if exist(gpha[i]) and gpha[i] ne '' then spawn,'cp '+gpha[i]+' .'
+        if exist(xspec[i]) and xspec[i] ne '' then spawn,'cp '+xspec[i]+' .'
+        if exist(arf[i]) and arf[i] ne '' then spawn,'cp '+arf[i]+' .'
+        if exist(pha[i]) and pha[i] ne '' then spawn,'cp '+pha[i]+' .'
+        if exist(expo[i]) and expo[i] ne '' then spawn,'cp '+expo[i]+' .'
+        if exist(reg[i]) and reg[i] ne '' then spawn,'cp '+reg[i]+' .'
+        if exist(evt[i]) and evt[i] ne '' then spawn,'cp '+evt[i]+' .'
+        if exist(dat[i]) and dat[i] ne '' then spawn,'cp '+dat[i]+' .'
+        if exist(sky[i]) and sky[i] ne '' then spawn,'cp '+sky[i]+' .'
+     endfor 
+  endif 
+     
+  return
+end 
+
+pro make_excl_lc,tmins,tmaxs,nocp=nocp,noprod=noprod
+  
+;  excl=ntostr([14,14,14,12,12,12,10,2,0,0])
+;  excl=ntostr([14,14,14,14,12,12,10,3,0,0])
+;  ex=[15,14,12,12,11,11,6,1,0,0]
+  ex=[16,14,14,14,14,14,6,4,0,0]
+;  binsize=[1,1,2,2,5,5,5,5,10,20]
+;  binsize=[1,1,1,2,2,2,2,3,4,5]
+  binsize=[1,1,1,2,2,3,2,2,2,5]
+  excl=ntostr(ex)
+  seg=ntostr(indgen(10)+1)
+  cp_goodfiles,seg,excl,n,nocp=nocp
+  cd,'lcdir'
+  roll=53.980580-90.
+  
+  for i=0,19 do begin 
+     regfile='src_excl'+ntostr(i)+'.reg'
+     write_regfile,regfile,497,499,[40,i],20,roll=roll,/box,/det
+  endfor 
+  
+  trigtime=227599969.0  
+  tmins=fltarr(10) & tmaxs=fltarr(10)
+  
+  for i=0,n-1 do begin
+     srcevname='../seg'+seg[i]+'_'+excl[i]+'_wt.evt'
+;     regfile='../src_excl'+excl[i]+'.reg'
+     regfile='src_excl'+excl[i]+'.reg'
+     expomap='../seg'+seg[i]+'_wt_ex.img'
+     arfname='seg'+seg[i]+'_'+excl[i]+'_wt.arf'
+     lcfile='seg'+seg[i]+'_'+excl[i]+'_wt.lc'
+     ev=mrdfits(srcevname,1)
+     tmin=min(ev.time)
+     tmax=max(ev.time)
+     openw,flun,'time_filter'+seg[i]+'.flt',/get_lun
+     printf,flun,sigfig(tmin,12)+'  '+sigfig(tmax,12)
+     close,flun
+     free_lun,flun
+     
+     if not keyword_set(noprod) then begin 
+        xrtproducts='xrtproducts infile='+srcevname+' outdir=./ regionfile='+regfile+ ' stemout=DEFAULT binsize='+ntostr(binsize[i])+' gtifile=time_filter'+seg[i]+'.flt expofile='+expomap+' arffile='+arfname+' lcfile='+lcfile+' clobber=yes > xrtproducts'+seg[i]+'.out'
+        print,xrtproducts
+        spawn,xrtproducts
+     endif 
+     
+     lc=mrdfits(lcfile,1,hdr)
+     lc.time=lc.time+tmin-trigtime
+     add_tag,lc,'tstart',0.,newlc
+     lc=newlc
+     add_tag,lc,'tstop',0.,newlc
+     lc=newlc
+     lc.tstart=lc.time-binsize[i]/2.
+     lc.tstop=lc.time+binsize[i]/2.
+     tmins[i]=lc[0].tstart
+     tmaxs[i]=max(lc.tstop)
+
+     mwrfits,lc,'lc'+seg[i]+'.fits',/create
+     if i eq 0 then lc0=lc else begin
+        concat_structs,lc0,lc,lctmp
+        lc0=lctmp
+     endelse 
+     
+
+;     openw,lun,'plt.pco',/get_lun
+;     printf,lun,'wd lc'+seg[i]+'.dat'
+;     printf,lun,'q'
+;     close,lun
+;     free_lun,lun
+     
+;     lcurve='lcurve tunits=0 nser=1 cfile="'+lcfile+'" window="-" dtnb=5 nbint=1000 outfile='+lcfile+' plot=yes plotdev="/ps" plotfile=plt.pco '
+;     print,lcurve
+;     spawn,lcurve
+     
+  endfor 
+  
+  mwrfits,lc0,'lc_excl.fits',/create
+  
+  
+  cd,'..'
+  
+  return
+end 

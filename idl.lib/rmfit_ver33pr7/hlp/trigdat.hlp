@@ -1,0 +1,156 @@
+"Selection:"
+    There are additional commands available when displaying trigdat FITS 
+    files. Due to the limitation of the software, no 'Spectral Fitting' 
+    commands are available. 
+    
+    "Toggle Fine Time Resolution"
+            When the trigdata data first comes up, only those time bins with  
+            duration greater than one second are shown. For short duration 
+            triggers where better time resolution is required, one can toggle 
+            the display of the finer time resolution bins that are available in 
+            the data. Care must be taken when saving a lookup file from this 
+            mode: currently, rmfit can not save the fine-time state in a lookup 
+            file. It is best not to use a lookup filename that will load 
+            automatically when the FITS file is next opened: that is, the base 
+            filename plus '.lu'. 
+            
+    "Change Detector Selection"
+            When the trigdat data file is first opened, it displays the sum of 
+            the triggered detectors by default. One can see which detectors 
+            triggered by examining the value associated with 'Detector:' in the 
+            information pane to the lower left of the display. Selected 
+            detectors are indicated by '1' in the Detector string. One can 
+            change the selected detectors using the 'Change Detector Selection' 
+            menu item. One choses a set of detectors to sum into the display 
+            from the choices in the dialog that is presented and clicks 
+            'Accept'. This is one way to see the BGO data from GBM.
+            
+    "Cycle Detector Selection"
+            Another way to see which detectors have the highest rates is to 
+            cycle through the entire set. Select the command to set the 
+            detector selection to a single detector, starting with detector 0 
+            ('NaI_00') of GBM. Subsequent selections of the menu item will 
+            advance the detector selection by one. After the last detector has 
+            been displayed, the cycle repeats. 
+            
+    "Restart Detector Cycle"
+            One can always reset the cycle back to detector 0 by selecting this 
+            item.
+                        
+    "Revert Detector Selection"
+            This command reverts the detector selection to the set displayed 
+            when the trigdat data file is first opened; thus, it displays the 
+            sum of the triggered detectors. The lookup file is re-read by this 
+            process, so some user selections may be undone by this action.
+
+"Localization:"
+    "Source Location"
+        Generates a gamma-ray source localization on the sky, given the 
+        source and background time-interval selections (but using all the 
+        GBM detectors), as well as other available information, such as the 
+        GLAST spacecraft orientation and the position of the Earth, relative 
+        to the detectors. Since this operation is highly dependent upon the 
+        format of the FITS data file that is used for this purpose, only the 
+        GLAST Burst Monitor data files can be used. 
+        
+        The source localization procedure starts with a new trigdat file. To 
+        maximize signal to noise, the display defaults to a selection of the 
+        triggered detectors. For various reasons, this selection may not be 
+        optimal, and may need some tweaking. To see which detectors have 
+        source counts, issue the 'Cycle Detector ...' command once for each 
+        GBM detector, including the two BGO detectors, which are currently 
+        not used to localization. They may have significant source counts, 
+        however. Once the optimal detector selection is known, these can be 
+        included in the displayed rates by selecting them via the 'Change 
+        Detector Selection' command. It is important to remember that the 
+        detector selection does not affect the source localization; all of 
+        the detectors are used. The detector selection is only useful for 
+        maximizing signal to noise, for those cases where that might help in 
+        the selection of source counts. 
+        
+        From this point on, selection of an energy range, background model 
+        and source counts proceeds similarly as with any of the other data 
+        types available to rmfit. For source localization, keep in mind that 
+        the goal is to maximize the signal over the background. The background
+        selection should bracket the source selection as much as possible, to 
+        avoid problems with extrapolation. When all selections have been made, 
+        it is a good idea to save the lookup file before proceeding. 
+        
+        When the data have been prepared, the 'Source Location' button will 
+        start the location engine (currently, the Daughter of LOCBURST [dol]
+        executable). Background and source count rates for the time at the 
+        center of the source selection are calculated for all 14 detectors. 
+        In addition, spacecraft attitude and position information for the 
+        same time are pulled from the trigdat FITS file; all of these values 
+        are written to an interface file, as well as a default set of NaI 
+        detector energy thresholds. A source location engine job with these 
+        values is SPAWNed off and rmfit waits for the job to return. Return 
+        values are pulled from the file that was written by the source 
+        location engine, and the source location values ('Source RA' and 
+        'Source Dec') are updated on the display. 
+
+        Currently, rmfit can do localizations with the level 1 trigdat fits 
+        files. Once you open the file, start with the background calculation; 
+        it is very important to get the background so that it is correct for 
+        every detector! To test this, cycle through all the detectors by 
+        repeated pressing 'c' on the keyboard. the background model should be 
+        consistent with the background rates in every detector, not well above 
+        or below them. Adjust the background selection and order to correct any 
+        deficiencies. When all looks good, press the letter 'r' to revert to 
+        the default detector selections. Pick a source interval for localizing 
+        the burst and save the lookup file (just in case!). If it is known that 
+        the spacecraft has slewed considerably through the duration of the burst, 
+        make sure that the source selection in time is fairly narrow, less than 
+        4 seconds should be good enough. After the new localization has been run, 
+        the sky maps will be available for display.
+        
+        "Hard" or "Soft" Location Setting
+            Some sources are intrinsically softer than GRBs, which affects the 
+            ability of the software to localize them. For sources such as the Sun 
+            or SGRs, which do not have much flux in the 50 to 300 keV band, use the 
+            "Soft" setting. This will send lower energy channels data to the local-
+            ization software than with the "Hard" setting. For most GRBs, it is 
+            best to use the "Hard" setting.
+        
+    "Write TCAT File"
+        Once a localization has been performed, the user should archive the 
+        result by writing out the RA, Dec and Error Radius obtained from the new 
+        localization into a GBM Trigger Catalog FITS file (GS-105, or 'tcat', 
+        file from the GLAST Science Data Products File Format Definition document). 
+        The resulting Trigger Catalog file should be uploaded to the GBM Trigger 
+        Catalog website.
+        
+    "Input Source Class"
+        The user should check that they agree with the GBM FSW-generated Event 
+        classification, which is visible on the display beside the 'Event:' 
+        label. In cases where the event has been misidentified, the user can change 
+        the source classification by issuing this command. Both the OBJECT and 
+        CLASS keywords to be placed into the Trigger Catalog file (see below) can 
+        be changed, although they should agree. The Trigger Catalog file with the 
+        changed parameters can be written out immediately, if the user wishes.
+        
+    "Write TCAT File"
+        Sometimes, the source localization can be done better by another 
+        instrument, such as the Fermi Large Area Telescope or one of the Swift 
+        instruments. This localization should be entered into the Trigger 
+        Catalog, to take the place of the best GBM localization; this command 
+        allows the user to enter the RA, Dec, Error Radius and "Mission, 
+        Instrument" for the more accurate localization. An appropriate tcat 
+        file with the new parameters for the Trigger Catalog will be created, 
+        if the user wishes, or this can be deferred. The source location entered 
+        by this command will show up on subsequent RA and Dec Sky Maps (see below), 
+        labelled by the "Mission" you have entered. This is a way to determine 
+        how far off the GBM localization is from the presumably "known" location.
+    
+    "Sky Map: Az-Zen" and "Sky Map: RA-Dec"
+        Once a localization has been performed for the current data, rmfit 
+        makes chi^2 contour maps available to be displayed, one in spacecraft 
+        Azimuth and Elevation and the other in celestial coordinates, Right 
+        Ascension and Declination. The sky maps can be zoomed and printed, as 
+        with any rmfit display. An asterix plots the position found for the 
+        source for the coordinates chosen, and one- and two-sigma error 
+        contours are indicated. For particularly difficult localizations, 
+        these may be quite convoluted, and the true measure of the error can 
+        be determined from the semi-major axes of the contours. Finally, the 
+        Earth blockage is displayed in the current background color as a 
+        series of dots.

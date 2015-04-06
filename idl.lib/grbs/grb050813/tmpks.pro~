@@ -1,0 +1,21 @@
+pro tmpks,src,bg,d,prob,alpha
+  
+  gooda=1.635
+  als=indgen(1000)/500.-1.0
+  d=dblarr(1000) & prob=d
+  alpha=gooda+als
+  for i=0,999 do begin
+     al=alpha[i]
+     
+     kstest,src,bg,al,c,dd,p,/noplot
+     
+     d[i]=dd
+     prob[i]=p
+  endfor 
+  
+  plot,alpha,-alog10(prob),psym=1,xtitle=!tsym.alpha,ytitle='-log!L10!N prob'
+  w=max(prob,m)
+  legend,['Max prob = '+ntostr(prob[m]),!tsym.alpha+' = '+ntostr(alpha[m])],/bottom,/right,box=0
+  
+  return
+end 

@@ -1,0 +1,23 @@
+function plaw2,t
+  
+  common plaw,alpha,cons,mint,maxt
+  
+  nt=n_elements(t)
+  a=dblarr(nt)
+  print,cons
+
+  if alpha eq 1 then begin
+     a=t/maxt*(1+cons)
+     maxa=1.+cons
+     a=a/maxa
+  endif else begin
+     malph1=-alpha+1.
+     for i=0,nt-1 do a[i]=1/malph1*((t[i]+mint)/maxt)^malph1+cons*t[i]-1/malph1*(mint/maxt)^malph1
+     maxa=1/malph1*((maxt+mint)/maxt)^malph1+cons*maxt-1/malph1*(mint/maxt)^malph1
+     a=a/maxa
+  endelse 
+  
+  print,a
+  
+  return,a
+end 

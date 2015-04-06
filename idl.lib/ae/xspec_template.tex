@@ -1,0 +1,34 @@
+% LaTex template for acis_extract.pro
+% $Id: xspec_template.tex 3380 2009-03-12 15:01:15Z patb $
+%
+\documentclass[12pt,letterpaper]{article}
+\usepackage{graphicx}
+\usepackage{verbatim}
+
+\pagestyle{empty}
+
+\setlength{\topmargin}{-0.5in}
+\setlength{\headheight}{0in}
+\setlength{\headsep}{0in}
+\setlength{\topskip}{0in}
+\setlength{\footskip}{0in}
+\setlength{\textheight}{10.0in}
+
+\setlength{\oddsidemargin}{-0.25in}
+\setlength{\textwidth}{7.0in}
+                                                      
+\setlength{\parindent}{0pt}
+
+\begin{document}
+\scriptsize
+\begin{figure}[H]
+\begin{center}
+% The rotation spec MUST come before the width spec!
+%\includegraphics[angle=0,page=1,width=1.0\textwidth]{pgplot.pdf}                
+\includegraphics[angle=-90,width=1.0\textwidth]{ldata.ps}                
+\end{center}
+\end{figure}
+
+\verbatiminput{xspec.log}
+\end{document}
+

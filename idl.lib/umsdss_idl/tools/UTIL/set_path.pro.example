@@ -1,0 +1,60 @@
+pro set_path,dave_version=dave_version,print=print
+;set up my path correctly
+;keyword dave_version is to use my latest checked out copy 
+;of um_idl instead of the newest official CVS copy
+;keyword print is to print out the path in a nice collumn format
+;example: put the following two lines in your .idl.startup file
+;.compile /sdss3/products/idltools_old/dave_idl/tools/set_path
+;set_path,/dave
+;this is my set_path for the machine sdss3.physics.lsa.umich.edu
+;obviously it will have to be changed for each machine
+
+p0=expand_path('+/usr/local/rsi/idl_5/lib')
+;the main directory for built in IDL routines
+
+p1=expand_path('+/sdss3/products/idltools_old/dave_idl')
+;my stuff and other stuff from UM
+;expand_path includes all subdirectories as well
+
+p3=expand_path('+/sdss3/products/idlastron_v5.0')
+;idlastron from Goddard
+
+p4=expand_path('+/sdss3/products/idltools_old/alexis')
+p5=expand_path('+/sdss3/products/idltools_old/buie')
+p6=expand_path('+/sdss3/products/idltools_old/deutsch')
+;other astronomy stuff that is sometime needed
+
+p=p1+':'+p3+':'+p3+':'+p4+':'+p5+':'+p6
+;the whole path (a colon seperated list)
+;put in the order you want it to be searched
+
+if not keyword_set(dave_version) then begin
+	p8=expand_path('+/sdss3/products/idltools/um_idl')
+	;this is the um_idl stuff (the official CVS version)
+endif else begin
+	p8=expand_path('+/sdss3/usrdevel/davej/um_idl_dave')
+	;this is the um_idl stuff (my latest checked out version
+	;which perhaps differs from the official CVS version)
+endelse
+
+p=p8+':'+p
+;put it on TOP of the list so it will be searched first
+p=p0+':'+p
+;the built in IDL routines are always first
+
+!path=p
+print,"set !path"
+;finally set the IDL systems variable !path
+
+if keyword_set(print) then begin
+	;print the path out one directory at a time
+	patharr=str_sep(!path, ":")
+	for i=0, n_elements(patharr)-1 do begin
+		print,patharr(i)
+	endfor
+endif
+
+return
+end
+
+

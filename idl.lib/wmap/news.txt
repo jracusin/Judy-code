@@ -1,0 +1,96 @@
+The following changes to the WMAP software distribution have been implemented
+since V1.0
+
+16-Aug-2006: Release of V2.0
+
+             Added TOD_TO_SKY_COORDS - New procedure to extract a time series
+	     of coordinates from an array of time-ordered data records
+
+             Added FITS_READ_COMBINED_MAP - New procedure to read a combined
+             temperature/polarization map as delivered by the WMAP team to
+             LAMBDA.
+
+	     Modified FITS_READ_TOD - This procedure, which reads the time-ordered
+             data FITS files, has been modified to read a one channel TOD FITS
+             file (as released in the first WMAP data release; this was the original
+             behaviour of this procedure), a two channel TOD file (as provided
+             in calibrated TOD data of the second WMAP data release), and a four
+             channel TOD file (as provided in the uncalibrated TOD data of the
+             second WMAP data release).
+
+23-Jul-2004: Release of V1.3
+
+22-Jul-2004: HEALPIX_TO_IMAGE - Fixed incorrect call to STDDEV()
+
+08-Jul-2004: INTERPOLATE_QUATERNIONS - New procedure to interpolate quaternions
+             extracted from WMAP time-ordered data
+
+             MAPVIEW - Now contains a widget entry field for a HEALPIX FITS 
+	     file name, i.e. one no longer needs to specify the FILENAME or
+	     ARRAY keywords.   Also, data I/O has been made more efficient
+	     
+	   
+28-Jul-2003: Release of V1.2
+
+18-Jul-2003: FITS_REPROJ_HEALPIX - Convert a HealPix image to a flatmap FITS
+		   file with world coordinate system (WCS) information
+
+18-Jul-2003: MAPVIEW - Added PNG file output, fixed bug with ring maps
+
+23-May-2003: SCAN_OVERLAY, GRID_OVERLAY - Work on Windows devices
+             Software now available in a .zip file for Windows users
+
+20-May-2003: HEALPIX_NESTED_VECTORS, LOAD_MAP_PARAMS, SCAN_OVERLAY, PLANET_OVERLAY 
+             GET_HEAL_LUT, GET_PRT_TEMP - updated to use CONCAT_DIR to 
+	     concatenate directories on non-Unix systems
+
+18-Apr-2003: MAPVIEW - Now has ARRAY keyword to read from an array instead of
+               a file 
+
+16-Apr-2003: FITS_READ_MAP - Close open file unit, new keyword PHeader to
+                   return the primary header
+
+19-Mar-2003: Release of V1.1
+
+17-Mar-2003: HEALPIX_TO_IMAGE (called by MAPVIEW) modified to avoid negative
+                logarithms when logarithmic scaling is specified
+
+06-Mar-2003: QUAT_TO_SKY_COORDS -- Modified to use the mean optical axis if the
+              DA_STR parameter is not supplied
+
+14-Feb-2003:
+
+    HealPix V1.2 (released 10-Feb) introduced two incompatibilities in the
+    MAPVIEW program.
+    
+    (1) EULER_MATRIX no longer works, but instead instructs users to use
+        EULER_MATRIX_NEW (with a different sign convention)
+    (2) DATA2GNOM has a different calling sequence, and calls a new routine
+        VECTOR_MAP
+    
+    MAPVIEW was modified to call EULER_MATRIX_NEW (with the new sign convention)
+    and the Healpix 1.2 version of DATA2GNOM was renamed to WMAP_DATA2GNOM.   
+    Copies of EULER_MATRIX_NEW, VECTOR_MAP and WMAP_DATA2GNOM are then included
+    in the WMAP distribution to provide compatibility for users with HealPix 
+    V1.1.
+
+  Updated wmap_idl_installation.txt to indicate that procedures to add to the
+!PATh are located in /home/user/wmap/pro not /home/user/wmap.   Introduce the
+(much smaller) tar file wmap_IDLpro_v11.tar containing only the procedure
+library plus any updated reference files.
+
+
+12-Feb-2003: New procedure SCAN_OVERLAY to plot WMAP's scan path using 
+     quaternion data.     SCAN_OVERLAY calls the new procedures 
+     Q2M -  Convert quaternions to rotation matrices
+     QUAT_TO_SKY_COORDS - Extract coordinates from input quaternions
+     
+    FITS binary table map_los.fits added to the $MAP_REF directory
+
+    FITS_READ_MAP modified to not read the number of observations column 
+                  unless requested  
+    
+    New "WIDGETS" category added to the list_of_routines to match the 
+    Explanatory Supplement.     File updated with new procedures.
+    
+    Tar file renamed to wmap_IDL_v11.tar.gz

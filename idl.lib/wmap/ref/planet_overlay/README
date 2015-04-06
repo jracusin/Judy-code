@@ -1,0 +1,5 @@
+This directory contains the FITS file JPLEPH.405 giving the JPL DE405 ephemeris
+(as Chebyshev polynomials) for computing solar system positions.  Copies of
+this ephemeris can also be found in the IDL Astronomy Library (
+http://idlastro.gsfc.nasa.gov/ftp/data/ ) and in Craig Markwardt's site
+(http://astrog.physics.wisc.edu/~craigm/idl/ephem.html ).

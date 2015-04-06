@@ -1,0 +1,214 @@
+# $Id: programs.pars_flight_0,v 1.4 2002/06/14 19:43:09 hinshaw Exp $
+# ===========================================================================
+# This is the MAP program parameters file.  It supplies the program
+# with a set of default/standard values common to all the programs.
+#
+# The parameters in this file are supplied in a keyword=value format.
+#
+# The '#' character is the comment character.  Anything following this
+# character is ignored UNLESS the character is embedded in a string.
+# 
+# Strings are delimited by surrounding them with single ticks.  This isn't
+# strictly necessary unless there is a comment also on the line.
+#
+# Records may be continued by placing a '&' character as the last character
+# on a line.  Comments may NOT be placed on the same line as the continuation
+# character; nor should they be placed within a set of continued lines.
+#
+# Written by Michael R. Greason, Hughes STX, 25 February 1997.
+# Calibration change.  GH, December 2001.
+# Calibration from Pass 1 cal_map medians.  MRG, SSAI, 11 June 2002.
+# New pointing from Pass1 preparation analysis.  Deleted Gal_Mask_File, F_knee,
+# and R_34.   GFH, June 14, 2002.
+# ===========================================================================
+PASS = 'FLIGHT_0'
+#
+#		Date and time of last modification to this file.
+#
+MOD_GMT   = '20021621700000000000'
+#
+#		CCSDS time reference.
+#
+CCSDS_GMT = '19930010000000000000'	# 1/01/1993 0:0 UT.
+#
+#		Date and time of launch.  The TRUE_LAUNCH_GMT value is
+#		the actual time that MAP actually launched; the LAUNCH_GMT
+#		value represents the time stamp reference time and is
+#		earlier in the day so that there are no negative time stamps.
+#
+TRUE_LAUNCH_GMT = '20011811946461830000'	# 06/30/2001 19:46:46.183 UT.
+LAUNCH_GMT = '20011810000000000000'		# 06/30/2001 00:00:00 UT.
+#
+#               UTCF time reference: used for >= pass c0 SIMULATED DATA only!
+#
+SIM_UTCF    = -31536000.00D+00       # seconds. Set neg to use UTCF_FILE.
+SIM_LEAPSEC = -5                     # seconds
+UTCF_FILE   = '/map/data/flight/lzp/utcf.dat'
+#
+#		Telemetry index file.
+#
+TELEM_INDFIL = '/map/data/flight/lzp/telem.index'
+#
+#		Questionable data events file.
+#
+QUESTION_EVENTS = '/map/files/ref/suspect_data.log'
+#
+#		Archive directory
+#
+ARCHIVE_DIR    = '/map/data/flight/pass0/archive'
+ARCHIVE_RAW    = '/map/data/flight/pass0/archive'
+ARCHIVE_CAL    = '/map/data/flight/pass0/archive_cal'
+ARCHIVE_INDFIL = 'index.file'
+#
+#		Attitude/orbit information
+#
+SPIN_PERIOD       =   129.3D+00	# seconds
+PRECESSION_PERIOD =  3600.0D+00	# seconds
+PRECESSION_ANGLE  =    22.5D+00	# degrees
+DIST_FROM_EARTH   = 1.5D+06	# kilometers
+#
+#		Telemetry information
+#		The TOD_PER_FRAME array is in the order:
+#		[K1, Ka1, Q1, Q2, V1, V2, W1, W2, W3, W4]
+#
+FRAME_DURATION    =    1.536	# seconds
+TOD_PER_FRAME = [12, 12, 15, 15, 20, 20, 30, 30, 30, 30]
+#
+#		CMB data
+#		The monopole temperature is the FIRAS Pass 4 value,
+#		the dipole is the DMR 4-year value in Galactic coordinates
+#		The ANT_TO_THERM field gives the multiplicative conversion
+#		from antenna temperature to thermodynamic temperature for
+#		each of the ten d/a's in the order [K1, Ka1, ... W4].  Apply
+#		the conversion as follows: T_th = ANT_TO_TH * T_ant.
+#
+T_MONOPOLE = 2.725				# K
+T_DIPOLE = [-0.2234,-2.2228, 2.5004]		# mK
+ANT_TO_TH = [1.014, 1.029, 1.045, 1.044, 1.101, 1.104, 1.256, 1.250, 1.256, 1.261]
+#
+#		Nominal radiometer data
+#		The gain is in du/mK, the offset is in du, the noise is in mK.
+#		These 4x10 arrays are in the order, following CJ's notation:
+#		[K1-13, K1-14, K1-23, K1-24,
+#		 Ka1-13, Ka1-14, Ka1-23, Ka1-24,
+#		 Q1-13, Q1-14, Q1-23, Q1-24,
+#		 Q2-13, Q2-14, Q2-23, Q2-24,
+#		 V1-13, V1-14, V1-23, V1-24,
+#		 V2-13, V2-14, V2-23, V2-24,
+#		 W1-13, W1-14, W1-23, W1-24,
+#		 W2-13, W2-14, W2-23, W2-24,
+#		 W3-13, W3-14, W3-23, W3-24,
+#		 W4-13, W4-14, W4-23, W4-24]
+#
+#               Gains and baselines given signs and values from the first
+#		attempt at cal_map for Pass 1.  These are median values
+#		from the hourly calibration files.
+#
+GAIN = [ -0.9700,  0.9938,  1.1745, -1.1200, &
+          0.8668, -0.8753, -1.0914,  1.0033, &
+          1.0530, -0.9834,  0.4914, -0.5365, &
+         -0.9882,  1.0173, -0.8135,  0.7896, &
+          0.4896, -0.5380, -0.5840,  0.5840, &
+         -0.4948,  0.4872,  0.4096, -0.3802, &
+          0.3888, -0.4139,  0.3290, -0.3003, &
+         -0.3587,  0.3701,  0.3655, -0.3666, &
+         -0.3255,  0.3517, -0.3291,  0.3225, &
+          0.2841, -0.2918,  0.3796, -0.3591 ]
+#
+BASELINE = [ 32136.98,  31764.96,  31718.19,  32239.29, &
+             31489.19,  32356.00,  32168.49,  31634.28, &
+             25621.62,  25502.45,  25500.11,  25667.74, &
+             26636.99,  24355.67,  26751.75,  24240.62, &
+             19050.87,  19129.09,  19380.14,  19081.39, &
+             19291.37,  18966.04,  18730.91,  19505.05, &
+             12428.31,  13567.44,  13049.69,  12930.21, &
+             13516.42,  12477.95,  12229.22,  13363.53, &
+             12678.23,  12934.65,  12730.91,  12692.85, &
+             11759.38,  13704.71,  11537.42,  13956.94  ]
+#
+#  noise rms estimates are CRUDELY provided from weekly trend plots
+#  covering interval 2001 days 192-204 and assuming gains above
+#  are correct. Not to be taken as truth.
+#
+NOISE_RMS = [  2.65,  2.59,  2.99,  2.96, &
+               2.92,  2.88,  2.96,  2.91, &
+               4.06,  4.04,  4.93,  4.81, &
+               3.67,  3.75,  4.45,  4.46, &
+               6.92,  6.90,  6.32,  6.44, &
+               5.74,  5.64,  6.52,  6.45, &
+               9.35,  9.26, 11.40, 11.24, &
+              11.11, 11.26, 10.88, 10.75, &
+              11.34, 11.58, 13.17, 12.58, &
+              12.46, 12.16, 10.69, 10.84  ]
+#
+#		Line-of-sight (LOS) geometry. Each array is 3x10, with a 
+#		three-element direction per DA.
+#		These values are based on circular gaussian fits to the
+#		first two seasons of Jupiter data (Fall 2001, Spring 2002)
+#		using the Pass0 archive and code that accounts for the
+#		aberration of light due to proper motion.  These numbers
+#		differ from the previous fits based on CasA data from the
+#		phasing loops by 1-2 arcmin.  A comparison with the initial
+#		results from Pass1 show a difference of < 1 arcsec.
+#
+DIR_A_LOS = [  0.03993743194318,  0.92448267167832, -0.37912635267982, &
+              -0.03836350153280,  0.92543717887494, -0.37695393578810, &
+              -0.03157188095163,  0.95219265474988, -0.30386241059657, &
+               0.03193385161530,  0.95220162163922, -0.30379647935526, &
+              -0.03317333754910,  0.94156429439011, -0.33519577742792, &
+               0.03337676771235,  0.94149468374332, -0.33537106592570, &
+              -0.00918939185649,  0.93943847522010, -0.34259437583453, &
+              -0.00950701394255,  0.94586439605663, -0.32442281201900, &
+               0.00980040822398,  0.94576779947882, -0.32469558276581, &
+               0.00980808738477,  0.93934799994236, -0.34282522723123  ]
+DIR_B_LOS = [  0.03794083653062, -0.92391755783762, -0.38070571212253, &
+              -0.04002167684949, -0.92463440201100, -0.37874726137612, &
+              -0.03340297596219, -0.95176877819247, -0.30499251475222, &
+               0.03014337784306, -0.95192770480751, -0.30483605690947, &
+              -0.03503633693827, -0.94094544143324, -0.33674045100040, &
+               0.03144454385558, -0.94113854675448, -0.33655530968115, &
+              -0.01147317267740, -0.93883247845653, -0.34418300902847, &
+              -0.01159000320270, -0.94535005109668, -0.32585112047876, &
+               0.00768184749607, -0.94540702221088, -0.32580139897397, &
+               0.00751408106677, -0.93889226303920, -0.34412912836731  ]
+#
+#		Polarization (POL) geometry, defines the E-plane of the axial
+#               port of the OMT.  DIR_A_POL is perpendicular to DIR_A_LOS.
+#		Each array is 3x10, with a three-element direction per DA.
+#
+DIR_A_POL = [  0.69487757242271, -0.29835139515692, -0.65431766318192, &
+              -0.69545992357813, -0.29560553030986, -0.65494493291187, &
+               0.71383872060219, -0.19131247543171, -0.67367189173456, &
+              -0.71390969181845, -0.19099503229669, -0.67368675923286, &
+              -0.69832280289930, -0.26176968417604, -0.66619959126169, &
+               0.69826122350352, -0.26204606404493, -0.66615548040223, &
+               0.70944248806767, -0.23532277684296, -0.66431509603747, &
+              -0.70476543555624, -0.23649685267332, -0.66886091193973, &
+               0.70468980214241, -0.23690904054153, -0.66879472879665, &
+              -0.70959923775957, -0.23501806310177, -0.66425554705017  ]
+DIR_B_POL = [  0.69546590081501,  0.29798590641998, -0.65385899120425, &
+              -0.69486414021667,  0.29814186328140, -0.65442742607568, &
+               0.71423586688235,  0.19072845484161, -0.67341650037147, &
+              -0.71357469183546,  0.19306390125546, -0.67345192048426, &
+              -0.69775710213559,  0.26425762446771, -0.66580998365151, &
+               0.69876566230957,  0.26145991550208, -0.66585678772745, &
+               0.71002796142313,  0.23471528678222, -0.66390438178103, &
+              -0.70422900931886,  0.23906270891214, -0.66851366750529, &
+               0.70521159225086,  0.23611413753036, -0.66852578425466, &
+              -0.70903152581832,  0.23766935833457, -0.66391834701609  ]
+#
+#			Planet cut angles, in degrees
+#
+MARS_CUT    = 7.0
+JUPITER_CUT = 7.0
+SATURN_CUT  = 7.0
+URANUS_CUT  = 7.0
+NEPTUNE_CUT = 7.0
+#
+#			The shield cut angle (in degrees) is used to indicate
+#			whether the Sun, Earth, or Moon is potentially visible
+#			over the shield.
+#
+SUN_SHIELD_CUT   = 25.0
+EARTH_SHIELD_CUT = 33.0
+MOON_SHIELD_CUT  = 33.0

@@ -1,0 +1,221 @@
+pro run_xspec,j,z,mode,phaname,nh,n_ev,exp_time,regime,trigtime,tmin,tmax
+  ;;xspec script
+  ;; models to fit
+  ;;;;  pow,pow+bb,pow+pow,cutoffpow,band
+  ;; loop through models and change output names or append to output file?
+  
+  
+  ;;important parameters
+  ;;nHgal & nH for all
+;;;ONLY DOING POW FOR NOW!!!!!!!!!!!!!  
+  for mo=0,3 do begin 
+     parname=['nHgal','nH']
+     parname_err=['nhgalerr','nH_err']
+     guess=[1,1.]
+     np=2
+     if z eq 0 then begin 
+        model='mo wabs*wabs'
+        zz=0
+     endif else begin
+        model='mo wabs*zwabs'
+        parname=[parname,'z']
+        parname_err=['nhgalerr','nH_err','z_err']
+        guess=[guess,1]
+        zz=3
+     endelse 
+     
+     case mo of
+        0: begin
+           momo='Pow'
+           model=model+'*pow'
+           parname=[parname,'PhInd','norm']
+           parname_err=[parname_err,'Pow_err','norm_err']
+           guess=[guess,1,1]
+        end 
+        1: begin
+           momo='Bknpow'
+           model=model+'(bknpow)'
+           parname=[parname,'PhInd1','BreakE','PhInd2','norm']
+           parname_err=[parname_err,'PhInd1_err','BreakE_err','PhInd2_err','norm_err']
+           guess=[guess,1,5,2,1]
+        end
+        
+           
+;        1: begin
+;           momo='Pow_BB'
+;           model=model+'(pow+bb)'
+;           parname=[parname,'PhInd','norm','kT','norm2']
+;           parname_err=[parname_err,'Pow_err','norm_err','kT_err','norm_err2']
+;           guess=[guess,1,1,0.1,1]
+;        end 
+;        2: begin
+;           momo='Pow_Pow'
+;           model=model+'(pow+pow)'
+;           parname=[parname,'PhInd','norm','PhInd2','norm2']
+;           parname_err=[parname_err,'Pow_err','norm_err','Pow_err2','norm_err2']
+;           guess=[guess,1,1,1,1]
+;        end 
+        2: begin 
+           momo='Cutoff'
+           model=model+'*cut'
+           parname=[parname,'PhInd','HighECut','norm']
+           parname_err=[parname_err,'Pow_err','HighECut_err','norm_err']
+           guess=[guess,1,1,1]
+        end 
+        3: begin
+           momo='Band'
+           model=model+'*grbm'
+           parname=[parname,'alpha','beta','tem','norm']
+           parname_err=[parname_err,'alpha_err','beta_err','tem_err','norm_err']
+           guess=[guess,-1,-2,5,1]
+        end 
+     endcase
+     print,momo
+     np=n_elements(parname)
+     impar=indgen(np)
+     imparerr=[1,indgen(np-3)+zz]
+     
+;     print,impar
+;     print,imparerr
+;     print,parname,parname_err
+     
+     xbfile='xspec'+ntostr(j+1)+'.batch'
+     openw,lun,xbfile,/get_lun
+
+     printf,lun,'data '+phaname
+     printf,lun,'ignore 0.-0.3'
+     printf,lun,'ignore bad'
+
+     printf,lun,'query yes'
+     
+     printf,lun,model
+     for b=0,np-1 do printf,lun,ntostr(guess[b])
+     
+     npar=n_elements(impar)
+     np0=ntostr(npar)
+     printf,lun
+     nimpar=n_elements(impar)
+     nimparerr=n_elements(imparerr)
+     if z eq 0 then begin 
+        printf,lun,'newpar 1 '+ntostr(nh)+' 0 '
+     endif else begin 
+        printf,lun,'newpar 1 '+ntostr(nh)+' 0 '
+        printf,lun,'newpar 3 '+ntostr(z)
+     endelse 
+     printf,lun
+     printf,lun
+     ;;sets nH guess & lower limit to galactic
+     printf,lun,'fit 1000'
+     printf,lun,'fit 1000'
+     printf,lun,'fit 1000'
+     printf,lun,'cpd /ps'
+     printf,lun,'setplot en'
+     printf,lun,'plot ld res'
+     printf,lun,'exec mv pgplot.ps '+phaname+'_'+momo+'.ps'
+     printf,lun
+     ;;tcl stuff
+     datfile='seg'+ntostr(j+1)+mode+'_'+momo+'.dat'
+     printf,lun,'set fileid [open '+datfile+' w]'
+           ;;;errors
+     np=ntostr(npar+1)
+     for p=0,nimparerr-1 do begin 
+        pp=ntostr(imparerr[p]+1)
+        printf,lun,'error stop 100,,maximum 20.0 '+pp
+        printf,lun,'tclout error '+pp
+        printf,lun,'set err'+pp+' [string trim $xspec_tclout]'
+        printf,lun,'regsub -all { +} $err'+pp+' { } cerr'+pp+''
+        printf,lun,'set lerr'+pp+' [split $cerr'+pp+']'
+        printf,lun,'puts $fileid "'+parname_err[imparerr[p]]+' [lindex $lerr'+pp+' 0] [lindex $lerr'+pp+' 1]"'
+     endfor 
+     
+                ;;; fit params
+     for p=0,n_elements(impar)-1 do begin 
+        pp=ntostr(impar[p]+1)
+        printf,lun,'tclout param '+pp
+        printf,lun,'set par'+pp+' [string trim $xspec_tclout]'
+        printf,lun,'regsub -all { +} $par'+pp+' { } cpar'+pp
+        printf,lun,'set lpar'+pp+' [split $cpar'+pp+']'
+
+        printf,lun,'puts $fileid "'+parname[impar[p]]+' [lindex $lpar'+pp+' 0]"'
+     endfor 
+     
+                ;;;stats
+     printf,lun,'tclout stat'
+     printf,lun,'set stt [string trim $xspec_tclout]'
+     printf,lun,'regsub -all { +} $stt { } cstt'
+     printf,lun,'set lstt [split $cstt]'
+     printf,lun,'puts $fileid "chisq [lindex $lstt 0]"'
+     
+     printf,lun,'tclout dof'
+     printf,lun,'set df [string trim $xspec_tclout]'
+     printf,lun,'regsub -all { +} $df { } cdf'
+     printf,lun,'set ldf [split $cdf]'
+     printf,lun,'puts $fileid "dof [lindex $ldf 0]"'
+
+                ;;;flux
+     printf,lun,'flux 0.3 10. err 10000 90'
+     printf,lun,'tclout flux 1'
+     printf,lun,'set flx [string trim $xspec_tclout]'
+     printf,lun,'regsub -all { +} $flx { } cflx'
+     printf,lun,'set lflx [split $cflx]'
+
+     printf,lun,'puts $fileid "flux [lindex $lflx 0]"'
+     printf,lun,'puts $fileid "flux_err [lindex $lflx 1] [lindex $lflx 2]"'
+     
+                ;;;unabs flux
+     printf,lun,'newpar 1 0 1 0 0 1e4 1e4'
+     if z ne 0 then printf,lun,'newpar 2 0 1 0 0 1e4 1e4'
+     printf,lun,'flux 0.3 10.0 err 10000 90'
+     printf,lun,'tclout flux 1'
+     printf,lun,'set flx [string trim $xspec_tclout]'
+     printf,lun,'regsub -all { +} $flx { } cflx'
+     printf,lun,'set lflx [split $cflx]'
+
+     printf,lun,'puts $fileid "unabs_flux [lindex $lflx 0]"'
+     
+                ;;;rate
+     printf,lun,'show rate'
+     printf,lun,'tclout rate 1'
+     printf,lun,'set rte [string trim $xspec_tclout]'
+     printf,lun,'regsub -all { +} $rte { } crte'
+     printf,lun,'set lrte [split $crte]'
+     printf,lun,'puts $fileid "rate [lindex $lrte 0]"'
+     printf,lun,'puts $fileid "model_rate [lindex $crte 2]"'
+     printf,lun,'close $fileid'
+     printf,lun,'exit'
+     printf,lun
+
+     close,lun
+     free_lun,lun
+
+     print,'XSPEC'
+     spawn,'xspec - '+xbfile+' > xspec'+ntostr(j+1)+'.out'
+     
+;  datfile='seg'+ntostr(j+1)+mode+'.dat'
+     
+     evfile='seg'+ntostr(j+1)+'wt.evt'
+     if not exist(evfile) then evfile='seg'+ntostr(j+1)+'pc.evt' 
+     ev=mrdfits(evfile,1)
+     tmin=min(ev.time)-trigtime
+     tmax=max(ev.time)-trigtime
+     
+     openu,lun,datfile,/get_lun,/append
+     printf,lun,'N_ev '+ntostr(n_ev)
+     printf,lun,'exptime '+ntostr(exp_time)
+     printf,lun,'tmin '+ntostr(tmin)
+     printf,lun,'tmax '+ntostr(tmax)
+     printf,lun,'regime '+regime
+;  if corr ge 0 then printf,lun,'pu_corr '+ntostr(corrfact[corr])
+     close,lun
+     free_lun,lun
+     
+  endfor   
+
+  return
+end 
+
+pro fit_sed_xrt
+  
+  cd,'~/Desktop/GRB080319B/xrt_spec_fits'
+  
+  

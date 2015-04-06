@@ -1,0 +1,35 @@
+pro grb080319b_lc,_extra=_extra
+  
+  cd,'~/Desktop/GRB080319B/'
+  file='curve_corr_new.qdp'
+  lc=lcout2fits(file,/qdp)
+  
+  tmin=[68.189981,102.19785,132.20277,170.19413,220.18925,260.23553,314.19632,392.18947,538.25537,916.34337]
+  tmax=[102.18361,132.18320,170.18345,220.18747,260.17150,314.18386,392.18057, 538.10948,916.12988,1720.0655]
+  
+  corr=[12.0633,12.0617,11.9731,7.07089,7.07130,7.06963,7.06928,1.85293,1.29116,1.29116]
+  
+  oldcorr=[10.3052,10.3034,10.3053,6.02534,6.02538,6.02521,6.02355,1.52453,1.2822,1.28219]
+  
+  ctr=lc.src_rate
+  for i=0,9 do begin
+     w=where(lc.tstart ge tmin[i] and lc.tstop le tmax[i])
+     ctr[w]=ctr[w]/oldcorr[i]*corr[i]
+  endfor 
+  
+  lc.src_rate=ctr
+  
+  convert_phil2lcout,file,/qdp,outfile='loredana_lc.txt'
+  
+  plot_like_qdp,file='loredana_lc.txt',_extra=_extra
+  
+  for i=0,9 do begin
+     
+     oplot,[tmin[i],tmin[i]],[1e-3,1e4],line=1
+     oplot,[tmax[i],tmax[i]],[1e-3,1e4],line=1
+  endfor 
+  
+  stop
+  return
+end 
+     

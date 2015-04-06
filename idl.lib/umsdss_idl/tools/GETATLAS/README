@@ -1,0 +1,42 @@
+
+	get_atlas.pro is an IDL procedure that loads atlas images.  It 
+calls an  external C routine.  This is a modified version of a stand alone 
+atlas reader written by Robert Lupton.  
+
+; EXAMPLES:
+;   Look at the atlas images in each bandpass for first 10 objects in frame 35
+;   of run 109
+;
+; IDL> file='/sdss3/data4/run109/tsObj-000109-3-0-0011.fit'
+; IDL> read_photo_col, file, struct, struct_type='all', start=35, nframes=1
+; IDL> index = indgen(10)
+; IDL> get_atlas, struct, index
+;
+;   Save the r' band atlas image with no display or prompting.  If clr is 
+;   specified, then only that image is retrieved and the program runs faster.
+;
+; IDL> get_atlas, struct, 33, clr=2, /noprompt, /nodisplay, imr=red_image
+; 
+
+
+The C code is made into a .so file: call_atlas.so.  You will need this file
+to run get_atlas.pro. The full path to this file is set on about line 92
+of get_atlas.
+
+This code has been written to be complete so some of the code may be useless
+for many purposes.  In particular the displaying routine has been written
+to be user friendly but it may not have use for those just saving a bunch of
+images.  However, most of the extra stuff can be turned off with 
+the appropriate keywords.  
+
+Note: in order to save memory, the code only saves the last image looked at.
+It can be easily modified to save all the images specified by 'index' or
+it can be called in succession without too much overhead.
+
+get_atlas currently has 5 subroutines:
+
+atlas_name.pro
+combine_atlas.pro
+copy_atlas.pro
+missing_atlas.pro
+display_atlas.pro

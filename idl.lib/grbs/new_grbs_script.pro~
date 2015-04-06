@@ -1,0 +1,42 @@
+pro new_grbs_script,skip=skip,getbat=getbat
+  
+;  csvfile='old_grbs.csv'
+  csvfile='short_grbs.csv'
+  outcsvfile='short_grbs2.csv'
+  
+  
+;readcol,'~racusin/grbs/new_grbs.csv',grbname,tid,battime,wt,format='(a,l,d,i)',delim=','
+  readcol,!grbs+csvfile,grbname,tid,battime,wt,format='(a,l,d,i)',delim=','
+  
+  ngrbs=n_elements(grbname)
+  g=0
+  stop
+  if keyword_set(getbat) then begin 
+     battime=strarr(ngrbs)
+     wt=intarr(ngrbs)
+     for i=g,ngrbs-1 do begin
+        if tid[i] gt 100000L then begin 
+           com='wget -O BATfile.txt --http-user=SwiftBA --http-passwd=BATgrb "http://swift.gsfc.nasa.gov/docs/swift/results/BATbursts/'+ntostr(tid[i])+'/bascript/top.html"'
+           print,com
+           spawn,com
+           com2='grep "Trigger Time" BATfile.txt > BATtime.txt'
+           print,com2
+           spawn,com2
+           readcol,'BATtime.txt',crap1,crap2,crap3,bt,delim=' ',format='(a,a,a,a)'
+           battime[i]=bt
+        endif
+;    grb_lc_script,grbname[i],tid[i],battime,wt
+        
+;    cd,'..'
+     endfor 
+
+     writecol,outcsvfile,grbname,tid,battime,wt,delim=','
+     stop
+  endif 
+
+  for i=g,ngrbs-1 do begin 
+     grb_lc_script,grbname[i],tid[i],battime[i],wt[i]
+  endfor 
+
+  return
+end 

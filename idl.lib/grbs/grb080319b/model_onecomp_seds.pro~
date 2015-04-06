@@ -1,0 +1,362 @@
+function bknpow,t,p,seg=seg,perror=perror,yerror=yerror
+  norm=p[0]
+  pow1=p[1]
+  break1=p[2]
+  pow2=p[3]
+  if n_elements(p) gt 4 then normt=p[4] else normt=1.
+  w1=where(t lt break1,nw1)
+  w2=where(t ge break1,nw2)
+  seg=dblarr(n_elements(t))
+  if nw1 gt 0 then seg[w1]=1
+  if nw2 gt 0 then seg[w2]=2
+  yfit=dblarr(n_elements(t))
+  
+  if normt le break1 then $ 
+     nnorm=(normt)^(-pow1)
+  if normt gt break1 then $
+     nnorm=(break1)^(pow2-pow1)*(normt)^(-pow2)
+  
+  if nw1 gt 0 then $
+     yfit[w1]=norm*(t[w1])^(-pow1)
+  if nw2 gt 0 then $
+     yfit[w2]=norm*(break1)^(pow2-pow1)*(t[w2])^(-pow2)
+  yfit=yfit/nnorm
+
+  return,yfit
+end 
+
+function bkn2pow,t,p,seg=seg,perror=perror,yerror=yerror
+  norm=p[0]
+  pow1=p[1]
+  break1=p[2]
+  pow2=p[3]
+  break2=p[4]
+  pow3=p[5]
+  if n_elements(p) gt 6 then normt=p[6] else normt=1.
+  w1=where(t lt break1,nw1)
+  w2=where(t ge break1 and t lt break2,nw2)
+  w3=where(t ge break2,nw3)
+  seg=dblarr(n_elements(t))
+  if nw1 gt 0 then seg[w1]=1
+  if nw2 gt 0 then seg[w2]=2
+  if nw3 gt 0 then seg[w3]=3
+  yfit=dblarr(n_elements(t))
+  
+  if normt le break1 then nnorm=(normt)^(-pow1)
+  if normt gt break1 and normt le break2 then $
+     nnorm=(break1)^(pow2-pow1)*(normt)^(-pow2) 
+  if normt gt break2 then $
+     nnorm=(break1)^(pow2-pow1)*(break2)^(pow3-pow2)*(normt)^(-pow3)
+  
+  if nw1 gt 0 then $
+     yfit[w1]=norm*(t[w1])^(-pow1)
+  if nw2 gt 0 then $
+     yfit[w2]=norm*(break1)^(pow2-pow1)*(t[w2])^(-pow2)
+  if nw3 gt 0 then $
+     yfit[w3]=norm*(break1)^(pow2-pow1)*(break2)^(pow3-pow2)*(t[w3])^(-pow3)
+  
+  yfit=yfit/nnorm
+
+  return,yfit
+end 
+
+pro model_onecomp_seds,ps=ps
+  
+    ;;;read in unfolded SEDs
+  cd,'~/Desktop/GRB080319B/SEDs/ebv0.02nh9/'
+
+  files=['sed150.txt','sed250.txt','sed350.txt','sed720.txt','sed1500.txt','sed5856.txt','sed1e4.txt','sed3e4.txt','sed8e4.txt','sed2e5.txt','sed5e5.txt']
+  n=n_elements(files)
+  
+  if keyword_set(ps) then begplot,name='sed_onecomp.ps',/color,/land
+  colors=[!red,!green,!blue,!cyan,!magenta,!yellow,!orange,!lightgreen,!turquoise,!royalblue,!purple]
+  time=[150,250,350,720,1500,5856,1e4,3d4,8d4,2d5,5d5]
+  h=4.1356692d-18
+  vband=5.55e14
+  xband=2./h
+  x=10^(findgen(100)/12)*1d13
+  
+  ;;LC dependent
+  aopt1=2.49
+  aopt2=1.25
+  ax1=1.44
+  xbreak1=2238.
+  ax2=1.85
+  xbreak2=41405.
+  ax3=1.17
+  ax4=2.70
+  
+  nuc=dblarr(11) & nucerr=dblarr(2,11) & chisq=nuc & dof=intarr(11) & nucerr0=nuc
+  
+  plot,[1d13,1d21],[1d-9,10],/nodata,/xlog,/ylog,xtitle='Frequency (Hz)',ytitle='Flux (Jy)',/ysty,/xsty,xminor=9,yminor=9,yticks=10,xticks=8,ytickf='loglabels',title=title
+  legend,[ntostr(long(time))+' s'],/top,/right,textcolor=colors,box=0  
+  for i=0,n-1 do begin 
+     readcol,files[i],nu,flux,fluxerr,format='(d,d,d)'
+     print,time[i]
+     
+     oploterror,nu,flux,fluxerr,errcolor=colors[i],color=colors[i],psym=5,/nohat,symsize=0.7
+     tt0=time[i]/time[0]
+     case i of
+        0: begin
+           ;;T+150s
+           model='bknpow'
+           par=[1e-3,0.75,2d18,1.,xband]
+           parname=['Norm1','p/2','nu_b','beta_e','xband']
+           parinfo=parinfo_struct(n_elements(parname))
+           parinfo.parname=parname
+           parinfo.value=par           
+           parinfo[0].limits=[0,0.1]
+           parinfo[0].limited=[1,1]
+           parinfo[1].fixed=1
+           parinfo[2].limits=[1d18,1d20]
+           parinfo[2].limited=[1,1]
+           parinfo[3].limits=[1,2]
+           parinfo[3].limited=[1,1]
+           parinfo[4].fixed=1
+        end 
+        1: begin 
+           ;;T+250s
+           model='bkn2pow'
+           par=[norm0*tt0^(-ax1),0.25,1d15,0.75,nub,betae,xband]
+           parname=['Norm1','(p-1)/2','nu_c','p/2','nu_b','beta_e','xband']
+           parinfo=parinfo_struct(n_elements(parname))
+           parinfo.parname=parname
+           parinfo.value=par           
+           parinfo[0].fixed=1
+           parinfo[1].fixed=1
+           parinfo[2].limits=[1d13,nub]
+           parinfo[2].limited=[1,1]
+           parinfo[3].fixed=1
+           parinfo[4].fixed=1
+           parinfo[5].fixed=1
+           parinfo[6].fixed=1
+        end 
+        2: begin
+           ;;T+350s
+           model='bkn2pow'
+           par=[norm0*tt0^(-ax1),0.25,1d15,0.75,nub,betae,xband]
+           parname=['Norm1','(p-1)/2','nu_c','p/2','nu_b','beta_e','xband']
+           parinfo=parinfo_struct(n_elements(parname))
+           parinfo.parname=parname
+           parinfo.value=par           
+           parinfo[0].fixed=1
+           parinfo[1].fixed=1
+           parinfo[2].limits=[1d13,nub]
+           parinfo[2].limited=[1,1]
+           parinfo[3].fixed=1
+           parinfo[4].fixed=1
+           parinfo[5].fixed=1
+           parinfo[6].fixed=1
+        end 
+        3: begin
+           ;;T+720s
+           model='bkn2pow'
+           par=[norm0*tt0^(-ax1),0.25,1d15,0.75,nub,betae,xband]
+           parname=['Norm1','(p-1)/2','nu_c','p/2','nu_b','beta_e','xband']
+           parinfo=parinfo_struct(n_elements(parname))
+           parinfo.parname=parname
+           parinfo.value=par           
+           parinfo[0].fixed=1
+           parinfo[1].fixed=1
+           parinfo[2].limits=[1d13,nub]
+           parinfo[2].limited=[1,1]
+           parinfo[3].fixed=1
+           parinfo[4].fixed=1
+           parinfo[5].fixed=1
+           parinfo[6].fixed=1
+        end 
+        4: begin 
+           ;;T+1500s
+           model='bkn2pow'
+           par=[norm0*tt0^(-ax1),0.25,1d15,0.75,nub,betae,xband]
+           parname=['Norm1','(p-1)/2','nu_c','p/2','nu_b','beta_e','xband']
+           parinfo=parinfo_struct(n_elements(parname))
+           parinfo.parname=parname
+           parinfo.value=par           
+           parinfo[0].fixed=1
+           parinfo[1].fixed=1
+           parinfo[2].limits=[1d13,nub]
+           parinfo[2].limited=[1,1]
+           parinfo[3].fixed=1
+           parinfo[4].fixed=1
+           parinfo[5].fixed=1
+           parinfo[6].fixed=1
+        end
+        5: begin 
+           ;;T+5856s
+           model='bkn2pow'
+           par=[norm0*xbreak1^(ax2-ax1)*time[i]^(-ax2)/time[0]^(-ax1),0.25,1d15,0.75,nub,betae,xband]
+           parname=['Norm1','(p-1)/2','nu_c','p/2','nu_b','beta_e','xband']
+           parinfo=parinfo_struct(n_elements(parname))
+           parinfo.parname=parname
+           parinfo.value=par           
+           parinfo[0].fixed=1
+           parinfo[1].fixed=1
+           parinfo[2].limits=[1d13,nub]
+           parinfo[2].limited=[1,1]
+           parinfo[3].fixed=1
+           parinfo[4].fixed=1
+           parinfo[5].fixed=1
+           parinfo[6].fixed=1
+        end         
+        6: begin 
+           ;;T+1e4s
+           model='bkn2pow'
+           par=[norm0*xbreak1^(ax2-ax1)*time[i]^(-ax2)/time[0]^(-ax1),0.25,1d15,0.75,nub,betae,xband]
+           parname=['Norm1','(p-1)/2','nu_c','p/2','nu_b','beta_e','xband']
+           parinfo=parinfo_struct(n_elements(parname))
+           parinfo.parname=parname
+           parinfo.value=par           
+           parinfo[0].fixed=1
+           parinfo[1].fixed=1
+           parinfo[2].limits=[1d13,nub]
+           parinfo[2].limited=[1,1]
+           parinfo[3].fixed=1
+           parinfo[4].fixed=1
+           parinfo[5].fixed=1
+           parinfo[6].fixed=1
+        end 
+        7: begin 
+           ;;T+3e4s
+           model='bkn2pow'
+           par=[norm0*xbreak1^(ax2-ax1)*time[i]^(-ax2)/time[0]^(-ax1),0.25,1d15,0.75,nub,betae,xband]
+           parname=['Norm1','(p-1)/2','nu_c','p/2','nu_b','beta_e','xband']
+           parinfo=parinfo_struct(n_elements(parname))
+           parinfo.parname=parname
+           parinfo.value=par           
+           parinfo[0].fixed=1
+           parinfo[1].fixed=1
+           parinfo[2].limits=[1d13,nub]
+           parinfo[2].limited=[1,1]
+           parinfo[3].fixed=1
+           parinfo[4].fixed=1
+           parinfo[5].fixed=1
+           parinfo[6].fixed=1
+        end       
+        8: begin 
+           ;;T+8e4s
+;           model='bknpow'
+;           par=[norm0*xbreak1^(ax2-ax1)*xbreak2^(ax3-ax2)*time[i]^(-ax3)/time[0]^(-ax1),0.75,nub,betae,xband]
+;           parname=['Norm1','p/2','nu_b','beta_e','xband']
+           model='bkn2pow'
+           par=[norm0*xbreak1^(ax2-ax1)*xbreak2^(ax3-ax2)*time[i]^(-ax3)/time[0]^(-ax1),0.25,7d14,0.75,nub,betae,xband]
+           parname=['Norm1','(p-1)/2','nu_c','p/2','nu_b','beta_e','xband']
+           parinfo=parinfo_struct(n_elements(parname))
+           parinfo.parname=parname
+           parinfo.value=par           
+           parinfo[0].fixed=1
+           parinfo[1].fixed=1
+;           parinfo[2].fixed=1
+           parinfo[2].limits=[min(nu),1d15]
+           parinfo[2].limited=[1,1]
+           parinfo[3].fixed=1
+           parinfo[4].fixed=1
+           parinfo[5].fixed=1
+           parinfo[6].fixed=1
+        end       
+        9: begin 
+           ;;T+2e5s
+           model='bkn2pow'
+           par=[norm0*xbreak1^(ax2-ax1)*xbreak2^(ax3-ax2)*time[i]^(-ax3)/time[0]^(-ax1),0.25,1d14,0.75,nub,betae,xband]
+           parname=['Norm1','(p-1)/2','nu_c','p/2','nu_b','beta_e','xband']
+           parinfo=parinfo_struct(n_elements(parname))
+           parinfo.parname=parname
+           parinfo.value=par           
+           parinfo[0].fixed=1
+           parinfo[1].fixed=1
+           parinfo[2].limits=[1d13,nub]
+           parinfo[2].limited=[1,1]
+           parinfo[3].fixed=1
+           parinfo[4].fixed=1
+           parinfo[5].fixed=1
+           parinfo[6].fixed=1
+        end     
+        10: begin 
+           ;;T+5e5s
+           model='bknpow'
+           par=[norm0*xbreak1^(ax2-ax1)*xbreak2^(ax3-ax2)*time[i]^(-ax3)/time[0]^(-ax1),0.75,nub,betae,xband]
+           parname=['Norm1','p/2','nu_b','beta_e','xband']
+           parinfo=parinfo_struct(n_elements(parname))
+           parinfo.parname=parname
+           parinfo.value=par           
+           parinfo[0].fixed=1
+           parinfo[1].fixed=1
+           parinfo[2].fixed=1
+           parinfo[3].fixed=1
+           parinfo[4].fixed=1
+        end         
+     endcase 
+     
+     wfree=where(parinfo.fixed eq 0,nfree)
+     if nfree gt 0 then begin 
+        newp=mpfitfun(model,nu,flux,fluxerr,par,yfit=yfit,nprint=100,parinfo=parinfo,perror=perror0)
+     endif else newp=par
+     tmp=execute('yfit='+model+'(nu,newp)')
+     chisq[i]=total((flux-yfit)^2/fluxerr^2)
+     dof[i]=n_elements(flux)-nfree
+     
+     if n_elements(newp) gt 6 then begin
+        nuc[i]=newp[2]
+        conf_error,nu,flux,fluxerr,newp,perror0,model,perror,par=2,fixed=[1,1,0,1,1,1,1]
+        nucerr[*,i]=perror[*,2]
+        nucerr0[i]=perror0[2]
+     endif 
+        
+     if i eq 0 then begin
+        norm0=newp[0]
+        betae=newp[3]
+        nub=newp[2]
+     endif 
+     
+     tmp=execute('yfit='+model+'(x,newp)')
+     oplot,x,yfit,color=colors[i]
+     colprint,parname,newp,parinfo.fixed
+     
+;     k=get_kbrd(10)
+;     if k eq 's' then stop
+  endfor 
+  
+  w=where(nuc ne 0,nw)
+  if keyword_set(ps) then begin
+     endplot 
+     begplot,name='nuc_onecomp.ps',/land,/color
+  endif else window,1
+  lowerr=nuc[w]-nucerr[0,w]
+  wlow=where(lowerr le 0)
+  lowerr[wlow]=10.
+  higherr=nuc[w]+nucerr[1,w]
+;  time=time/(1.+0.937)
+  
+  plot,time[w],nuc[w],/xlog,/ylog,yrange=[1e13,1e17],psym=5,xtitle='SED Time (s)',ytitle=!tsym.nu+'!Lc!N'
+  nerr=dblarr(nw)
+  for i=0,nw-1 do begin 
+     oplot,[time[w[i]],time[w[i]]],[lowerr[i],higherr[i]]
+     nerr[i]=min(nucerr[*,w])
+  endfor 
+  
+    
+  colprint,time,nuc*h,nucerr[0,*]*h,nucerr[1,*]*h,chisq,dof,chisq/dof
+  
+  newp=mpfitfun('bknpow',time[w],nuc[w],nerr,[1e14,-1,1e4,1],nprint=100,perror=perror0)
+  t=[time[w],newp[2]]
+  t=t[sort(t)]
+  yfit=bknpow(t,newp)
+  
+  delchi0=chisqr_cvf(0.1,n_elements(newp)-1)
+  conf_error,time[w],nuc[w],nerr,newp,perror0,'bknpow',perror,par=[1,2,3],delchi0=delchi0
+    
+  oplot,t,yfit,color=!green
+  if keyword_set(ps) then endplot
+  
+  colprint,newp,perror[0,*],perror[1,*]
+  
+  x1=-newp[1]
+  x2=-newp[3]
+  k1=(8.*x1+4.)/(3.+2.*x1)
+  k2=(8.*x2+4.)/(3.+2.*x2)
+  print,k1,k2
+  
+  
+  stop
+  return
+end 

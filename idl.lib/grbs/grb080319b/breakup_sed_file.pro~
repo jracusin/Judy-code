@@ -1,0 +1,6 @@
+pro breakup_sed_file
+  
+  dir='~/Desktop/GRB080319B/SEDs/ebv0.05nh9/'
+  cd,dir
+  file='fluxden_ebv05nh09.qdp'
+  readcol,file,lines,format='(a)'

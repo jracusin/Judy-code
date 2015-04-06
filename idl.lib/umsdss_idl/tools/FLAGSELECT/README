@@ -1,0 +1,23 @@
+
+These routines are designed to make cuts on SDSS photo catalog based
+on flags.
+
+First, make a flag structure:
+
+IDL>make_flag_struct, fs
+
+each flag is set to 'D' for don't care.  i.e. don't care about that flag.
+If you want a flag to be false, set the flag to 'N'.  If you require
+the flag to be true, set the flag to 'Y'.
+
+IDL>fs.CHILD = 'Y'
+
+Then you can select by these flags.  This example selects on 
+regular flags, color 2 (red).  s will store the good indices.
+
+IDL>colorindex=2
+IDL>flag_select, photostruct, fs, colorindex, s
+
+This will select on only objc_flags:
+
+IDL>flag_select, photostruct, fs, colorindex, s, objc=1

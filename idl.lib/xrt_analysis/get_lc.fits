@@ -1,0 +1,15 @@
+pro get_lc,lc1,lc2,lc3,lc4,lc5,mint,time,density,err
+
+
+    time=[mint[0]+lc1.x,mint[1]+lc2.x,mint[2]+lc3.x,mint[3]+lc4.x,mint[4]+lc5.x]
+    density=[lc1.density,lc2.density,lc3.density,lc4.density,lc5.density]
+    err=[lc1.error,lc2.error,lc3.error,lc4.err,lc5.error]
+
+    s=sort(time)
+    time=time[s]
+    density=density[s]
+    err=err[s]
+
+return
+end 
+    

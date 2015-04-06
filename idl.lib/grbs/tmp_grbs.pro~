@@ -1,0 +1,17 @@
+pro tmp_grbs
+  
+  grbra=213.00667d
+  grbdec=16.981889d
+  ralist=[213.00667,213.00542,213.00750,213.00542,213.00783,213.00583,213.00606d]
+  declist=[16.981889,16.981778,16.983472,16.981667,16.981583,16.981861,16.981574d]
+  errlist=[3.60000,1.10000,0.00000,0.00000,0.00000,0.00000,5.52000d]
+  names=['XRT refined','Butler','A','B','C','D','XRT boresight corr']
+  newra=213.00547d
+  newdec=16.981660d
+  newerr=2.0551594d
+  
+  
+  make_astrom_plot,grbra,grbdec,ralist,declist,errlist,names,newra,newdec,newerr,title=title,donames=donames,_extra=_extra
+     
+  return
+end 

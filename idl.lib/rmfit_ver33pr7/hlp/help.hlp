@@ -1,0 +1,202 @@
+GENERAL TUTORIAL
+
+RMFIT is a general purpose program for displaying and analyzing FITS spectral 
+data, such as from Gamma-Ray Bursts and Solar Flares. It can act upon any 
+X-ray or gamma-ray data stored in suitable FITS (Flexible Image Transport 
+System) files. The program has several capabilities: 
+
+1) Display of time histories and spectra
+2) Selection of data subsets for display
+3) Creation of a background model and background subtraction
+4) Spectral fitting via forward-folding spectral models
+
+The data are displayed in multiple windows and much of the data manipulation is
+done with a mouse. RMFIT is written in IDL and FORTRAN and the source code is
+provided for users to examine. The distributed version runs in the IDL 'Virtual
+Machine', which means that any user may run RMFIT without a licensed version of
+IDL. For those users that have a license for IDL, after quitting RMFIT, the user
+may be left in IDL with many of the variables defined and available for
+additional use.
+
+RMFIT has been run on DEC VAX/VMS, DEC OpenVMS Alpha, SUN (currently, SOLARIS is
+not supported), Linux, Mac OSX and PC/Windows operating systems.  The minimal
+requirements for running RMFIT are the IDL Virtual Machine (version 6.1 or
+higher). If you need to create or modify the FORTRAN model fitting program MFIT
+for your own computer, your machine must also support a FORTRAN 77 compiler. To
+create the MFIT dynamically loadable module, we have provided a makefile in the
+MFIT subdirectory. Consult the README.DOC file in the top level directory for
+further instructions. We have provided pre-buuilt MFIT executables for Windows 
+and Mac OSX computers.
+ 
+<Invocation & RMFIT Window>
+ 
+To start RMFIT, the user can either start the Virtual Machine, IDL or click on
+the 'rmfit.sav' file directly. In either of the first two methods, the user must
+navigate to find the 'rmfit.sav' file within the computer's file directory
+structure. Whenever the Virtual Machine is used, an IDL splash panel is
+displayed that must be clicked on before any further action can be taken.
+
+The general flow of data into RMFIT starts with FITS PHA and DRM data files from
+a past or current X-ray or gamma-ray astronomy mission, as found at the HEASARC
+at NASA's Goddard Space Flight Center. When RMFIT starts up, a box will appear
+that allows you to select FITS files in the directory tree specified by the path
+you have set in RMFIT.  You may select your data file, or CANCEL to make changes
+to the FITS file filter, or to turn off Auto Read Lookup (see below). The main
+menu initially will contain the file filter *.fits (or your custom filter) in
+the 'Select File(s) for Reading' box. This filter should usually be sufficient,
+but you may enter another filter if desired (wildcard = *), or a complete
+filename. If you enter the default filter, or enter another, a box will appear
+enabling you to choose any files matching the filter in the current directory
+tree. There is a default FITS file, located in the 'rmfit/data' directory, that
+can be used for testing purposes. A short RMFIT tutorial session based upon this
+file is presented below. All data files are stored in RMFIT as lowercase.
+
+The RMFIT Window is the main interface to read in FITS data files for spectral
+fitting. PHA FITS data files are selected for display and fitting with the
+'Load' button. Loaded files can be Displayed or Hidden with the appropriate
+buton. This is especially useful if the user has hidden or closed the data
+display window; the RMFIT 'Display' button is the only way to bring the display
+back. One can also display Detector Response Functions by loading them from the
+RMFIT Window. All FITS PHA data files Loaded into the RMFIT Window are initially
+included in spectral fitting; thus, data that the user wishes not to be included
+in a joint spectral fit should be Deleted from the RMFIT Window list before 
+attempting a spectral fit.
+
+This sample session uses the three example files her_herb_143_6... provided in
+the 'rmfit/data' directory.  The FITS data file her_herb_143_6.fits contain HER
+(High Energy Resolution background) and HERB (High Energy Resolution Burst) data
+from BATSE Large-Area Detector 6 collected before, during and after BATSE
+Trigger 143.  The other two files contain lookup information and a DRM for this
+data.
+
+The Auto Read Lookup option is initally set to ON.  If this is ON when the FITS
+file is read, the directory that contains the FITS file is searched for a lookup
+file based on the FITS file name and your lookup file extension.  The lookup
+file is automatically read and the menu updated with the lookup file parameters.
+
+<PHA Display Window>
+
+Interacting with PHA data is done with the display window for the loaded file.
+Each loaded file typically has its own display window, with the file's name in
+the title, except for the case where the RMFIT 'Display on Load' Option has been
+turned OFF. To display any file in the RMFIT Window's list, use the 'Display'
+button. For this tutorial, find the file named 'her_herb_143_6.fits' in the 
+'rmfit/data' subdirectory and load it into RMFIT. We will want to start from 
+scratch, so we must remove the current selections, using the menu, 
+'File/Lookup/Erase Current'.
+
+The first time a PHA data file has ever been opened in RMFIT, no lookup data
+exists and no selections have been made. It is very important to make the proper
+selections before fitting data, as there are many cases where certain instrument
+time or energy channels are not appropriate for spectral fitting. We suggest
+first examining the Spectral Display of counts per energy channel, which may be
+seen by typing 's', 't' or selecting the 'Toggle' button, if it is not visible.
+To select a portion of the energy range for fitting, type 'i' or choose the
+button "Select Source:/Source Interactive". Source selection mode is now active
+on the display, and can only be exited by moving the cursor to the left of the
+leftmost plot axis and clicking there. Select the first bin in the range by
+positioning the cursor over a bin in the plot and clicking mouse button. Select
+the last bin in the same way. Numbers in the lower left-hand corner of the plot
+track the position of the mouse cursor, which can be used if a particular value
+is to be selected. If you move the cursor below the bottom axis of the plot, the
+message in the lower left-hand corner of the plot will change to 'Numerical
+Entry'. If you click the mouse button in this area of the plot, RMFIT will
+prompt you to type two numbers to bound the selection interval. The selected
+interval will be the smallest one that encompasses the bin(s) containing the
+numbers entered. RMFIT will respond to the selection by displaying the actual
+values of the edges of the selected interval. For the example FITS file, select
+35-1850 kev. If you make a mistake and want to start over, move the cursor past
+the right-hand vertical axis of the plot, until the message in the lower
+left-hand corner of the plot reads, 'Clear Selctions', and press the mouse
+button. The plot will revert to the default selection (the entire range), and
+you can start over. Otherwise, individual channel selections may be chnged with
+the 'Adjust Source:' commands.
+
+After you select the two bins, RMFIT will move the vertical lines on the plot so
+that they bound the range of channels you have selected. You may continue to
+select ranges of bins by clicking on two bins on the plot, setting up additional
+non-overlapping (and possibly discontiguous) selections. You exit the command by
+selecting a point on the plot to the left of the left, vertical axis, so that
+the message in the lower left-hand corner of the plot reads, 'EXIT'.
+ 
+<Fit Background>
+
+Once a range of energy bins has been selected, the History plot will update to
+display the integrated rates only for the selection, as can be seen by typing
+'h', 't' or selecting the 'Toggle' button. The history display allows the user
+to see the entire time history of spectral accumulations at once, whereas only a
+portion of the data may reflect an event of interest, such as a gamma-ray burst.
+(It should be noted that single-spectrum XSPEC PHA type 1 files do not have a
+History display.)  The burst counts dominate the history display, so it is a
+good idea to isolate the background by zooming the plot in the Y direction, by
+typing 'y' or selecting 'Zoom:/Y Zoom'. Each pair of clicks will mark a region
+of the y-axis to zoom into; we would like to display count rates between 3000
+and 5000, which may be accomplished in a series of refinements by clicking above
+and below the line time history of the background rates. Once the plot is zoomed
+enough, the background rate is clearly seen to change; use 'EXIT' as usual.
+
+The next task is to select a background model, using 'Fit Background'. Selection
+of the background is done in the same manner as the selection of energy bins,
+marking regions of interest with two mouse clicks. It is best to find regions
+both before and after the times containing the source plus background counts.
+For the example file, we need at least two regions: roughly 1400 s before and
+after the burst (at t = 0 s). Try selecting both the regions -1400 - -300 and
++320 - +1400 and then 'EXIT' to the left of the plot. RMFIT will request the
+order of the background model polynomial; choose 4. In the resulting chi-square
+plot, one can see poor convergence at low energies for this model and selection.
+Select 'Dismiss' to put away the plot and select 'Fit Background' again. Snce I
+happen to know that there is a solar flare contaminating the interval +600 -
++850, we should leave that out. Select the bin before this, +320 - +600, by
+clicking in it twice and the two bins that follow after, +900 - +1450. The
+chi-square plot is much more reasonable, although it is not perfect. Dissmiss 
+the plot and zoom the History display out to full range by typing, 'g' (which 
+goes to the selection, in this case there is none).
+
+<Select Source>
+
+In order to select data for spectral fitting, we first need to zoom in on the
+time history to see the details of the source counts. Type 'x' or select
+'Zoom:/X Zoom' and then refine the plot by clicking on alternate sides of the
+source counts (visible as a spike at time zero) until the time region +0 - +10 s
+is displayed; 'EXIT' as usual. Follow the same 'Select Source:/Source
+Interactive' (or type 'i') routine as with the Spectral display, this time
+selecting the bright interval from +0.8 to +2.9 s. The selection is marked with
+cross hatching. The History display shows the rates for the selected energy
+range, '34.169: 1855.98 keV' and the time range of the source intervals is
+indicated by the label, '0.832: 2.880 s'. The dotted line at the bottom of the
+Burst History plot indicates the background model.
+
+<Spectral Fitting:>
+ 
+We are now ready to do spectral analysis, so choose 'Spectral Fitting:/Fit One
+Spectrum'. RMFIT will redraw the Burst History window and display the message
+'Click on spectrum to fit'.  Position the cursor on the desired spectrum
+('1.024: 1.408 s') on the Burst History window and click. The selected spectral
+accumutation will be highlighted; click 'EXIT' as usual. RMFIT will look for the
+DRM file associated with the burst data file and automatically read it in. You
+should now see the 'Photon Model' selection widget, where we would like to pick
+the 7th term, 'Comptonized, Epeak'. Additional models may be summed together by
+more than one selction; this is done with the 'Control' key held down, but as we
+only require one model for now, we can leave things.
+
+Accept your choice by clicking on 'Accept'. RMFIT will now put up two new
+windows: the 'Fit Log', where the results of the spectral fit are displayed, and
+the 'Fit Display', where the reulsts can be seen graphically. The Fit Log
+indicates that the chi^2 of this model is 121.51 for 111 degrees-of-freedom. The
+parameter values are: amplitude = 0.4149 +/- 0.00847, Epeak = 993.0 +/- 51.6
+keV, and Index = -0.4551 +/- 0.0385. The pivot energy is fixed at 100 keV.  You
+can see from the Fit Display couunt spectrum plot that most of the contribution
+to chi^2 comes from below 100 keV. In this bright burst, with excellent SNR,
+some nonlinearites in the preliminary channel-to-energy conversion become
+apparent which lead to systematic deviations between the data and the count rate
+model. You will probably wish to try some of the other plot types by typing 'p',
+'e' or 'n' to bring up the 'Photon Spectrum', etc.. To try the batch fit mode,
+select the menu item 'Batch Fit Selections'. RMFIT will successively fit each
+interval selected in the Burst History window, starting each fit with the model
+obtained in the above fit. After the fits are done,  select 'Fit Parameters...',
+then 'Comptonized, Epeak: Epeak (keV)'. A plot showing the values of Epeak for
+the selected spectra plotted versus the time ranges of the spectra; the flux
+history is visible as a dotted historgram in blue. There seems to be a
+hard-to-soft trend in the first pulse; while the trend in the second pulse is
+more like Epeak tracks the pulse.  To leave RMFIT, select 'Options/Show rmfit
+Window', then 'File/Quit' or 'File/Exit IDL'.

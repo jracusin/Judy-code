@@ -1,0 +1,3 @@
+These are some sdss specific programs.
+The directores GET_ATLAS, FLAG_SELECT, and READPHOTO
+also contain sdss specific routines

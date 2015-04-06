@@ -1,0 +1,86 @@
+"Fit Background"
+
+   *** "Fit Background" is valid only in the burst history window ***
+   
+      The "Fit Background" command is used to create the background model, which 
+      is used to produce background-subtracted source spectra. Each selected 
+      range of bins in the background intervals will be displayed as a white-
+      dashed histogram. The default, which is no background intervals, can be
+      returned to at any time by selecting a point on the plot to the right of 
+      the right vertical axis ("Clear Selections").  "Numerical Entry" works the
+      same way as described above in "Select Source Interactive" section.  After 
+      the selection is complete, or when you desire to return to the menu, say 
+      to zoom in or out to better select other portions of the background, 
+      select a point on the plot to the left of the left vertical axis ("EXIT").
+
+      You will be asked to choose the order of the background model to be used 
+      for the fit. The coefficients of the background model are computed at this 
+      time, after which the background model, integrated over energy, will be 
+      displayed as a line plotted over the time histogram. This line will appear 
+      dotted (light blue colored) where it has been interpolated or extrapolated 
+      beyond the time bins selected for the background model fit, and, in 
+      particular, will be interpolated through the burst interval. This allows
+      the user to visually estimate the amount of signal above background for 
+      the source spectra, as well as visually evaluate the appropriateness of 
+      the background model. While a continuous background model is shown on the 
+      plot, background subtraction is done by averaging the background model 
+      over the accumulation time of each source data interval. 
+
+      You will also be given a plot of reduced chi^2 for the background model 
+      versus energy channel over the selected energy range to verify that the 
+      background fit is satisfactory. 
+      
+         *** If you choose "Cancel", RMFIT will erase all the background ***
+         *** information even the background model that existed prior to ***
+         *** your choosing "Fit Background".  We strongly suggest saving ***
+         *** your background model as a lookup file whenever you make    ***
+         *** one. Otherwise, there is no way to retrieve the lost one!!  ***
+
+      You can change the order of the background model without changing the
+      background intervals selection by again choosing the "Fit Background"
+      command and immediately "EXIT"ing.
+             
+      The background model is created, for each channel, by fitting a polynomial 
+      of the selected order to the data.  The average of the polynomial over 
+      each time bin is calculated and compared to the data, and the polynomial 
+      coefficients are optimized so as to minimize chi^2.
+      For all except the strongest bursts at low energies, selection of the
+      background model needs to be done with care.  Lower orders probably lead 
+      to a more stable and robust background model, but models of low order 
+      frequently cannot reproduce the observed background time variations.  
+
+      You must balance systematic errors in the background model caused by 
+      choosing more data than can be fit with a polynomial versus the large 
+      statistical error bars caused by basing the background model upon a small 
+      interval of data.  If your source time intervals are an extrapolation, 
+      rather than an interpolation, of the background model, it would be wise to 
+      select a low order.  
+
+"Select Background" (PHA Type I FITS Display only)
+      
+      Files in the FITS PHA Type I format, used primarily by XSPEC, are loaded 
+      into a special display, since they consist of only a single spectrum. Most 
+      of the capabilities of rmfit, including spectral fitting, are available, 
+      except that the burst history display does not have any meaning in this 
+      context. The PHA Type I display is thus recognized by the absence of the 
+      "Toggle" button and the changed wording on the button "Fit Background" -> 
+      "Select Background". Rather than fitting a background model to a time 
+      series of user-selected spectra, for the Type I display, the user selects 
+      a Type I background spectrum file (usually denoted with the '.bak' suffix) 
+      from the resulting list of files. The background model is assumed to be 
+      a constant, consisting of the spectrum found in the file, so any Type I 
+      PHA file may be used. After a selection has been made, the background 
+      model is presented in the spectrum display as a dotted histogram, as 
+      usual, in the current background color. For spectral fitting, the chosen 
+      background is subtracted from the observed spectrum; it is up to the 
+      user to determine whether the background is appropriate (e.g.: the observed 
+      rates are mostly all greater than the background rates). When the user 
+      quits rmfit, or when the datafile is deleted from the rmfit window, there 
+      will be an opportunity given to save the background filename into the 
+      current datafile, to be automatically loaded the next time the file is 
+      read in. Simply answer "Yes" to the question, "Save new background file 
+      into dataset: <filename>?". It is best if the two files stay together in 
+      the same directory, so that the one can always find the other. If that 
+      association is ever lost, the "Options/Reset Background Filename" menu 
+      item can remove the background filename from the PHA file, in order to 
+      avoid error messages from rmfit.

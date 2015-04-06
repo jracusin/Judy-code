@@ -1,0 +1,543 @@
+FIT DISPLAY HELP
+   
+== Fit Log Window ==
+
+"Clear"
+      This clears the contents of the Fit Log window.  Once it is cleared, there
+      is no way to restore them back in the window.  It is always a good idea to
+      save the results with "Save" command described below, when a fit is done.
+      
+"Hide"
+      Hides the Fit Log window.  It can be restored by selecting "Options" ->
+      "Show Fit Log" in the Fit Display window.
+      
+"Save"
+      Once a fit has been performed upon a spectrum, you can save the results to 
+      a file, by issuing the "Save" command.  The result will be an ASCII file 
+      which contains exactly same information as you see in the Fit Log window.
+      
+"Table"
+      Again, after a fit has been performed, the "Table" command will bring up 
+      a useful widget for exporting the fit data to a table. Each spectral fit  
+      in the 'Fit Log' window will be summarized by a row in the table. Buttons 
+      on the bottom of the table can be used to delete the selected rows, change 
+      values displayed in the table columns, sort on columnar data and close the 
+      Table. Finally, the "Export to:" button offers three options for tabular 
+      export: two wiki table formats and an Excel spreadsheet compatible format.
+
+== Fit Display Window ==
+
+<Main Menu Items>
+
+File
+----
+   
+   "Print"
+         Prints the plot either to a file or to a printer.  The configuration 
+         can be changed by choosing the "Print Setup..." command.
+         
+         For most UNIX-style operating systems, printing is done via the 'lp' 
+         command to the current default printer, assuming that it can accept 
+         PostScript files. You must set up the printer accordingly outside of 
+         rmfit.
+                  
+   "PS Configure..."
+         When you print plots to postscript files, you may change the postscript
+         plot configuration using this command. Among the options available are:
+         
+            Paper size: Letter, Legal, A4, etc.
+            Printed image size: Can be typed in directly; however, the more useful
+                way is to resize the white rectangle by dragging. There is detailed 
+                help available. Finally, the image can be centered using buttons 
+                found below the page image and preset image sizes can be called up 
+                by a drop-down menu.
+            Portrait vs. Landscape orientation
+            Ecapsulated PostScript output: for embedding into papers
+            Color output
+            Output filename, path and extension
+            
+         Configuration option sets can be saved and recalled with the 'Config' 
+         button and all the defaults restored with the 'Defaults' button. Select 
+         'Accept' to pass the options to the next plot.
+         
+   "Print Fit Info on Plot" / "No Fit Info on Plot"
+         Once a fit is done and if you wish to print the resulted plots to a 
+         file or a printer, this option lets you choose whether you would like 
+         the fit information printed along with the plots.  It switches between 
+         "Print Fit..." and "No Fit..." when the option is clicked.  The printed
+         information will be exactly the same contents and format as seen in the 
+         Fit Log for the fit.
+         (Default - "Print Fit Info on Plot")  
+
+   "Screenshot"
+         This command is available for archiving the displayed plot as a '.png' 
+         formatted screenshot. After saving the screenshot to a file, the file 
+         can be posted to the web or presentation software with no modifications.
+
+   "Dismiss"
+         This command closes the Fit Display window but keeps the Fit Log 
+         opened.  To restore the display window, go to any of the data windows 
+         and select "Fit Plotter".  It retains the information of the last fit 
+         done as long as you do not exit the RMFIT session.
+
+   
+Dataset
+-------
+
+   Shows the data windows on top of the Fit Display window, either "All" at once 
+   or any selected ones.
+   
+   
+Options
+-------
+   
+   "Show rmfit Window"
+         Restores the rmfit window as is (i.e, if it is minimized, it restores
+         as minimized so will not show up on the screen). 
+         
+   "Colors"
+         This allows you to interactively select color tables for the following.
+   
+            Background
+            Foreground
+            History
+            Spectrum
+            Background Model
+            
+         Use the sliders or type in hex values to obtain a specific color. 'Accept' 
+         will dave the color and use it for the appropriate element of subsequent 
+         plots. Printing in color requires you to select 'Color' on the 'PS 
+         Configure...' option under the 'File' menu.
+
+   "Show Fit Log"
+         Restores the Fit Log window on top of the other windows.
+         This works even if the Fit Log window has been closed / hidden /
+         minimized.
+           
+   "Plot Configuration"
+         This selection initiates a menu to change plotting parameters.  These
+         parameters will affect all subsequent plots.  You must reset the values
+         by clicking "Default" to turn off any changes you make.  The preview is 
+         available to see the changes made.  The configurations can be saved as 
+         *.cfg file and can be loaded through "Config" button.
+      
+   "Set Fluence Energies"
+         After the first fit is done, the flux interval can be changed according
+         to your interest.  When this command is selected, it brings up an
+         window "Set flux integration interval", in which you can enter the
+         lower and upper bound energies of the interval in keV.  Once you set
+         the flux interval, this will become your default, and will not change
+         for later sessions until you reset it. The default range is 10 -- 1000 
+         keV.
+      
+   "Set Duration Energies"
+         Similar to the command above, you can set the energy interval used to 
+         calculate durations using the photon flux method. The default range is 
+         50 -- 300 keV.
+         
+   "Rest Duration Calculation"
+         Allows the user to recalculate the duration without redoing a batch fit.
+         See the "Burst Duration" command description below.
+
+<Other Menu Items>
+
+"Zoom"
+      Commands to select regions of the current plot for display are always 
+      available, no matter which command has been used to generate the plot. 
+      Each command has a keyboard equivalent that may be used in place of 
+      selecting the command from the menu. There is a hidden keyboard command 'r' 
+      that simply refreshes the plot (some systems handle window reveals 
+      differently and may leave the display blank).
+   
+      "----- TEAROFF"
+            Separates the "Zoom" subcommand buttons in another window so that 
+            you can choose the commands without going through the pull-down 
+            menu.
+            
+      "Zoom" (keyboard equivalent: 'z')
+            Select "Zoom" and RMFIT will wait for you to select two points on 
+            the plot with the mouse. These two points should be the diagonal 
+            corners of a box which includes all the data you wish to display.
+            To aid selection, the lower left corner of the plot will display the 
+            current cursor position. In addition, after the first point is
+            selected, a dotted box will follow the cursor, as an indication of 
+            the region of the plot which will be expanded.  After you select the 
+            second point, RMFIT will redraw the plot.  If you wish to exit the 
+            command without redrawing, select a point on the plot to the left of 
+            the left vertical axis (the message in the lower left-hand corner of 
+            the plot window reads "EXIT").  If you wish to "RESET" and start 
+            over, select a point on the plot to the right of the right vertical 
+            axis.  This will reset the plot to the original range that you   
+            started with.  You can also "RESET to Default Range" by selecting a 
+            point in the upper margin.  The plot will revert to the default 
+            selection (the entire range), and you can start all over.  
+            You may enter selections through the keyboard by clicking in the 
+            lower margin ("Numerical Entry").  If you click in this area of the 
+            plot, RMFIT will prompt you to type two numbers to bound the 
+            selection interval.  When you "Accept", the selected interval will 
+            be the smallest one that encompasses the bin(s) containing the 
+            numbers entered; whereas, "Accept Exact" will take the exact values 
+            for the interval boundaries.
+            
+      "Zoom X" (keyboard equivalent: 'x')
+            This zoom takes effect only on the X-axis ranges.  When you select
+            "X Zoom", RMFIT will wait fro you to select two points on the plot
+            with the mouse.  Once you select the first point, RMFIT shows a line
+            indicating your selection, and as soon as you select the second
+            point, RMFIT will redraw the plot.  "RESET", "RESET to Default
+            Range","EXIT", and "Numerical Entry" follow the above descriptions.
+            
+      "Zoom Y" (keyboard equivalent: 'y')
+            This zoom takes effect only on the Y-axis ranges in the same manner
+            as "X Zoom" above.
+            
+      "Full Screen" (keyboard equivalent: 'f')
+            Select this button to expand the plot to full screen size.  Click on
+            the plot to close the Full Screen window.
+
+
+"Fit Results"
+   
+      "----- TEAROFF"
+            Separates the "Fit Results" subcommand buttons in another window so 
+            that you can choose the commands without going through the 
+            pull-down menu.
+            
+      "Dump Results to Log"
+            After a fit is done, the detailed fit information can be displayed 
+            in the Fit Log window by selecting "Dump Results to Log".  This 
+            command is useful when you want to save the fit results to a text 
+            file.  You can "Clear" the Fit Log contents and "Dump Results to 
+            Log", and "Save" only the desired fit result to a file in ASCII 
+            format.
+              
+            For a time-integrated fit with one or more dataset(s), the dumped 
+            results will contain the model parameter information, detector name, 
+            live time, total chi^2, channel number, energy range, observed, 
+            background and model count rates, model sigma, deduced observed 
+            count rate, and sigma, for each energy channel in the selection and 
+            for each dataset.  
+           
+            For a batch fit, the dumped results will be the same as the
+            information that is already shown in the Fit Log when the fit is
+            completed. (i.e, no extra information available)
+                        
+      "Write Results to File"
+            The "Write Results to File" option writes a FITS file (*.par) 
+            containing detailed information about the CURRENT batch fit.  
+            The information is very similar to the information placed into the 
+            formatted file written by the "Save" option available in the Fit Log 
+            window.  These FITS files can be read by selecting "Read Fit Results 
+            File" and displayed directly to the Fit Display window.
+            
+      "Write Fit Param Only"
+            Same as above but writes only the fit parameters to a FITS file.  
+            This means that it does not contain any model data and therefore
+            cannot display "Residuals Contour" or "NuFnu Contour" when read.
+            (When you try "Residuals Contour" or "NuFnu Contour" command, it 
+            gives an error message: ``This parameter file has no model data'' 
+            on the left bottom corner of Fit Display window)  
+            
+      "Read Fit Results File"
+            This reads the saved fit result files (*.par) and plots the selected
+            parameters.
+            
+            
+"Redo Last Fit"
+            This command gives you access to selections of data without having 
+            to do any extra effort.  "Redo Last Fit" simply re-loads the last 
+            fitted spectrum into MFIT (including the last spectrum in a batch 
+            fit series), where you can select a new model for fitting.
+
+           
+"Spectral Fitting"
+   
+      "----- TEAROFF"
+            Separates the "Spectral Fitting" subcommand buttons in another 
+            window so that you can choose the commands without going through the 
+            pull-down menu.
+            
+      "Synthesize Burst"
+            Sometimes it is useful to simulate a burst with a photon model with 
+            known parameters. Selecting this command will bring up the 'Photon 
+            Model' selection box. Select one or more models, and optionally 
+            select values for their parameters, ending by selecting 'Accept'. 
+            rmfit will then request the parameters of the synthetic burst itself:
+            the length of the background accumulation, the livetime of each spectrum, 
+            as well as the number of spectra to produce. Finally, a random number is 
+            requested as a seed for the random number generator creating the Poisson 
+            statistics for each spectrum. Selecting 'OK' accepts these inputs and 
+            brings up a dialog asking a name and path for the synthetic burst file. 
+            After the file has been created, it can be read into rmfit for analyes, 
+            using the current data file's DRM.
+            
+      "Error Interval", "ChiSQ 1D Plot" & "ChiSQ 2D Plot"
+            The error bars reported after each fit and in the Fit Log are
+            estimated from the derivatives of chi^2. The statistically 'exact' 
+            errors on the parameter values are the value changes that increase 
+            chi^2 by certain amounts, as discussed in Numerical Recipes by Press 
+            et al. The option "ChiSQ 1D Plot" plots the value of chi^2 versus a 
+            selected parameter, thereby allowing you to see the confidence 
+            regions for the parameter. The option "ChiSQ 2D Plot" plots the 
+            value of chi^2 as a contour map versus the values of two selected 
+            parameters, thereby depicting the joint confidence region of the two 
+            parameters.  For both options, chi^2 is evaluated by doing fits on a 
+            (1-dimensional or 2-dimensional) grid of points. For the 
+            2-dimensional case, the number of grid points can be large, implying 
+            a significant run-time to perform the fits. We recommend doing 
+            preliminary 2-dimensional maps with a small number of grid points in 
+            order to ``home in'' on the the confidence region.  
+            
+            When you select "ChiSQ..." command, RMFIT will ask you to select the
+            parameter(s) to process the chi^2 mapping.  You will be given the 
+            choice of percentile confidence levels (90%, 99%, 99.9%) or sigma 
+            confidence levels (1, 2, or 3 sigma) as well as the number of 
+            parameters of interest.  
+            
+               *** When you select more than one parameter for 1D-plot  ***
+               *** or more than two parameters for 2D-plot, it gives an ***
+               *** error message saying "Choose at most one (or two, in ***
+               *** case of 2D-plot) parameter(s)" on the left bottom    ***
+               *** corner of the Fit Display window, regardless of the  ***
+               *** number of parameters you choose.                     ***
+               
+            How many parameters are of interest to you depends upon the
+            scientific question that you are asking. As described in Numerical 
+            Recipes (Press et al.), the more parameters whose values are of 
+            interest to you, the larger the size of the confidence region.  
+            
+            You can also specify the range in the parameter for which you want a 
+            chi^2 plot.  The default range is +/- 4 sigma.
+            
+            After the chi^2 has been plotted, selecting "ChiSQ..." command again
+            will pose a question, "Redo Chisq calculation with new parameters
+            or ranges?"  Answering "Yes" will give you back the same "Select
+            Parameters" Window as described above.  "No" will keep the current
+            parameters and the ranges, and will give you an window that lets you 
+            change only the sigma/percentage option and the number of parameter 
+            option.             
+            
+            "Error Interval" is a way to output the desired two-tailed error 
+            interval that is derived from the 1D chi^2 plot for one parameter of 
+            interest on the Fit Log window. Select the parameter to be evaluated 
+            and the level of error and whether the level should be in sigmas or 
+            in digits of precision. That is: the dialog has a pop-up that selects 
+            the Error INterval to be expressed either in "Sigma Levels" or "Percent 
+            Level", as well as a pop-up for the level itself: either 1, 2, or 3 
+            sigma or, for percentiles, digits of precision that correspond as: 
+            1 = 90%; 2 = 99% or 3 = 99.9%. Select the parameter of interest, making 
+            sure that the range selected will actually cover the desired level, 
+            and select "Accept". Instead of a plot, the Fit Log will come to the 
+            front and the previous fit will be redisplayed, with the error for the 
+            selected parameter replaced by an error interval: 
+            parameter - lowerror + hierror.
+       
+   --- The following "Fit..." commands work the same way as described in the 
+       SPECTRAL FITTING HELP:    
+   
+         "Fit One Spectrum"
+         "Fit One Interval"
+         "Fit Selections"
+         "Batch Fit Selections"
+   
+   
+"Fit Display Options:"
+---------------------
+Once a fit has been obtained, there are many different ways of displaying
+information about the results. MFIT implements six plot types with three
+options for residual plots for this purpose:
+
+      "Cumulative"
+            The raw counts are accumulated from the lowest energy bin to the  
+            highest and compared with the accumulated model counts. Sometimes, 
+            with sparse datasets, the highest energy bins contribute the least 
+            number of counts to the fit. This display makes this evident, as 
+            the cumulative counts curves (and model counts) will flatten out 
+            where there are no more counts to sum.
+
+      "Raw Counts"
+            A display of the source counts, as derived directly from the data,  
+            sometimes provides a useful diagnostic tool, since you are seeing 
+            exactly what the detector saw and what was fitted. Raw counts are  
+            background-subtracted source counts; they have not been converted 
+            into a differential rate spectrum, obtained by dividing the counts 
+            by the energy bin widths and the livetime. The raw counts model is 
+            overplotted on the data.
+   
+      "Counts Spectrum"
+            The "Counts Spectrum" is the most fundamental plot since the 
+            observed quantity is counts and the fit is done by minimizing the 
+            difference between the observed and model counts.  In order to make 
+            the plot model independent, the error bars shown are calculated from 
+            the data, even though MFIT uses variances estimated from the model 
+            to calculate and minimize chi^2.  Unlike the photon model, the count 
+            rate model is discrete--it predicts the count rate in each channel.  
+            For this reason, we prefer to plot the count rate model as a
+            histogram. 
+
+      "Photon Spectrum"
+            The "Photon Spectrum" must be used with caution.  Both the photon 
+            flux model and, less obviously, the 'photon flux data' are model 
+            dependent.  The photon 'data' are calculated, for each channel, by 
+            using the model photon flux and model count rate to define an 
+            efficiency.  These efficiencies are used to convert the data count 
+            rates into 'data' photon rates.  The error bars on this plot type 
+            are calculated from the model. 
+
+      "Energy Spectrum"
+            The "Energy Spectrum" is similar to the photon spectrum. The model is 
+            derived from the continuous photon flux model multiplied by E.
+            
+      "Nu Fnu Spectrum"
+            The "Nu Fnu spectrum" (= d(Eflux)/d(log E)) plot shows the 'photon 
+            data' and photon model in units of energy flux per log energy 
+            range, thereby making clear what energy range dominates the source's 
+            luminosity.   The model is derived from the continuous photon flux 
+            model simply by multiplying by E^2.  The derivation of the data 
+            values from the 'photon data' is slightly more complicated.  The 
+            quantity 'Eflux' is energy flux, not energy x flux.  
+
+For each of the spectral fits in the display, you can choose to display the plot 
+with either Linear of Log axes by selection or deselection of the "X Log" or 
+"Y Log" bottons. You may also choose to show or hide the individual components 
+of the spectral model by selecting the appropriate button under "Model Display 
+Options:". Notice that this only applies to models that are composed of a sum of 
+multiple terms; it has no effect upon the display of a single photon model nor a 
+single model times any number of multiplicative terms.
+
+   --- The following residual plots are plotted right below the spectrum plot, 
+       in the same plot window:
+      
+      "Sigma Residuals"
+            The "Sigma Residuals" plot shows the residuals (data - model) as 
+            pulls, i.e., in units of sigma.  The sigmas used are calculated from 
+            the model.  This plot is always done at the instrument's channel 
+            resolution even if you have combined channels in the burst spectrum 
+            window.  
+
+      "Counts Residuals"
+            The "Counts Residuals" plot show the residuals (data - model).
+            
+      "No Residuals"
+            Hides the residual plot from the spectrum plot window.
+            
+ 
+Batch Plot Options:   --> these options appear after a batch fit is done
+-------------------
+You can plot the fit parameters obtained by batch fit processing in various
+ways by choosing the "Fit Parameters..." option,  which becomes available after 
+a batch fit has been done.  When the batch fit is completed, it automatically
+displays reduced chi^2 time history with photon flux history overplotted.
+
+      "Fit Parameters..."
+            Choose "Fit Parameters..." to display a single fit parameter as a
+            function of time.  You will be asked to choose which fit parameter 
+            to display as a time history.  First select the plot options
+            described below and select the fit parameter(s) of which you want to
+            obtain the time series, from the list.  The plot will be displayed 
+            in the main plot window, so you can print the plot, or zoom it.   
+            
+            PLOT OPTIONS:
+            
+            "Overplot Flux history?"
+               Click this ON if you want to make an overlay of the photon flux 
+               history plot upon the chosen time series.  The flux history will 
+               be displayed as dotted lines. 
+               (Default - ON)
+
+            "One parameter vs. another"
+               The "One parameter vs. another" command allows one parameter of 
+               the fit to be displayed as a function of another, depending upon 
+               the order in which the two fit parameters are chosen.  The first 
+               chosen will make up the horizontal axis of the resultant plot. 
+               "Overplot Flux history?" must be clicked OFF in order for this
+               command to be effective, since "Overplot..." tries to plot a
+               parameter as a function of time. 
+               
+            "Plot histogram (1 only)"
+               Some batch fit parameters may be distributed within a range of 
+               values, the most common of these being the distribution of 
+               reduced chi-squares.  The "Plot Histogram" command presents a 
+               menu of the fit parameters (including reduced chi-squares) to 
+               choose to display as a histogram of number of occurrences of a 
+               parameter value within a range of parameter values.  The bin 
+               sizes are chosen to be equal to the smallest non-zero error of a 
+               fitted parameter, except for the case of reduced chi-squares, 
+               where the bin size is equal to one third of the standard 
+               deviation of the distribution.  The number of bins can be adjusted 
+               by changing the value displayed under "Number of Histogram Bins:". 
+               Note that this number will not be used if the number of samples 
+               is smaller.
+                  
+            "Log X Axis"
+               Plots the horizontal axis in log scale, if available.
+            
+            "Log Y Axis"
+               Plots the vertical axis in log scale, if available.
+               
+     "Burst Duration"
+            Proper use of this command requires some preparation of the data set:
+            a background model should be created that excludes source counts as
+            much as possible, using the "Fit Background" command of the data
+            window. Next, using "Select Source:" -> "Source Interactive" from
+            the data window, select *both* the background and source regions in
+            one contiguous selection. Finally, perform a batch fit (you may wish
+            to "Fit Selections" first to obtain good starting parameters for the
+            spectral model); now you may select the "Burst Duration" command. At
+            first, only the Photon Fluence history is visible, and there is a
+            message at the lower left corner of the Fit Display: "Choose the
+            lower background interval". If the data were prepared correctly, the
+            Photon Fluence plot should look approximately like a 'S' curve, flat
+            at the lower left, then rising, and finally flat again at the upper
+            right of the plot. The flat portions are the background intervals
+            you will need to define. Make choices with mouse clicks at the left
+            and right edges of the lower flat interval. Once the lower background
+            interval is acceptable, click in the left-hand margin of the plot to
+            EXIT and confirm your selection. Similarly, you are prompted for the
+            upper background interval; once you EXIT to confirm this selection,
+            all of the duration calculations are performed, and displayed on the
+            plot. You may choose the "Options" -> "Calculate Durations" menu item
+            to redo your selections. These calculations can be saved as part of
+            the "Fits Results:" -> "Write Results to File" or "Write Fit Params
+            Only" menu choices. The Peak Flux on the timescale of the data and
+            the total Energy Fluence are both calculated over the Fluence
+            Interval that appears at the upper right hand corner of the plot.
+            This can always be changed with the "Options" -> "Set Flux Interval"
+            menu item.      
+
+      "Residuals Contours"
+            The "Residuals Contours" plots a time history of the sigma residuals
+            obtained for each spectrum as a contour map.  Contours are at one 
+            sigma increments, with negative residuals displayed as red contours, 
+            and positive residuals displayed as green contours.  
+            The Zero-crossing contours are blue.  Systematic departures of the 
+            data from the chosen spectral model will show up as bands or islands 
+            of elevated or depressed contours.  
+
+      "NuFnu Contours"
+            The "NuFNu Contours" is roughly analogous to a topographical 
+            elevation map.  Keeping in mind that the two axes of the plot have 
+            different meanings, the contours follow equal intensities of the 
+            nu-f-nu model time history.  The nufnu spectral model is obtained by 
+            multiplying the photon spectrum by the energy squared.  Gamma-ray 
+            bursts typically peak between 100 keV and 1 MeV in this 
+            representation, which makes it useful for displaying which energy 
+            the peak power of the burst is coming from.  The red dashed line 
+            follows this peak for each time bin; thus it is analogous to a 
+            `continental divide' for the plot, dividing the rising energy 
+            portion of the model, on the left of the dashed line, from the 
+            falling energy portion.
+            
+      "Stack Spectra:"
+            Another way to represent the sequence of fits in the batch mode is to 
+            plot the individual model spectra on top of each other. The time order 
+            is represented in color, changing from yellow for the first spectrum 
+            to red for the latest in time; a time-averaged spectrum is shown as a 
+            dashed line. Photon, Energy or NuFnu stacked spectra can be chosen. As 
+            the spectral model energy coverage is much greater than the physical 
+            detector energy boundaries, the stack plots show the extrapolation of 
+            the model to low and high energies. As with any plot on the display, 
+            the 'Zoom:' commands, including their keyboard equivalents, can be 
+            used to restrict the view.
+            
+--------------------------- END OF FIT DISPLAY HELP ----------------------------

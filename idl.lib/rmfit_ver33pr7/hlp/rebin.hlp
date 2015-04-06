@@ -1,0 +1,118 @@
+"Rebin"
+      You will frequently want to combine time bins via the "Combine Bins" or, 
+      better, the "Signal to Noise" commands to generate spectra with better
+      statistics. As described below, the "Signal to Noise" command combines
+      time bins until a desired signal to noise ratio is attained in the
+      background-subtracted data. These combined time intervals should generate 
+      more consistent results when a given spectral model is applied to each 
+      in turn, via the "Batch Fit Selection" procedure, described  under the 
+      "Fit Spectra" command.
+      
+      "----- TEAROFF"
+            Separates the "Rebin" subcommand buttons in another window so that
+            you can choose the commands without going through the pull-down 
+            menu.
+            
+      "Temporal Resolution"
+            You can rebin your burst history into different time bins using this
+            command.  When you select "Temporal Resolution", RMFIT will ask you
+            to enter data resolution(s) you wish to rebin the data with (in 
+            sec).  The resolution you enter has to be an integer multiple of the  
+            original binning of the data. 
+             
+            e.g. BATSE MER data has 16ms resolution for the first ~33 sec and 
+                 64ms resolution thereafter.  If you enter data resolution of 
+                 32ms (= 0.032 sec) at the prompt, RMFIT will combine every 
+                 two bins of the 16ms bins and the 64ms bins remain unchanged. 
+                 If you enter 128ms (= 0.128 sec) data resolution, every four
+                 16ms-bins and every two 64ms-bins will be combined 
+                 respectively. 
+                  
+      "Signal to Noise"
+            You may want to bin your data so that each data point has roughly 
+            the same level of statistical significance above background.  After 
+            a background model has been computed, the "Signal to Noise" command 
+            lets you bin your data so that the rate in each bin has an error bar 
+            smaller than a size you specify.  When you select "Signal to Noise",
+            RMFIT will prompt for you to enter a desired Signal to Noise Ratio 
+            (SNR) for the background-subtracted data.  RMFIT will attempt to 
+            reduce the size of your data's error bars by combining bins.  The 
+            choice of SNR will involve some trial and error.  For the burst
+            history window, SNRs are calculated based upon the total number of 
+            energy bins selected in the burst spectrum window, and vice versa.
+            Thus, if only one energy bin has been selected (spanning 5 keV), 
+            you would supply a correspondingly smaller SNR than if the entire 
+            energy range (roughly 2 MeV) were selected, in order to obtain an 
+            equivalent time binning.  As a rough guide for the BATSE HER data, 
+            if most of the energy range is selected (the overflow channels at 
+            the high end, as well as channels below the LLD, should usually be
+            excluded for spectroscopic analysis), a number above 15 will usually 
+            produce spectra which have enough significance above background to 
+            be fit reliably.  
+
+      "Full Resolution"
+            When you select the "Full resolution" entry, RMFIT will display your
+            data with the binning at which it is stored in the FITS file. 
+            
+      "Refine Bins"
+            Once you have combined a sequence of energy bins, you may wish to 
+            undo the operation and display your data at its full resolution 
+            again.  The "Refine Bins" command allows you to reverse the effect 
+            of the "Combine Bins" or "Temporal Resolution"/"Signal to Noise" 
+            command.
+            
+         "Refine by Half"
+               The "Refine by half" command is a less drastic version of "Refine 
+               Single Bin". It divides a large, combined bin into two smaller 
+               bins, each roughly half the width of the original.
+
+         "Refine Single Bin"
+               Select "Refine Single Bin", and RMFIT will wait for you to select 
+               a bin from the spectrum plot. When you select a bin, RMFIT will 
+               redraw the plot with the data within the selected bin displayed 
+               at your file's full resolution. 
+
+      "Combine Bins"
+            The "Combine Bins" command permits you to combine a sequence of bins 
+            into a single bin.  When you select "Combine Bins", a pull-down menu  
+            appears asking what type of binning is desired.  
+            You can always undo the binning (i.e, go back to the original 
+            resolution) by choosing "Full Resolution" or "Refine Bins" described 
+            above.
+         
+         "Source Intervals"
+               After you make your selection(s) with "Select Source" command,  
+               you can combine all continuously selected bins into one bin by 
+               choosing this command.  If you have multiple number of 
+               discontinuous selections, it combines each selection separately.
+               If you choose this command when you do not have any specific
+               selections, it combines the entire data range into one bin.  
+               
+         "Single Bin" & "Combine by..."
+               "Single Bin" means that all the bins selected by the mouse will 
+               be joined into one bin; whereas "Combine by..." will bring up a  
+               box that asks you the numbers of bins to combine into one bin. 
+               If you, for example, choose the number to be 2, it means that 
+               every two bins in the range selected by the mouse will be 
+               combined into one bin.  
+               
+               In both cases, RMFIT will wait for you to mark two bins from the 
+               history/spectrum plot in the manner described in the following 
+               "Select Source Interactive" command.  To clear the current 
+               selection before exiting and start over, move the cursor to a 
+               point on the plot to the right of the right vertical axis, until 
+               the message in the lower left-hand corner reads, "Clear 
+               Selection", and press the mouse button.  "Numerical Entry" works 
+               the same way as described in the "Select Source Interactive" 
+               section below.  When you exit after you are done with your 
+               selection, RMFIT will combine them accordingly. 
+               To exit, move the cursor to a point on the plot to the left of 
+               the left vertical axis, until the message in the lower left-hand 
+               corner reads, "EXIT", and press the mouse button. After pressing 
+               the button once, it still keeps you in the "Combine Bins" mode,
+               and you can further combine bins as many times as you need.  When  
+               you are done with combining, just click on the "EXIT" point 
+               twice, and it will let you out of the mode and keep the last 
+               binning. After you exit, RMFIT will redraw the history/spectrum  
+               plot with the selected range of bins replaced by the selected 
+               binning pattern.
