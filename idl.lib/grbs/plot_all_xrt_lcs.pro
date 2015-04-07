@@ -37,7 +37,7 @@ pro histoit
   flu1=where(g[w1].fluence gt 4.45e-6,ng)
   flu2=where(g[w2].fluence gt 4.45e-6,ng)
 
-  begplot,name='~/Swift/xrt_stats_lat_times.ps',/land,/color,font='helvetica'
+  begplot,name='~/Swift/xrt_stats_lat_times.ps',/land,/color;,font='helvetica'
   !p.multi=[0,1,2]
   plothist,alog10(f1),bin=0.1,xtitle='Count Rate @'+ntostr(t[0],2)+' ks',xtickname=['10!U'+ntostr(indgen(5)-5)+'!N','1','10']
   plothist,alog10(f1[gbm1]),bin=0.1,color=!green,/overplot  
@@ -225,8 +225,8 @@ pro plot_all_xrt_lcs,t,val,rate=rate,flux=flux,lum=lum,data=data,overgrb=overgrb
      bin=0.5
   endif 
   if keyword_set(ldens) then begin 
-     yrange=[1d42,1d52]
-     ytitle='Luminosity Density !L0.3-10 keV!N (erg s!U-1!N Hz!U-1!N)'
+     yrange=[1d24,1d34]
+     ytitle='Luminosity [1 keV] (erg s!U-1!N Hz!U-1!N)'
      xtitle='Time (s) / (1+z)'
      add=add+'ldens'
      grbcat=grbcat[wz]
@@ -239,9 +239,8 @@ pro plot_all_xrt_lcs,t,val,rate=rate,flux=flux,lum=lum,data=data,overgrb=overgrb
   
   if n_elements(dir) eq 0 then dir='~/GRBs/'
 
-
   if n_elements(val) eq 0 then begin 
-     begplot,name=dir+'all_xrt_lc_'+add+'.ps',/land,font='helvetica',/color
+     begplot,name=dir+'all_xrt_lc_'+add+'.ps',/land,/color;,font='helvetica'
      if n_elements(overgrb) eq 0 and not keyword_set(nocolor) then loadct,39
      !x.margin=[4,2]
      !y.margin=[3,1]
@@ -267,7 +266,9 @@ pro plot_all_xrt_lcs,t,val,rate=rate,flux=flux,lum=lum,data=data,overgrb=overgrb
               f=f*4.*!pi*dist^2*(1.+grbcat[i].z)^(spec[ws].phind-1.-1.)
               z1=1./(1+grbcat[i].z)
               if keyword_set(ldens) then begin
-                 fdens=flux2jy(1.,grbcat[i].beta)
+                 fdens=flux2jy(1.,grbcat[i].phind)*1d-23
+                 f=f*fdens
+              endif 
 ;        g[i].flux_avg*4.*!pi*dist^2*(1.+g[i].z)^(g[i].beta-1.)
            endif 
 ;        if skip eq 0 then begin 
@@ -292,7 +293,9 @@ pro plot_all_xrt_lcs,t,val,rate=rate,flux=flux,lum=lum,data=data,overgrb=overgrb
               time=time[sort(time)]
               tmp=execute('yfit='+mo+'(time,p)')                
               tmp=execute('yfit200='+mo+'(200./z1,p)')
-              h[i]=round((alog10(f*yfit200)-42.5)*31.)
+              if keyword_set(lum) then h[i]=round((alog10(f*yfit200)-42.5)*31.)
+              if keyword_set(ldens) then h[i]=round((alog10(f*yfit200)-24.5)*31.)
+
 ;           tmp=execute('color=!grey'+ntostr(h))
 ;           print,h
               if n_elements(time) gt 1 then begin 
@@ -339,7 +342,7 @@ pro plot_all_xrt_lcs,t,val,rate=rate,flux=flux,lum=lum,data=data,overgrb=overgrb
 
            nwdet=where(lc.src_rate_err eq 0,nnwdet)
            if keyword_set(rate) then f=1.
-           if keyword_set(flux) or keyword_set(lum) then begin
+           if keyword_set(flux) or keyword_set(lum) or keyword_set(ldens) then begin
               if exist(overgrb[i]+'/UL_specfits.fits') then begin 
                  spec=mrdfits(overgrb[i]+'/UL_specfits.fits',1,/silent)
                  ws=n_elements(spec)-1
@@ -347,11 +350,14 @@ pro plot_all_xrt_lcs,t,val,rate=rate,flux=flux,lum=lum,data=data,overgrb=overgrb
                  if n_elements(z) gt 0 then zlist[i]=z[i] else zlist[i]=spec[0].z
               endif else skip=1
            endif 
-           if keyword_set(lum) then begin
+           if keyword_set(lum) or keyword_set(ldens) then begin
               dist=lumdist(zlist[i])*mpc2cm
               f=f*4.*!pi*dist^2*(1.+zlist[i])^(spec[ws].phind-1.-1.)
               z1=1./(1+zlist[i])
-;print,spec[0].z
+              if keyword_set(ldens) then begin
+                 fdens=flux2jy(1.,grbcat[i].phind)*1d-23
+                 f=f*fdens
+              endif 
            endif else z1=1.
            plotsym,1,4,thick=5
            lcfit='~/GRBs/'+overgrb[i]+'/lc_fit_out_idl_int9.dat'
@@ -394,7 +400,7 @@ pro plot_all_xrt_lcs,t,val,rate=rate,flux=flux,lum=lum,data=data,overgrb=overgrb
 ;        oplot,lc.time*z1,lc.src_rate*f,color=color[i],thick=2
         endfor
         if not keyword_set(noleg) then begin
-           if keyword_set(lum) then legend,['All GRBs',overgrb+' (z='+numdec(zlist,2)+')'],textcolor=[!grey50,color[0:novergrb-1]],box=0,/top,/right,charsize=1.0 else $
+           if keyword_set(lum) or keyword_set(ldens) then legend,['All GRBs',overgrb+' (z='+numdec(zlist,2)+')'],textcolor=[!grey50,color[0:novergrb-1]],box=0,/top,/right,charsize=1.0 else $
               legend,['All GRBs',overgrb],textcolor=[!grey50,color[0:novergrb-1]],box=0,/top,/right,charsize=1.0
         endif 
      endif 

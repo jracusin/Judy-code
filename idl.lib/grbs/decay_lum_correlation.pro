@@ -368,6 +368,8 @@ pro gendre,doplot=doplot,reallyredo=reallyredo
   w=where(g.t90 gt 2.)
   g=g[w]
   ng=n_elements(g)
+goto,skip
+
   lum1=dblarr(ng)
   lump=dblarr(ng)
   alpha=fltarr(ng)
@@ -466,7 +468,7 @@ pro gendre,doplot=doplot,reallyredo=reallyredo
   ;; legend,['slope='+numdec(r[1],2),'spearman='+numdec(c[0],2),'sig='+numdec(mpnormlim(c[1],/SLEVEL),1)],/top,/left,box=0
 
   w=where(alphaav ne 0 and lum1 gt 0 and finite(alphaaverr[0,*]))
-  test_correlation,lum1[w],-alphaav[w],lum1err[*,w],alphaaverr[*,w],g[w].z,xtitle='Lum at rest frame 1 day (erg/s)',ytitle='avg PL decay after plateau',xrange=[1d23,1d29],xticks=6,yrange=[-5,1],/ysty
+  test_correlation,lum1[w],-alphaav[w],lum1err[*,w],alphaaverr[*,w],g[w].z,xtitle='Lum!LX,1 day!N (erg s!U-1!N Hz !U-1!N)',ytitle=!tsym.alpha+'!Lavg,X,>t!Iplateau!N',xrange=[1d23,1d29],xticks=6,yrange=[-5,1],/ysty
 
   ;; ploterror2,lum1[w],alphaav[w],lum1err[*,w],alphaaverr[*,w],psym=8,/xlog,xtitle='Lum at rest frame 1 day (erg/s)',ytitle='avg PL decay after plateau',/nohat,yrange=[-1,5],/ysty,charsize=2
   ;; fitexy,alog10(lum1[w]),alphaav[w],x_sig=alog10(lum1[w])-alog10(lum1[w]-lum1err[0,w]),y_sig=alphaaverr[0,w],a,b
@@ -491,28 +493,34 @@ pro gendre,doplot=doplot,reallyredo=reallyredo
   endplot
 ;  spawn,'ps2pdf ~/stuff_for_people/Sam/gendre.ps ~/stuff_for_people/Sam/gendre.pdf'
   spawn,'ps2pdf ~/stuff_for_people/Sam/lum_plateau_decay.ps ~/stuff_for_people/Sam/lum_plateau_decay.pdf'
- 
+ skip:
   ;;; measure the average spread in afterglows as functions of time
 
-  t=logarr(100,10*86400.,bin=0.1)
+  t=logarr(100,10*86400.,bin=1)
   nt=n_elements(t)
-  sigf=dblarr(nt)
-  f=dblarr(ng,nt)
+  sigfa=dblarr(nt)
+  sigff=dblarr(nt)
+  favg=dblarr(ng,nt)
+  ffit=dblarr(ng,nt)
   n=intarr(nt)
   for i=0,n_elements(g)-1 do begin
      w=where(t ge g[i].tstart and t le g[i].tstop)
-;     f[i,w]=call_function(strtrim(g[i].basemodel,2),t[w],g[i].p)
-     f[i,w]=call_function('pow',t[w]*(1.+g[i].z),[g[i].norm_avg,g[i].alpha_avg])*g[i].lfact
+     f=g[i].lfact*g[i].unabs_cfratio*g[i].fluxdens_avg/g[i].flux_avg
+     ffit[i,w]=call_function(strtrim(g[i].basemodel,2),t[w],g[i].p)*f
+     favg[i,w]=call_function('pow',t[w]*(1.+g[i].z),[g[i].norm_avg,g[i].alpha_avg])*f
   endfor 
 
   for j=0,nt-1 do begin 
-     w=where(f[*,j] ne 0,nw)
-     sigf[j]=stddev(f[w,j])/median(f[w,j])
+     w=where(favg[*,j] ne 0,nw)
+     sigfa[j]=stddev(favg[w,j])/median(favg[w,j])
+     sigff[j]=stddev(ffit[w,j])/median(ffit[w,j])
      n[j]=nw
   endfor 
 
-  begplot,name='~/Swift/decay_lum_corr/lum_spread_w_time.ps',/land
-  plot,t,sigf,/xlog,/ylog,xtitle='Time (s)',ytitle='Standard Deviation/Median L(t)',thick=10
+  begplot,name='~/Swift/decay_lum_corr/lum_spread_w_time.ps',/land,/color
+  plot,t,sigfa,/xlog,/ylog,xtitle='Time (s)',ytitle=!tsym.sigma+'!LLum(t)!N/!S!A   ~!R!NLum(t)',thick=10,charsize=2.
+  oplot,t,sigff,color=!red,thick=10
+  legend,['Fit','Avg'],textcolor=[!red,!p.color],box=0,/top,/right,charsize=2
   endplot
   spawn,'ps2pdf ~/Swift/decay_lum_corr/lum_spread_w_time.ps ~/Swift/decay_lum_corr/lum_spread_w_time.pdf'
 
@@ -536,6 +544,7 @@ pro paper_plots
   
   g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
 
+  goto,skip
   ;; T90start
   
   bin=5.
@@ -550,10 +559,11 @@ pro paper_plots
 ;  k=get_kbrd(10)
 ;  if k eq 's' then stop
   p.close
-  
+  skip:
   ;;; individual segments at t200
 
   begplot,name='~/Swift/decay_lum_corr/flux_decay_und.ps',/land,/color
+  !x.margin=[5,2]
   atype=strarr(n_elements(g))
   for i=0,n_elements(g)-1 do begin
      alpha=which_alpha(g[i].pnames,g[i].p,g[i].t200,aa)
@@ -565,14 +575,56 @@ pro paper_plots
   w3=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and strtrim(atype,2) eq 'III')
   w4=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and strtrim(atype,2) eq 'IV')
   w5=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and strtrim(atype,2) eq 'SPL')
-help,w1,w2,w3,w4
+  help,w1,w2,w3,w4
 ;  w4=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and atype eq 'SPL')
   test_correlation,g.lumdens_final,-g.alpha_und,g.lumdens_final_err,g.alpha_und_err,g.z,yrange=[-7,6],/ysty,xtitle='Lum!LX,fit,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!LX,fit,200s!N',w1=w1,w2=w2,w3=w3,w4=w4,w5=w5,add=['I:   ','II:  ','III: ','IV:  ','SPL: ']
 ;;add in by color which ones are SPL, I, II, III
   endplot
   spawn,'ps2pdf ~/Swift/decay_lum_corr/flux_decay_und.ps ~/Swift/decay_lum_corr/flux_decay_und.pdf'
-  stop
+  
+;  skip:
+  ;;; parrot plot
 
+  begplot,name='~/Swift/decay_lum_corr/parrot_avg_plot.ps',/color
+  loadct,39
+  w=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3,nw)
+  g=g[w]
+  t=logarr(10,1e7,bin=0.1)
+  multiplot,[1,2],/init
+  for j=0,1 do begin 
+     multiplot
+     if j eq 0 then begin
+        xtitle=''
+        ytitle='Lum!LX,avg!N(t) (erg s!U-1!N Hz!U-1!N)' 
+        leg='Avg'
+     endif else begin 
+        ytitle='Lum!LX,fit!N(t) (erg s!U-1!N Hz!U-1!N)'
+        xtitle='Time (s)/(1+z)'
+        leg='Fit'
+     endelse 
+     plot,[10,1e7],[1d24,1d34],/nodata,/xlog,/ylog,xtitle=xtitle,ytitle=ytitle,charsize=2
+     h=fltarr(nw)
+     legend,[leg],box=0,/top,/right,charsize=2.,color=0
+
+     for i=0,nw-1 do begin
+        wt=where(t ge g[i].tplateau_start and t ge g[i].tstart and t le g[i].tstop)
+        f=g[i].lfact*g[i].fluxdens_avg/g[i].flux_avg*g[i].unabs_cfratio
+        yfit200=call_function('pow',g[i].t200,[g[i].norm_avg,g[i].alpha_avg])
+        yfita=call_function('pow',t,[g[i].norm_avg,g[i].alpha_avg])
+        yfitf=call_function(strtrim(g[i].basemodel,2),t,g[i].p)
+
+        h[i]=round((alog10(f*yfit200)-24.5)*31.)
+
+        if j eq 0 then oplot,t[wt]/(g[i].z+1.),yfita[wt]*f,color=h[i]
+        if j eq 1 then oplot,t[wt]/(g[i].z+1.),yfitf[wt]*f,color=h[i]
+        
+     endfor 
+  endfor 
+  multiplot,/reset,/default
+  endplot
+  spawn,'ps2pdf ~/Swift/decay_lum_corr/parrot_avg_plot.ps ~/Swift/decay_lum_corr/parrot_avg_plot.pdf'
+
+  stop
   return
 end 
 
