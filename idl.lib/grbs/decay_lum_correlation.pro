@@ -1,65 +1,87 @@
 @fit_lc
 @swift_lat_pop_studies
-pro test_correlation,x,y,xerr,yerr,z,_extra=_extra
+pro test_correlation,x,y,xerr,yerr,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=w5,add=add
 
   ;;w1=where(g.t90 gt 2. and g.tstart lt g.t200 and g.alpha_avg lt 3)
+  nsamp=1
+  if n_elements(w1) eq 0 then w1=indgen(n_elements(x))
+  if n_elements(w2) gt 1 then nsamp=nsamp+1
+  if n_elements(w3) gt 1 then nsamp=nsamp+1
+  if n_elements(w4) gt 1 then nsamp=nsamp+1
+  if n_elements(w5) gt 1 then nsamp=nsamp+1
+  if n_elements(add) eq 0 then add=''
 
   ;;; assumes xlog 
   w=where(x-xerr[0,*] lt 0.)
   xerr[0,w]=x[w]-1e25
+  color=[!p.color,!red,!green,!blue,!magenta]
+  leg=''
 
-  w=where(y ne 0 and x gt 0 and finite(yerr[0,*]) and finite(xerr[0,*]),nw)
-  plotsym,0,1
-  if n_elements(xrange) eq 0 then begin 
-     xrange=round(alog10(prange(x[w],xerr[0,w]))+0.5)
-     xticks=xrange[1]-xrange[0]
-     xrange=10d^xrange
-  endif 
+  for j=0,nsamp-1 do begin
+     case j of
+        0: ws=w1
+        1: ws=w2
+        2: ws=w3
+        3: ws=w4
+        4: ws=w5
+     endcase 
+     
+     w=where(y[ws] ne 0 and x[ws] gt 0 and finite(yerr[0,ws]) and finite(xerr[0,ws]),nw)
+     w=ws[w]
+     plotsym,0,1
+     if n_elements(xrange) eq 0 then begin 
+        xrange=round(alog10(prange(x[w],xerr[0,w]))+0.5)
+        xticks=xrange[1]-xrange[0]
+        xrange=10d^xrange
+     endif 
 
-  ploterror2,x[w],y[w],xerr[*,w],yerr[*,w],psym=8,/xlog,/nohat,charsize=2,_extra=_extra,xminor=9,xticks=xticks,/xsty,xrange=xrange
+     if j eq 0 then ploterror2,x[w],y[w],xerr[*,w],yerr[*,w],psym=8,/xlog,/nohat,charsize=2,_extra=_extra,xminor=9,xticks=xticks,/xsty,xrange=xrange else oploterror2,x[w],y[w],xerr[*,w],yerr[*,w],psym=8,color=color[j]
 
-  fitexy,alog10(x[w]),y[w],x_sig=alog10(x[w])-alog10(x[w]-xerr[0,w]),y_sig=yerr[0,w],a,b
-  line=alog10(x[w])*b+a
-  oplot,x[w],line;,color=!green
-  print,'slope=',b
-  print,'constant=',a
-  c=r_correlate(alog10(x[w]),y[w])
-  rsig=mpnormlim(c[1],/SLEVEL)
-  print,'Spearman rank coeff & prob & sig: ',c[0],c[1],rsig
-  pr=pr_correlate(x,y,z,/silent)
-  prsig=mpnormlim(pr[1],/SLEVEL)
-  print,'partial spearman rank coeff & prob & sig: ',pr[0],pr[1],prsig
+     fitexy,alog10(x[w]),y[w],x_sig=alog10(x[w])-alog10(x[w]-xerr[0,w]),y_sig=yerr[0,w],a,b
+     line=alog10(x[w])*b+a
+     oplot,x[w],line,color=color[j]
+     print,'slope=',b
+     print,'constant=',a
+     c=r_correlate(alog10(x[w]),y[w])
+     rsig=mpnormlim(c[1],/SLEVEL)
+     print,'Spearman rank coeff & prob & sig: ',c[0],c[1],rsig
+     pr=pr_correlate(x[w],y[w],z[w],/silent)
+     prsig=mpnormlim(pr[1],/SLEVEL)
+     print,'partial spearman rank coeff & prob & sig: ',pr[0],pr[1],prsig
 
-  a0=a
-  b0=b
-  
-  aa=fltarr(1e4) & bb=fltarr(1e4)
-  n=nw
-  for o=0,1e4-1 do begin
-     r=round(randomu(seed,n)*n)
-     fitexy,alog10(x[w[r]]),y[w[r]],x_sig=alog10(x[w[r]])-alog10(x[w[r]]-xerr[0,w[r]]),y_sig=yerr[0,w[r]],a,b
-     aa[o]=a
-     bb[o]=b
-  endfor 
-  a_err=mc_error(aa,sig=1.)
-  b_err=mc_error(bb,sig=1.)
-  
-  mdist=fltarr(nw)
-  for i=0,nw-1 do begin
-     dists=sqrt((alog10(x[i])-alog10(x))^2+(-y[i]-line)^2)
-     mdist[i]=min(dists)
-  endfor 
-  plothist,mdist,x2,y2,bin=0.1,/noplot
-;  ga=gaussfit(x2,y2,a1,nterms=3)
-  am=sqrt(mean((mdist-mean(mdist))^2))
-  plus=b0*alog10(x)+a0+am*cos(b0)*2.  ;;; 2 sigma error
-  minus=b0*alog10(x)+a0-am*cos(b0)*2.
-  s=sort(x)
-  oplot, x[s],plus[s], line=2;,color=!green
-  oplot, x[s],minus[s],line=2;,color=!green
+     a0=a
+     b0=b
+     
+     aa=fltarr(1e4) & bb=fltarr(1e4)
+     n=nw
+     for o=0,1e4-1 do begin
+        r=round(randomu(seed,n)*n)
+        fitexy,alog10(x[w[r]]),y[w[r]],x_sig=alog10(x[w[r]])-alog10(x[w[r]]-xerr[0,w[r]]),y_sig=yerr[0,w[r]],a,b
+        aa[o]=a
+        bb[o]=b
+     endfor 
+     a_err=mc_error(aa,sig=1.)
+     b_err=mc_error(bb,sig=1.)
+     
+     mdist=fltarr(nw)
+     for i=0,nw-1 do begin
+        dists=sqrt((alog10(x[w[i]])-alog10(x[w]))^2+(-y[w[i]]-line)^2)
+        mdist[i]=min(dists)
+     endfor 
+     plothist,mdist,x2,y2,bin=0.1,/noplot
+     am=sqrt(mean((mdist-mean(mdist))^2))
+     plus=b0*alog10(x[w])+a0+am*cos(b0)*2.  ;;; 2 sigma error
+     minus=b0*alog10(x[w])+a0-am*cos(b0)*2.
+     s=sort(x[w])
+     oplot, x[w[s]],plus[s], line=2,color=color[j]
+     oplot, x[w[s]],minus[s],line=2,color=color[j]
+;     leg=[leg,'slope='+numdec(b0,2)+'!S!D-'+numdec(b_err[0],2)+'!R!U+'+numdec(b_err[1],2)+'!N  const='+numdec(a0,2)+'!S!D-'+numdec(a_err[0],2)+'!R!U+'+numdec(a_err[1],2)+'!N  R!Dsp!N='+numdec(c[0],2)+'  signif='+numdec(mpnormlim(c[1],/SLEVEL),1)+!tsym.sigma]
+     if a0 gt 0 then pm='+' else pm=''
+     leg=[leg,add[j]+!tsym.alpha+'!N = '+numdec(b0,2)+'!S!D-'+numdec(b_err[0],2)+'!R!U+'+numdec(b_err[1],2)+'!N log L'+pm+numdec(a0,2)+'!S!D-'+numdec(a_err[0],2)+'!R!U+'+numdec(a_err[1],2)+'!N    R!Dsp!N='+numdec(c[0],2)+' ('+numdec(mpnormlim(c[1],/SLEVEL),1)+!tsym.sigma+'!N)']
+  endfor      
 
-  legend,['slope='+numdec(b0,2)+'!S!D-'+numdec(b_err[0],2)+'!R!U+'+numdec(b_err[1],2)+'!N','const='+numdec(a0,2)+'!S!D-'+numdec(a_err[0],2)+'!R!U+'+numdec(a_err[1],2)+'!N','R!Dsp!N='+numdec(c[0],2),'signif='+numdec(mpnormlim(c[1],/SLEVEL),1)+!tsym.sigma],/top,/left,box=0,spacing=2.5,margin=-0.5
-;stop
+  legend,leg[1:*],/top,/left,box=0,spacing=2.5,margin=-0.5,textcolor=color[0:nsamp-1]
+
   return
 end 
 
@@ -231,19 +253,24 @@ pro dainotti
      endif 
   endfor 
   w=where(ptime ne 0 and ptime-ptimerr[0,*] gt 0)
-
+help,w
   begplot,name='~/Swift/decay_lum_corr/dianotti.ps',/color,/land,font='helvetica'
   ploterror2,ptime[w],lump[w],ptimerr[*,w],lumperr[*,w],psym=3,/xlog,/ylog,xtitle='Time at end of plateau (s)',ytitle='Luminosity at end of Plateau (erg s!U-1!N Hz!U-1!N)'
   fitexy,alog10(ptime[w]),alog10(lump[w]),x_sig=alog10(ptime[w])-alog10(ptime[w]-ptimerr[0,w]),y_sig=alog10(lump[w])-alog10(lump[w]-lumperr[0,w]),a,b
   oplot,ptime[w],10^(alog10(ptime[w])*b+a),color=!green
   print,a,b
   c=r_correlate(alog10(ptime[w]),lump[w],zd=zd)
-  print,c,mpnormlim(c[1],/SLEVEL)
+  rsig=mpnormlim(c[1],/SLEVEL)
+  print,'Spearman rank coeff & prob & sig: ',c[0],c[1],rsig
+  pr=pr_correlate(alog10(ptime[w]),alog10(lump[w]),g[w].z,/silent)
+  prsig=mpnormlim(pr[1],/SLEVEL)
+  print,'partial spearman rank coeff & prob & sig: ',pr[0],pr[1],prsig
+
   legend,['slope='+numdec(b,2),'spearman='+numdec(c[0],2),'sig='+numdec(mpnormlim(c[1],/SLEVEL),1)],/top,/right,box=0
   endplot
   spawn,'ps2pdf ~/Swift/decay_lum_corr/dianotti.ps ~/Swift/decay_lum_corr/dianotti.pdf'
 
-
+stop
   alphaavg=g.alpha_avg
   q=where(g.alpha_avg2 ne 0)
   alphaavg[q]=g[q].alpha_avg2
@@ -439,7 +466,7 @@ pro gendre,doplot=doplot,reallyredo=reallyredo
   ;; legend,['slope='+numdec(r[1],2),'spearman='+numdec(c[0],2),'sig='+numdec(mpnormlim(c[1],/SLEVEL),1)],/top,/left,box=0
 
   w=where(alphaav ne 0 and lum1 gt 0 and finite(alphaaverr[0,*]))
-  test_correlation,lum1[w],-alphaav[w],lum1err[*,w],alphaaverr[*,w],g[w].z,xtitle='Lum at rest frame 1 day (erg/s)',ytitle='avg PL decay after plateau',xrange=[1d23,1d29]
+  test_correlation,lum1[w],-alphaav[w],lum1err[*,w],alphaaverr[*,w],g[w].z,xtitle='Lum at rest frame 1 day (erg/s)',ytitle='avg PL decay after plateau',xrange=[1d23,1d29],xticks=6,yrange=[-5,1],/ysty
 
   ;; ploterror2,lum1[w],alphaav[w],lum1err[*,w],alphaaverr[*,w],psym=8,/xlog,xtitle='Lum at rest frame 1 day (erg/s)',ytitle='avg PL decay after plateau',/nohat,yrange=[-1,5],/ysty,charsize=2
   ;; fitexy,alog10(lum1[w]),alphaav[w],x_sig=alog10(lum1[w])-alog10(lum1[w]-lum1err[0,w]),y_sig=alphaaverr[0,w],a,b
@@ -465,6 +492,30 @@ pro gendre,doplot=doplot,reallyredo=reallyredo
 ;  spawn,'ps2pdf ~/stuff_for_people/Sam/gendre.ps ~/stuff_for_people/Sam/gendre.pdf'
   spawn,'ps2pdf ~/stuff_for_people/Sam/lum_plateau_decay.ps ~/stuff_for_people/Sam/lum_plateau_decay.pdf'
  
+  ;;; measure the average spread in afterglows as functions of time
+
+  t=logarr(100,10*86400.,bin=0.1)
+  nt=n_elements(t)
+  sigf=dblarr(nt)
+  f=dblarr(ng,nt)
+  n=intarr(nt)
+  for i=0,n_elements(g)-1 do begin
+     w=where(t ge g[i].tstart and t le g[i].tstop)
+;     f[i,w]=call_function(strtrim(g[i].basemodel,2),t[w],g[i].p)
+     f[i,w]=call_function('pow',t[w]*(1.+g[i].z),[g[i].norm_avg,g[i].alpha_avg])*g[i].lfact
+  endfor 
+
+  for j=0,nt-1 do begin 
+     w=where(f[*,j] ne 0,nw)
+     sigf[j]=stddev(f[w,j])/median(f[w,j])
+     n[j]=nw
+  endfor 
+
+  begplot,name='~/Swift/decay_lum_corr/lum_spread_w_time.ps',/land
+  plot,t,sigf,/xlog,/ylog,xtitle='Time (s)',ytitle='Standard Deviation/Median L(t)',thick=10
+  endplot
+  spawn,'ps2pdf ~/Swift/decay_lum_corr/lum_spread_w_time.ps ~/Swift/decay_lum_corr/lum_spread_w_time.pdf'
+
 stop
 
   return
@@ -502,9 +553,21 @@ pro paper_plots
   
   ;;; individual segments at t200
 
-  begplot,name='~/Swift/decay_lum_corr/flux_decay_und.ps',/land
-  w1=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3)
-  test_correlation,g[w1].lumdens_final,-g[w1].alpha_und,g[w1].lumdens_final_err,g[w1].alpha_und_err,g[w1].z,yrange=[-7,3],/ysty,xtitle='Lum!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!LX,fit,>200s!N'
+  begplot,name='~/Swift/decay_lum_corr/flux_decay_und.ps',/land,/color
+  atype=strarr(n_elements(g))
+  for i=0,n_elements(g)-1 do begin
+     alpha=which_alpha(g[i].pnames,g[i].p,g[i].t200,aa)
+     t=strsplit(g[i].type,'-',/ex)
+     atype[i]=t[aa/2]
+  endfor 
+  w1=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and strtrim(atype,2) eq 'I')
+  w2=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and strtrim(atype,2) eq 'II')
+  w3=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and strtrim(atype,2) eq 'III')
+  w4=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and strtrim(atype,2) eq 'IV')
+  w5=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and strtrim(atype,2) eq 'SPL')
+help,w1,w2,w3,w4
+;  w4=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and atype eq 'SPL')
+  test_correlation,g.lumdens_final,-g.alpha_und,g.lumdens_final_err,g.alpha_und_err,g.z,yrange=[-7,6],/ysty,xtitle='Lum!LX,fit,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!LX,fit,200s!N',w1=w1,w2=w2,w3=w3,w4=w4,w5=w5,add=['I:   ','II:  ','III: ','IV:  ','SPL: ']
 ;;add in by color which ones are SPL, I, II, III
   endplot
   spawn,'ps2pdf ~/Swift/decay_lum_corr/flux_decay_und.ps ~/Swift/decay_lum_corr/flux_decay_und.pdf'
@@ -527,28 +590,29 @@ pro large_errors
   stop
 return
 end 
-pro simulate,g,doplot=doplot
+pro simulate,g,doplot=doplot,noplot=noplot
 
   if n_elements(g) eq 0 then g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
-  lum=g.lum_avg
-  lumerr=g.lum_avg_err
-  w=where(g.tstart lt g.t200 and g.lum_avg ne 0)
-  lum=lum[w]
-  lumerr=lumerr[*,w]
+  w=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and g.lumdens_final ne 0)
+  lum=g[w].lumdens_final
+  lumerr=g[w].lumdens_final_err
+  beta=g[w].beta
+  ratio=g[w].unabs_cfratio
+  z=g[w].z
+
   g=g[w]
   ng=n_elements(g)
 
 ;  w=where(g.lum_avg2 ne 0)
 ;  lum[w]=g[w].lum_avg2
-  z=g.z
   
   mpc2cm=3.08568025d24 
-  ratio=4e-11 ;; erg/cm2/s/(cts/s)
+;  ratio=4e-11 ;; erg/cm2/s/(cts/s)
   xrtlim=2e-4
-  nsim=1e3
-  out=mrdfits('~/Swift/decay_lum_corr/sim_decay_slope.fits',1)
+  nsim=1e4
+  if exist('~/Swift/decay_lum_corr/sim_decay_slope.fits') then out=mrdfits('~/Swift/decay_lum_corr/sim_decay_slope.fits',1)
   if n_elements(out) eq 0 then begin
-     out=create_struct('r',0d,'p',0d,'slope',0d,'const',0d,'zd',0d)
+     out=create_struct('r',0d,'p',0d,'slope',0d,'const',0d,'zd',0d,'sig',0d)
      out=replicate(out,nsim)
      jstart=0
   endif else begin 
@@ -563,7 +627,7 @@ pro simulate,g,doplot=doplot
      lum200err=dblarr(2,ng) & t200=alpha200
      for i=0L,ng-1 do begin 
 ;,g2*5
-        if i mod 100 eq 0 then print,i
+;        if i mod 100 eq 0 then print,i
         r1=randomu(seed,1)*ng-1  ;;; select random index for z
         r2=randomu(seed,1)*ng-1  ;;; select random index for lum
 ;     r3=randomu(seed,1)*ng-1  ;;; select random index for lc
@@ -574,8 +638,9 @@ pro simulate,g,doplot=doplot
         
         dist=lumdist(z[r1],/silent)*mpc2cm
         t200[i]=200.*(1.+z[r1])
+        fdens=flux2jy(1.,beta[r2]+1.,/silent)*1d-23
 
-        cr2=lum[r2]/(4.*!pi*dist^2)/g[r2].unabs_cfratio ;;; random luminosity and random z = count rate at t_200*(1+z)
+        cr2=lum[r2]/(4.*!pi*dist^2)/ratio[r2]/fdens ;;; random luminosity and random z = count rate at t_200*(1+z)
         dir='~/GRBs/'+strtrim(g[r3].grb,2)+'/'
         lc=lcout2fits(dir=dir,/silent)
         t=lc.time
@@ -583,14 +648,12 @@ pro simulate,g,doplot=doplot
         ferr=lc.src_rate_err
         terr=rotate([[lc.time-lc.tstart],[lc.tstop-lc.time]],4)
         lcfile='lc_fit_out_idl_int9.dat'
-;        if not exist(dir+lcfile) then lcfile='lc_fit_out_idl_int7.dat'
         if exist(dir+lcfile) then begin 
            read_lcfit,dir+lcfile,pnames,p,perror
            mo=fit_models(pnames,p,np,nf,basemo=basemo)
            tmp=execute('cr1='+mo+'(t200[i],p)')
            norm=cr2/cr1
            w=where(f*norm[0] gt xrtlim and t gt t200[i] and ferr gt 0,nw)
-;        print,norm,nw
            if nw gt 2 then  begin 
 ;           fitexy,alog10(t[w]),alog10(f[w]),a,b,x_sig=alog10(terr[0,w]),y_sig=alog10(ferr[w])
               ab=linfit(alog10(t[w]),alog10(f[w]))
@@ -605,8 +668,10 @@ pro simulate,g,doplot=doplot
               fit_pow_model,t[w],f[w]*norm[0],terr[w],ferr[w]*norm[0],p,intmo,pnames,yfit,newp,perror,chisq,dof,weights,lc[w].src_counts,lc[w].tot_back_cts,status=status,breaks=0,noint=noint,pmin0=pmin0,/silent
               alpha200[i]=newp[1]
               alpha200err[i]=perror[1]
-              lum200[i]=lum[r2]
-              lum200err[*,i]=lumerr[*,r2]
+              lum200[i]=lum[r2]*norm[0]
+              lum200err[*,i]=lumerr[*,r2]*norm[0]
+;              lum200[i]=lum[r2]
+;              lum200err[*,i]=lumerr[*,r2]
               norm200[i]=norm
 
               if keyword_set(doplot) then begin
@@ -625,24 +690,35 @@ pro simulate,g,doplot=doplot
         endif 
      endfor 
 
-     w=where(lum200 ne 0 and alpha200 ne 0,nw)
-     ploterror,alog10(lum200[w]),-alpha200[w],alpha200err[w],psym=3,xtitle='Lum',ytitle=!tsym.alpha,yrange=[-5,0],/nohat
-     for i=0,nw-1 do oplot,alog10([lum200[w[i]]-lum200err[0,w[i]],lum200[w[i]]+lum200err[1,w[i]]]),-[alpha200[w[i]],alpha200[w[i]]],color=color
-     r=regress(alog10(lum200[w]),-alpha200[w],const=const,yfit=yfit,correlation=linearcorr,measure_error=alpha200err[w])
+     w=where(lum200 ne 0 and alpha200 gt 0 and alpha200 lt 3,nw)
+     fitexy,alog10(lum200[w]),-alpha200[w],x_sig=alog10(lum200[w])-alog10(lum200[w]-lum200err[0,w]),y_sig=alpha200err[w],a,b
+     line=alog10(lum200[w])*b+a
      c=r_correlate(alog10(lum200[w]),-alpha200[w],zd=zd)
-     line=(r[0]*alog10(lum200[w])+const)
-     oplot,alog10(lum200[w]),line,color=!magenta
-     legend,['R='+numdec(c[0],3)+'  p='+ntostr(c[1])+'  slope='+numdec(r[0],3)+'  const='+numdec(const,3)],/top,/right,box=0
-     print,c[0],r[0],const,zd,mpnormlim(c[1],/SLEVEL)
+     sig=mpnormlim(c[1],/SLEVEL)
+
+     if not keyword_set(noplot) then begin 
+        ploterror,alog10(lum200[w]),-alpha200[w],alpha200err[w],psym=3,xtitle='Lum',ytitle=!tsym.alpha,yrange=[-3,0],/nohat
+        for i=0,nw-1 do oplot,alog10([lum200[w[i]]-lum200err[0,w[i]],lum200[w[i]]+lum200err[1,w[i]]]),-[alpha200[w[i]],alpha200[w[i]]],color=color
+;     r=regress(alog10(lum200[w]),-alpha200[w],const=const,yfit=yfit,correlation=linearcorr,measure_error=alpha200err[w])
+;     line=(r[0]*alog10(lum200[w])+const)
+        oplot,alog10(lum200[w]),line,color=!magenta
+        legend,['R='+numdec(c[0],3)+'  p='+ntostr(c[1])+'  slope='+numdec(b,3)+'  const='+numdec(a,3)],/top,/right,box=0
+     endif 
+
+     print,c[0],a,b,zd,sig
 
      ptime,systime(1)-pt
      out[j].r=c[0]
      out[j].p=c[1]
-     out[j].slope=r[0]
-     out[j].const=const
+     out[j].slope=b;r[0]
+     out[j].const=a;const
      out[j].zd=zd
+     out[j].sig=sig
      if j mod 10 eq 0 then mwrfits,out,'~/Swift/decay_lum_corr/sim_decay_slope.fits',/create
   endfor 
+
+  plothist,out.sig,bin=0.1,xtitle=!tsym.sigma
+
   stop
   return
 end 
@@ -670,7 +746,7 @@ pro hypothesis,grb,simr,noplot=noplot,plotone=plotone,pind=pind,ps=ps
      !x.margin=[4,4]
      !y.margin=[4,2]
 
-     lc=lcout2fits(dir=grb[j]);'~/GRBs/'+grb[j]+'/lc_newout_phil.txt')
+     lc=lcout2fits(dir=grb[j],/silent);'~/GRBs/'+grb[j]+'/lc_newout_phil.txt')
      read_lcfit,'~/GRBs/'+grb[j]+'/lc_fit_out_idl_int9.dat',pnames,p0,perror0
 
      tb=p0[pind]
@@ -1472,7 +1548,7 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
      mwrfits,g,'~/Swift/decay_lum_corr/lum_decay_corr.fits',/create
   endif else g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
 
-  w=where(g.tstart lt g.t200 and finite(g.flux_avg)); and g.lum_avg ne 0 and g.lum_avg_err[0] ne 0)
+  w=where(g.tstart lt g.t200*2. and finite(g.flux_avg)); and g.lum_avg ne 0 and g.lum_avg_err[0] ne 0)
   g=g[w]
   s=where(g.t90 le 2.)
   l=where(g.t90 gt 2.)
@@ -1544,17 +1620,18 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
            0: begin ;; all
               w1=indgen(n_elements(g))
               w2=-1
-              leg=['All']
+              leg=['All: ']
            end 
            1: begin ;; t200>tb or t200<tb
-              leg=['t!Lb!N>t!L200!N - steep decay contam','t!Lb!N<t!L200!N - good']
+;              leg=['t!Lb!N>t!L200!N - steep decay contam','t!Lb!N<t!L200!N - good']
+              leg=['Steep Decay Contam: ','Not Contam: ']
               w1=where((g.alpha_avg2 ne 0 and abs(g.alpha_avg2-g.alpha_avg) gt 0.05) or g.alpha_avg gt 3.)
               w2=where((g.alpha_avg2 eq 0 or abs(g.alpha_avg2-g.alpha_avg) lt 0.05) and g.alpha_avg lt 3.)
            end
            2: begin ;; short/long
               w1=where(g.t90 le 2. and g.t90 ne 0 and g.alpha_avg2 le 3)
               w2=where(g.t90 gt 2. and g.alpha_avg2 le 3)
-              leg=['short','long']
+              leg=['short: ','long: ']
               ;;; fix steep decay contamination
 ;              wcontam=where((g.alpha_avg2 ne 0 and abs(g.alpha_avg2-g.alpha_avg) gt 0.05) or g.alpha_avg gt 3.)
 ;              alpha[wcontam]=g[wcontam].alpha_avg2
@@ -1570,7 +1647,7 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
            3: begin ;; flares/noflares
               w1=where(g.nflares gt 0 and g.t90 gt 2. and g.alpha_avg2 le 3)
               w2=where(g.nflares eq 0 and g.t90 gt 2. and g.alpha_avg2 le 3)
-              leg=['Flares','No Flares']
+              leg=['Flares: ','No Flares: ']
            end
            4: begin ;; pow or other
               model=strtrim(g.model,2)
@@ -1578,150 +1655,160 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
               w1=where((model eq 'pow' or model eq 'gauss1_pow' or model eq 'gauss2_pow' or model eq 'gauss3_pow' or model eq 'gauss4_pow' or model eq 'gauss5_pow') and g.t90 gt 2. and g.alpha_avg2 le 3)
               ind[w1]=1
               w2=where(ind eq 0 and g.t90 gt 2. and g.alpha_avg2 le 3)
-              leg=['PL, long','breaks, long']
+              leg=['SPL: ','breaks: ']
            end
            5: begin ;; plateau/ no plateau
               w1=where((strpos(g.type,'II-III') ne -1 or strpos(g.type,'II-IV') ne -1) and g.t90 gt 2. and g.alpha_avg2 le 3)
               w2=where((strpos(g.type,'II-III') eq -1 and strpos(g.type,'II-IV') eq -1) and g.t90 gt 2. and g.alpha_avg2 le 3)
-              leg=['Have Plateau, long, corrected','No Plateau, long, corrected']
+;              leg=['Have Plateau, long, corrected','No Plateau, long,
+;              corrected']
+              leg=['Plateau: ','No Plateau: ']
            end 
            6: begin
               w1=where(g.t90 gt 2. and g.alpha_avg2 le 3)
               w2=-1
-              leg=['Long, steep decay corrected']
+;              leg=['Long, steep decay corrected']
+              leg='Final: '
            end 
         endcase 
 
-        plot,[1d26,1d33],[-2.5,0],/nodata,xtitle='Lum!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L'+add+',X,>200s!N',xrange=xrange,yrange=yrange,charsize=2.,/xsty,/ysty,/xlog,xminor=9
-        print,leg
+        xrange=round(alog10([1d24,1d32])+0.5)
+        xticks=xrange[1]-xrange[0]
+        xrange=10d^xrange
 
-        for q=0,1 do begin
-           case q of
-              0: begin
-                 w=w1
-                 color=!p.color
-                 lcolor=!p.color
-                 psym=8
-              end
-              1: begin
-                 w=w2
-                 color=!red
-                 lcolor=!red
-                 psym=5
-              end
-           endcase 
-           if w[0] ne -1 then begin
-              fit[fi].char=leg[q]
-              fit[fi].lc=add
-              oploterror2,lum[w],-alpha[w],10^[[alog10(lum[w])-alog10(lum[w]-lumerr[0,w])],[alog10(lum[w]+lumerr[1,w])-alog10(lum[w])]],alphaerr[*,w],psym=psym,color=color
+        test_correlation,lum,-alpha,lumerr,alphaerr,g.z,w1=w1,w2=w2,xtitle='Lum!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L'+add+',X,>200s!N',add=leg,yrange=[-4,2],xrange=[1d24,1d32],xticks=xticks
 
-              x=alog10(lum[w])
-              y=-alpha[w]
-              x_sig=alog10(lum[w])-alog10(lum[w]-lumerr[0,w])
-              y_sig=alphaerr[0,w]
+
+;;         plot,[1d26,1d33],[-2.5,0],/nodata,xtitle='Lum!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L'+add+',X,>200s!N',xrange=xrange,yrange=yrange,charsize=2.,/xsty,/ysty,/xlog,xminor=9
+;;         print,leg
+
+;;         for q=0,1 do begin
+;;            case q of
+;;               0: begin
+;;                  w=w1
+;;                  color=!p.color
+;;                  lcolor=!p.color
+;;                  psym=8
+;;               end
+;;               1: begin
+;;                  w=w2
+;;                  color=!red
+;;                  lcolor=!red
+;;                  psym=5
+;;               end
+;;            endcase 
+;;            if w[0] ne -1 then begin
+;;               fit[fi].char=leg[q]
+;;               fit[fi].lc=add
+;;               oploterror2,lum[w],-alpha[w],10^[[alog10(lum[w])-alog10(lum[w]-lumerr[0,w])],[alog10(lum[w]+lumerr[1,w])-alog10(lum[w])]],alphaerr[*,w],psym=psym,color=color
+
+;;               x=alog10(lum[w])
+;;               y=-alpha[w]
+;;               x_sig=alog10(lum[w])-alog10(lum[w]-lumerr[0,w])
+;;               y_sig=alphaerr[0,w]
               
-;              fitexy,alog10(lum[w]),-alpha[w],a,b,x_sig=alog10(lum[w])-alog10(lum[w]-lumerr[0,w]),y_sig=alphaerr[0,w]
-              fitexy,x,y,a,b,x_sig=x_sig,y_sig=y_sig
-;stop
-;              r=mpfitexy(x,y,x_sig,y_sig,/quiet,guess=[-0.2,1],minchi=chi,dof=dof,errors=errors) ;;; winner!
-;              b=r[0]
-;              const=r[1]
-              const=a
-              fit[fi].slope=b
-              fit[fi].const=a;const
-;              r1=[b,a]
-              ;;;;inverse: slope=1/b, intercept=-a/b
+;; ;              fitexy,alog10(lum[w]),-alpha[w],a,b,x_sig=alog10(lum[w])-alog10(lum[w]-lumerr[0,w]),y_sig=alphaerr[0,w]
+;;               fitexy,x,y,a,b,x_sig=x_sig,y_sig=y_sig
+;; ;stop
+;; ;              r=mpfitexy(x,y,x_sig,y_sig,/quiet,guess=[-0.2,1],minchi=chi,dof=dof,errors=errors) ;;; winner!
+;; ;              b=r[0]
+;; ;              const=r[1]
+;;               const=a
+;;               fit[fi].slope=b
+;;               fit[fi].const=a;const
+;; ;              r1=[b,a]
+;;               ;;;;inverse: slope=1/b, intercept=-a/b
 
 
-              ;;; HOW TO GO FROM BOOTSTRAP ERROR ON PARAMETERS TO
-              ;;; ERROR CONTOURS?????????
-              ;;; bootstrap error
-              if not keyword_set(noerror) then begin 
-                 aa=fltarr(1e4) & bb=fltarr(1e4)
-                 n=n_elements(x)
-                 for o=0,1e4-1 do begin
-                    r=round(randomu(seed,n)*n)
-;                    r1=mpfitexy(x[r],y[r],x_sig[r],y_sig[r],/quiet,guess=[-0.2,1],minchi=chi,dof=dof)
-                    fitexy,x[r],y[r],x_sig=x_sig[r],y_sig=y_sig[w],a0,b0
-                    aa[o]=a0
-                    bb[o]=b0
-;                    r1=[a0,b0]
-;                    oplot,x,aa[o]+bb[o]*x,color=!pink
-                 endfor 
-                 a_err=mc_error(aa,sig=1.)
-                 b_err=mc_error(bb,sig=1.)
-                 fit[fi].slope_err=b_err
-                 fit[fi].const_err=a_err
-              endif 
+;;               ;;; HOW TO GO FROM BOOTSTRAP ERROR ON PARAMETERS TO
+;;               ;;; ERROR CONTOURS?????????
+;;               ;;; bootstrap error
+;;               if not keyword_set(noerror) then begin 
+;;                  aa=fltarr(1e4) & bb=fltarr(1e4)
+;;                  n=n_elements(x)
+;;                  for o=0,1e4-1 do begin
+;;                     r=round(randomu(seed,n)*n)
+;; ;                    r1=mpfitexy(x[r],y[r],x_sig[r],y_sig[r],/quiet,guess=[-0.2,1],minchi=chi,dof=dof)
+;;                     fitexy,x[r],y[r],x_sig=x_sig[r],y_sig=y_sig[w],a0,b0
+;;                     aa[o]=a0
+;;                     bb[o]=b0
+;; ;                    r1=[a0,b0]
+;; ;                    oplot,x,aa[o]+bb[o]*x,color=!pink
+;;                  endfor 
+;;                  a_err=mc_error(aa,sig=1.)
+;;                  b_err=mc_error(bb,sig=1.)
+;;                  fit[fi].slope_err=b_err
+;;                  fit[fi].const_err=a_err
+;;               endif 
 
-              c=r_correlate(alog10(lum[w]),-alpha[w],zd=zd,probd=probd)
+;;               c=r_correlate(alog10(lum[w]),-alpha[w],zd=zd,probd=probd)
 
-;              sig=sigprob((1d)-c[1])
-              rsig=mpnormlim(c[1],/SLEVEL)
-              fit[fi].spearman_rank=c[0]
-              fit[fi].null_hypo=c[1]
-              fit[fi].signif=rsig
-              print,'Spearman rank coeff & prob & sig: ',c[0],c[1],rsig
-              pr=pr_correlate(x,y,g[w].z,/silent)
-              prsig=mpnormlim(pr[1],/SLEVEL)
-              fit[fi].partspear_rank=pr[0]
-              fit[fi].partspear_null_hypo=pr[1]
-              fit[fi].partspear_signif=prsig
+;; ;              sig=sigprob((1d)-c[1])
+;;               rsig=mpnormlim(c[1],/SLEVEL)
+;;               fit[fi].spearman_rank=c[0]
+;;               fit[fi].null_hypo=c[1]
+;;               fit[fi].signif=rsig
+;;               print,'Spearman rank coeff & prob & sig: ',c[0],c[1],rsig
+;;               pr=pr_correlate(x,y,g[w].z,/silent)
+;;               prsig=mpnormlim(pr[1],/SLEVEL)
+;;               fit[fi].partspear_rank=pr[0]
+;;               fit[fi].partspear_null_hypo=pr[1]
+;;               fit[fi].partspear_signif=prsig
 
-              print,'partial spearman rank coeff & prob & sig: ',pr[0],pr[1],prsig
+;;               print,'partial spearman rank coeff & prob & sig: ',pr[0],pr[1],prsig
 
-;              good=where(yerr gt 0)
-;              r=regress(x[good],y[good],const=const,yfit=yfit,correlation=linearcorr,measure_error=yerr[good])
-;              print,'regress: ',r[0],const
-;              line=(r[0]*x+const)
-;stop
+;; ;              good=where(yerr gt 0)
+;; ;              r=regress(x[good],y[good],const=const,yfit=yfit,correlation=linearcorr,measure_error=yerr[good])
+;; ;              print,'regress: ',r[0],const
+;; ;              line=(r[0]*x+const)
+;; ;stop
 
-              line=b*x+const
-              oplot,10^x,line,color=lcolor
-;              oplot,x[good],yfit,color=lcolor
-              mdist=fltarr(n_elements(w))
-              for i=0,n_elements(w)-1 do begin
-                 dists=sqrt((x[i]-x)^2+(-y[i]-line)^2)
-                 mdist[i]=min(dists)
-              endfor 
-              plothist,mdist,x2,y2,bin=0.1,/noplot
-              if j eq 0 then begin 
-                 ga=gaussfit(x2,y2,a2,nterms=3)
+;;               line=b*x+const
+;;               oplot,10^x,line,color=lcolor
+;; ;              oplot,x[good],yfit,color=lcolor
+;;               mdist=fltarr(n_elements(w))
+;;               for i=0,n_elements(w)-1 do begin
+;;                  dists=sqrt((x[i]-x)^2+(-y[i]-line)^2)
+;;                  mdist[i]=min(dists)
+;;               endfor 
+;;               plothist,mdist,x2,y2,bin=0.1,/noplot
+;;               if j eq 0 then begin 
+;;                  ga=gaussfit(x2,y2,a2,nterms=3)
 
-;                 plus=r[0]*x+r[1]+a[2]*cos(r[0])*2.
-;                 minus=r[0]*x+r[1]-a[2]*cos(r[0])*2.
-                 am=sqrt(mean((mdist-mean(mdist))^2))
-                 plus=b*x+const+am*cos(b)*2.  ;;; 2 sigma error
-                 minus=b*x+const-am*cos(b)*2.
-                 s=sort(x)
-                 oplot, 10^x[s],plus[s], line=2,color=lcolor
-                 oplot, 10^x[s],minus[s],line=2,color=lcolor
+;; ;                 plus=r[0]*x+r[1]+a[2]*cos(r[0])*2.
+;; ;                 minus=r[0]*x+r[1]-a[2]*cos(r[0])*2.
+;;                  am=sqrt(mean((mdist-mean(mdist))^2))
+;;                  plus=b*x+const+am*cos(b)*2.  ;;; 2 sigma error
+;;                  minus=b*x+const-am*cos(b)*2.
+;;                  s=sort(x)
+;;                  oplot, 10^x[s],plus[s], line=2,color=lcolor
+;;                  oplot, 10^x[s],minus[s],line=2,color=lcolor
 
-              endif 
-              if q eq 0 then begin
-                 c1=c
-;                 r1=r
-                 a1=a
-                 b1=b
-;                 const1=const
-                 sig=rsig
-              endif
-           endif  
-           fi=fi+1
-        endfor 
-        if n_elements(leg) eq 2 then begin
-           legend,['R='+numdec(c1[0],3)+'  p='+numdec(c1[1],2,/sci)+'  sig='+numdec(sig,1)+'  slope='+numdec(b1,3)+'  const='+numdec(a1,3),$
-                   'R='+numdec(c[0],3)+'  p='+numdec(c[1],2,/sci)+'  sig='+numdec(rsig,1)+'  slope='+numdec(b,3)+'  const='+numdec(a,3)],/top,/right,box=0,textcolor=[!p.color,!red]
-           legend,leg,box=0,/bottom,/left,textcolor=[!p.color,!red],psym=[8,5],color=[!p.color,!red]
-        endif else begin
+;;               endif 
+;;               if q eq 0 then begin
+;;                  c1=c
+;; ;                 r1=r
+;;                  a1=a
+;;                  b1=b
+;; ;                 const1=const
+;;                  sig=rsig
+;;               endif
+;;            endif  
+;;            fi=fi+1
+;;         endfor 
+;;         if n_elements(leg) eq 2 then begin
+;;            legend,['R='+numdec(c1[0],3)+'  p='+numdec(c1[1],2,/sci)+'  sig='+numdec(sig,1)+'  slope='+numdec(b1,3)+'  const='+numdec(a1,3),$
+;;                    'R='+numdec(c[0],3)+'  p='+numdec(c[1],2,/sci)+'  sig='+numdec(rsig,1)+'  slope='+numdec(b,3)+'  const='+numdec(a,3)],/top,/right,box=0,textcolor=[!p.color,!red]
+;;            legend,leg,box=0,/bottom,/left,textcolor=[!p.color,!red],psym=[8,5],color=[!p.color,!red]
+;;         endif else begin
            
-           legend,['R='+numdec(c1[0],3)+'  p='+numdec(c[1],2,/sci)+'  sig='+numdec(rsig,1)+'  slope='+numdec(b,3)+'  const='+numdec(a,3)],/top,/right,box=0
-;           legend,leg,box=0,/bottom,/left,psym=8
-        endelse 
+;;            legend,['R='+numdec(c1[0],3)+'  p='+numdec(c[1],2,/sci)+'  sig='+numdec(rsig,1)+'  slope='+numdec(b,3)+'  const='+numdec(a,3)],/top,/right,box=0
+;; ;           legend,leg,box=0,/bottom,/left,psym=8
+;;         endelse 
 
-;  legend,['long','short','Flares','No
-;  Flares'],box=0,/bottom,/left,textcolor=[!p.color,!red,!p.color,!p.color],psym=[3,3,8,2]
-     endfor 
+;; ;  legend,['long','short','Flares','No
+;; ;  Flares'],box=0,/bottom,/left,textcolor=[!p.color,!red,!p.color,!p.color],psym=[3,3,8,2]
+      endfor 
      print
   endfor 
 

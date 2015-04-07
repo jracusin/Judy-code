@@ -5,9 +5,9 @@ function lcout2fits,file,phil=phil,silent=silent,qdp=qdp,empty=empty,pcfile=pcfi
   if not keyword_set(empty) then begin
      if n_elements(file) eq 0 then begin
         if exist(dir+'/UL_lc.fits') then begin
-           lc=mrdfits(dir+'/UL_lc.fits',1)
+           lc=mrdfits(dir+'/UL_lc.fits',1,silent=silent)
            if keyword_set(chandra) and exist(dir+'/UL_lc_chandra.fits') then begin 
-              clc=mrdfits(dir+'/UL_lc_chandra.fits',1)
+              clc=mrdfits(dir+'/UL_lc_chandra.fits',1,silent=silent)
               concat_structs,lc,clc,lc2
               lc=lc2
            endif 
@@ -18,7 +18,7 @@ function lcout2fits,file,phil=phil,silent=silent,qdp=qdp,empty=empty,pcfile=pcfi
         nowrite=1
         if file eq 'lc_newout_phil.txt' then begin 
            if exist(dir+'/UL_lc.fits') then begin 
-              lc=mrdfits(dir+'/UL_lc.fits',1)
+              lc=mrdfits(dir+'/UL_lc.fits',1,silent=silent)
               return,lc
            endif 
         endif 

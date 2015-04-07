@@ -1132,7 +1132,7 @@ pro convert_plots
   for i=0,n_elements(psfiles)-1 do spawn,'convert -rotate 270 '+psfiles[i]+'eps '+psfiles[i]+'png'
 end
 
-pro which_alpha,ts,p,aspec,x,np=np
+pro which_alpha_old,ts,p,aspec,x,np=np
 
 ;  np=n_elements(p)-nflares*3
   if np mod 2 eq 1 then np=np-1

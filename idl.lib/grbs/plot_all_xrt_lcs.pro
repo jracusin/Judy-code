@@ -177,10 +177,10 @@ stop
   return
 end 
 
-pro plot_all_xrt_lcs,t,val,rate=rate,flux=flux,lum=lum,data=data,overgrb=overgrb,z=z,add=add,nocolor=nocolor,overcolor=overcolor,overdata=overdata,basemodel=basemodel,noleg=noleg,dir=dir,overcom=overcom,overmodel=overmodel,lastthick=lastthick,nounder=nounder,overgcom=overgcom,xrange=xrange
+pro plot_all_xrt_lcs,t,val,rate=rate,flux=flux,lum=lum,data=data,overgrb=overgrb,z=z,add=add,nocolor=nocolor,overcolor=overcolor,overdata=overdata,basemodel=basemodel,noleg=noleg,dir=dir,overcom=overcom,overmodel=overmodel,lastthick=lastthick,nounder=nounder,overgcom=overgcom,xrange=xrange,ldens=ldens
 
-  if not keyword_set(rate) and not keyword_set(flux) and not keyword_set(lum) then begin
-     print,'syntax - plot_all_xrt_lcs,rate=rate,flux=flux,lum=lum'
+  if not keyword_set(rate) and not keyword_set(flux) and not keyword_set(lum) and not keyword_set(ldens) then begin
+     print,'syntax - plot_all_xrt_lcs,rate=rate,flux=flux,lum=lum,ldens=ldens'
      print,'         NEED TO SPECIFY'
      return
   end 
@@ -224,6 +224,17 @@ pro plot_all_xrt_lcs,t,val,rate=rate,flux=flux,lum=lum,data=data,overgrb=overgrb
      yrange2=[40,48]
      bin=0.5
   endif 
+  if keyword_set(ldens) then begin 
+     yrange=[1d42,1d52]
+     ytitle='Luminosity Density !L0.3-10 keV!N (erg s!U-1!N Hz!U-1!N)'
+     xtitle='Time (s) / (1+z)'
+     add=add+'ldens'
+     grbcat=grbcat[wz]
+     ngrbs=nz
+     yrange2=[25,33]
+     bin=0.5
+  endif 
+
   if keyword_set(data) then add=add+'_data'
   
   if n_elements(dir) eq 0 then dir='~/GRBs/'
@@ -244,17 +255,19 @@ pro plot_all_xrt_lcs,t,val,rate=rate,flux=flux,lum=lum,data=data,overgrb=overgrb
            grb=strtrim(grbcat[i].grb,2)
            print,grb
            if keyword_set(rate) then f=1.
-           if keyword_set(flux) or keyword_set(lum) then begin
+           if keyword_set(flux) or keyword_set(lum) or keyword_set(ldens) then begin
               if exist(grb+'/UL_specfits.fits') then begin 
                  spec=mrdfits(grb+'/UL_specfits.fits',1)
                  ws=n_elements(spec)-1
                  f=spec[ws].unabs_cfratio
               endif else skip=1
            endif 
-           if keyword_set(lum) then begin
+           if keyword_set(lum) or keyword_set(ldens) then begin
               dist=lumdist(grbcat[i].z)*mpc2cm
               f=f*4.*!pi*dist^2*(1.+grbcat[i].z)^(spec[ws].phind-1.-1.)
               z1=1./(1+grbcat[i].z)
+              if keyword_set(ldens) then begin
+                 fdens=flux2jy(1.,grbcat[i].beta)
 ;        g[i].flux_avg*4.*!pi*dist^2*(1.+g[i].z)^(g[i].beta-1.)
            endif 
 ;        if skip eq 0 then begin 
@@ -279,7 +292,7 @@ pro plot_all_xrt_lcs,t,val,rate=rate,flux=flux,lum=lum,data=data,overgrb=overgrb
               time=time[sort(time)]
               tmp=execute('yfit='+mo+'(time,p)')                
               tmp=execute('yfit200='+mo+'(200./z1,p)')
-              h[i]=round((alog10(f*yfit200)-42)*31.)
+              h[i]=round((alog10(f*yfit200)-42.5)*31.)
 ;           tmp=execute('color=!grey'+ntostr(h))
 ;           print,h
               if n_elements(time) gt 1 then begin 

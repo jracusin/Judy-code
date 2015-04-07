@@ -1,6 +1,7 @@
 function which_alpha,pnames,p,time,inds
 
   mo=fit_models(pnames,p,np)
+
 ;  np=n_elements(p)-nflares*3
   if np mod 2 eq 1 then np=np-1
   case np of
