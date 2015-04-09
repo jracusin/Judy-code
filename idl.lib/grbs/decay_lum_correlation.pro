@@ -368,7 +368,7 @@ pro gendre,doplot=doplot,reallyredo=reallyredo
   w=where(g.t90 gt 2.)
   g=g[w]
   ng=n_elements(g)
-goto,skip
+;goto,skip
 
   lum1=dblarr(ng)
   lump=dblarr(ng)
@@ -468,7 +468,7 @@ goto,skip
   ;; legend,['slope='+numdec(r[1],2),'spearman='+numdec(c[0],2),'sig='+numdec(mpnormlim(c[1],/SLEVEL),1)],/top,/left,box=0
 
   w=where(alphaav ne 0 and lum1 gt 0 and finite(alphaaverr[0,*]))
-  test_correlation,lum1[w],-alphaav[w],lum1err[*,w],alphaaverr[*,w],g[w].z,xtitle='Lum!LX,1 day!N (erg s!U-1!N Hz !U-1!N)',ytitle=!tsym.alpha+'!Lavg,X,>t!Iplateau!N',xrange=[1d23,1d29],xticks=6,yrange=[-5,1],/ysty
+  test_correlation,lum1[w],-alphaav[w],lum1err[*,w],alphaaverr[*,w],g[w].z,xtitle='L!LX,1 day!N (erg s!U-1!N Hz !U-1!N)',ytitle=!tsym.alpha+'!Lavg,X,>t!Iplateau!N',xrange=[1d23,1d29],xticks=6,yrange=[-5,1],/ysty
 
   ;; ploterror2,lum1[w],alphaav[w],lum1err[*,w],alphaaverr[*,w],psym=8,/xlog,xtitle='Lum at rest frame 1 day (erg/s)',ytitle='avg PL decay after plateau',/nohat,yrange=[-1,5],/ysty,charsize=2
   ;; fitexy,alog10(lum1[w]),alphaav[w],x_sig=alog10(lum1[w])-alog10(lum1[w]-lum1err[0,w]),y_sig=alphaaverr[0,w],a,b
@@ -492,8 +492,8 @@ goto,skip
   ;; !p.multi=0
   endplot
 ;  spawn,'ps2pdf ~/stuff_for_people/Sam/gendre.ps ~/stuff_for_people/Sam/gendre.pdf'
-  spawn,'ps2pdf ~/stuff_for_people/Sam/lum_plateau_decay.ps ~/stuff_for_people/Sam/lum_plateau_decay.pdf'
- skip:
+  spawn,'ps2pdf ~/Swift/decay_lum_corr/lum_plateau_decay.ps ~/Swift/decay_lum_corr/lum_plateau_decay.pdf'
+; skip:
   ;;; measure the average spread in afterglows as functions of time
 
   t=logarr(100,10*86400.,bin=1)
@@ -577,7 +577,7 @@ pro paper_plots
   w5=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and strtrim(atype,2) eq 'SPL')
   help,w1,w2,w3,w4
 ;  w4=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and atype eq 'SPL')
-  test_correlation,g.lumdens_final,-g.alpha_und,g.lumdens_final_err,g.alpha_und_err,g.z,yrange=[-7,6],/ysty,xtitle='Lum!LX,fit,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!LX,fit,200s!N',w1=w1,w2=w2,w3=w3,w4=w4,w5=w5,add=['I:   ','II:  ','III: ','IV:  ','SPL: ']
+  test_correlation,g.lumdens_final,-g.alpha_und,g.lumdens_final_err,g.alpha_und_err,g.z,yrange=[-7,6],/ysty,xtitle='L!LX,fit,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!LX,fit,200s!N',w1=w1,w2=w2,w3=w3,w4=w4,w5=w5,add=['I:   ','II:  ','III: ','IV:  ','SPL: ']
 ;;add in by color which ones are SPL, I, II, III
   endplot
   spawn,'ps2pdf ~/Swift/decay_lum_corr/flux_decay_und.ps ~/Swift/decay_lum_corr/flux_decay_und.pdf'
@@ -595,10 +595,10 @@ pro paper_plots
      multiplot
      if j eq 0 then begin
         xtitle=''
-        ytitle='Lum!LX,avg!N(t) (erg s!U-1!N Hz!U-1!N)' 
+        ytitle='L!LX,avg!N(t) (erg s!U-1!N Hz!U-1!N)' 
         leg='Avg'
      endif else begin 
-        ytitle='Lum!LX,fit!N(t) (erg s!U-1!N Hz!U-1!N)'
+        ytitle='L!LX,fit!N(t) (erg s!U-1!N Hz!U-1!N)'
         xtitle='Time (s)/(1+z)'
         leg='Fit'
      endelse 
@@ -1727,8 +1727,8 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
         xrange=round(alog10([1d24,1d32])+0.5)
         xticks=xrange[1]-xrange[0]
         xrange=10d^xrange
-
-        test_correlation,lum,-alpha,lumerr,alphaerr,g.z,w1=w1,w2=w2,xtitle='Lum!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L'+add+',X,>200s!N',add=leg,yrange=[-4,2],xrange=[1d24,1d32],xticks=xticks
+        print,leg
+        test_correlation,lum,-alpha,lumerr,alphaerr,g.z,w1=w1,w2=w2,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L'+add+',X,>200s!N',add=leg,yrange=[-4,2],xrange=[1d24,1d32],xticks=xticks
 
 
 ;;         plot,[1d26,1d33],[-2.5,0],/nodata,xtitle='Lum!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L'+add+',X,>200s!N',xrange=xrange,yrange=yrange,charsize=2.,/xsty,/ysty,/xlog,xminor=9
