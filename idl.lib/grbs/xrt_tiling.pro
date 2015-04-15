@@ -1087,12 +1087,16 @@ pro xrt_tiling_plot
 
   plot,xrange,yrange,/iso,/nodata,title='Arbitrary tiles',xrange=xrange,yrange=yrange,/xsty,/ysty,charsize=2.0,xmargin=0.15,ymargin=0.2
   xrt_tiling,91,x,y,rad,rad2,/noplot,center=[10,0]
+
 ;  i=[85,56,33,16,5,0,2,10,24,44,70,71,45,25,11,3,4,15,32,55,84] ;;
 ;  long line
-  i=[19,32,0,23,24,45,46,47,27,28] ;; smiley face
-  i=[63,64,65,66,67,68,42,23,10,25,46,26,12,28,50,77,78,79,80,81,82,31,15,16,34,35,18,7,38,20,54,37,55,17,39,6,5,53,40,21,8,1,0,4,14,30,52,41,22,9,2,3,13,29,51,11] ;; batman
-  x=x[i]
-  y=y[i]
+  j=[19,32,0,23,24,45,46,47,27,28] ;; smiley face
+  j=[63,64,65,66,67,68,42,23,10,25,46,26,12,28,50,77,78,79,80,81,82,31,15,16,34,35,18,7,38,20,54,37,55,17,39,6,5,53,40,21,8,1,0,4,14,30,52,41,22,9,2,3,13,29,51,11] ;; batman
+  j=[67,41,40,39,21,9,10,22, 26,3,7,19,18,17,16,5,1, 83,55,32,31,53,80,79,51]-1 ;; APS
+;  j=indgen(n_elements(x)-1)
+
+  x=x[j]
+  y=y[j]
 ;  xrt_tiling,7,x,y,rad,rad2,/noplot,center=[10,0]
 ;  xrt_tiling,7,x2,y2,rad,rad2,/noplot,center=[x[5],y[5]]
 ;  xrt_tiling,7,x3,y3,rad,rad2,/noplot,center=[x[2],y[2]]
@@ -1104,6 +1108,7 @@ pro xrt_tiling_plot
 ;  y=[y,y2,y3,y4,y3a,y4a]
   for i=0,n_elements(x)-1 do begin
      skycircle,x[i],y[i],xrtrad/60.,xx,yy
+;     xyouts,x[i]-10-0.1,y[i],ntostr(fix(j[i]+1)),charsize=0.5
      oplot,xx-10,yy
   endfor 
   
@@ -1208,7 +1213,7 @@ pro xrt_tiling,ntiles,x,y,rad,rad2,center=center,noplot=noplot
 ;  plot,[-r,r],[-r,r],/iso,/nodata,xrange=[-r,r]+center[0],yrange=[-r,r]+center[1],/xsty,/ysty
      for i=0,ntiles-1 do begin
 ;     tvcircle,xrtrad,x[i]*cos(y[i]*!dtor),y[i]
-;     xyouts,x[i],y[i],ntostr(fix(i+1))
+;        xyouts,x[i],y[i],ntostr(fix(i+1))
         skycircle,x[i],y[i],xrtrad,xx,yy
         oplot,xx,yy
      endfor 

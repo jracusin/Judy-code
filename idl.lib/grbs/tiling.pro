@@ -35,8 +35,9 @@ stop
   return
 end 
 
-pro optimize_tiling,files,outname,outdir,pngfiles=pngfiles
+pro optimize_tiling,files,outname,outdir,pngfiles=pngfiles,ntiles=ntiles,noplot=noplot
 
+;  if n_elements(ntiles) eq 0 then 
   ntiles=2000.
   xrtrad=23.6/2./60.
   results=create_struct('file','','ntiles68',0,'ntiles95',0,'ntiles99',0.,'p1000',0.,'p2000',0.)
@@ -60,8 +61,10 @@ pro optimize_tiling,files,outname,outdir,pngfiles=pngfiles
      cra=xmap[mmax]
      cdec=ymap[mmax]
 
-     im=image(outdir+pngfiles[u],margin=0,image_dimensions=[800,510])
-     mp=map('Mollweide',label_show=0,grid_longitude=30,grid_latitude=30,linestyle=1,thick=2,margin=[0.008,0,0.008,0],/current) ;,xrange=[cra-60,cra+60])
+     if not keyword_set(noplot) then begin 
+        im=image(outdir+pngfiles[u],margin=0,image_dimensions=[800,510])
+        mp=map('Mollweide',label_show=0,grid_longitude=30,grid_latitude=30,linestyle=1,thick=2,margin=[0.008,0,0.008,0],/current) ;,xrange=[cra-60,cra+60])
+     endif 
      radone=0.
      decdone=0.
 
@@ -149,14 +152,18 @@ pro optimize_tiling,files,outname,outdir,pngfiles=pngfiles
 
         skycircle,cra,cdec,xrtrad,x,y,n=30
 ;           oplot,x,y,color=!red
-        p2=plot(x,y,color='red',/current,/overplot)
+        if not keyword_set(noplot) then begin 
+           p2=plot(x,y,color='red',/current,/overplot)
+        endif 
         wc=where(prob gt 0.999)
         if wc[0] ne -1 then j=ntiles-1        
 
      endfor 
      
-     im.save,outdir+outname[u]+'_xrt_2000tiles.png'
-     im.close
+     if not keyword_set(noplot) then begin 
+        im.save,outdir+outname[u]+'_xrt_2000tiles.png'
+        im.close
+     endif 
 
      begplot,name=outdir+outname[u]+'_xrt_2000tiles_prob.ps',/land
      plot,prob,ytitle='Cumulative Enclosed Probability',xtitle='N tiles'
@@ -182,55 +189,90 @@ end
 
 pro ligo_gbm
   outdir='~/Swift/Tiling/'
-  ligofile='~/iLobster/simulations/LIGO_sims/2016_fits/303684/bayestar.fits'
-  detfile='~/iLobster/simulations/LIGO_sims/2016_fits/303684_lin.png'
-  read_fits_map,ligofile,hmap,nside=nside
-  pix2ang_nest,nside,lindgen(n_elements(hmap)),theta,phi
-  lra=360.-phi*!radeg
-  ldec=(0.5*!pi-theta)*!radeg
-  maxpix=max(hmap,mmax)
-  cra=lra[mmax]
-  cdec=ldec[mmax]
- 
+  ldir='~/iLobster/simulations/LIGO_sims/2016_fits/'
+  ligofiles=file_search(ldir+'*/bayestar*fits')
+  nligo=n_elements(ligofiles)
+
+;  ligofile='~/iLobster/simulations/LIGO_sims/2016_fits/303684/bayestar.fits'
+;  detfile='~/iLobster/simulations/LIGO_sims/2016_fits/303684_lin.png'
+  
   dir='~/Fermi/gbmtrig/'
-  locprob=file_search(dir+'glg_locprob_all*fit')
-  gbmfile=locprob[0]
-  probmap=mrdfits(gbmfile,1,hdr)
+  gbmfiles=file_search(dir+'glg_locprob_all*fit')
+  ngbm=n_elements(gbmfiles)
+
+  outdir='~/Swift/Tiling/ligo_gbm/sim_same_center/'
+
+  nsim=1000
+  done=file_search(outdir+'tiles_probsligo_gbm_*.fits')
+  dd=intarr(n_elements(done))
+  for i=0,n_elements(done)-1 do begin
+     d=strsplit(done[i],'_.',/ex)
+     dd[i]=d[6]
+  endfor 
+  md=max(dd)
+  nest=0 & ring=0
+  for s=md+1,nsim-1 do begin
+     time=systime(1)
+     l=randomu(seed,1.)*nligo
+     g=randomu(seed,1.)*ngbm
+     ligofile=ligofiles[l]
+     gbmfile=gbmfiles[g]
+
+     read_fits_map,ligofile,hmap,nside=nside
+     pix2ang_nest,nside,lindgen(n_elements(hmap)),theta,phi
+     lra=360.-phi*!radeg
+     ldec=(0.5*!pi-theta)*!radeg
+     nest=1
+     if max(ldec) gt 1000 then begin 
+        pix2ang_ring,nside,lindgen(n_elements(hmap)),theta,phi
+        lra=360.-phi*!radeg
+        ldec=(0.5*!pi-theta)*!radeg
+        ring=1
+        nest=0
+     endif 
+     print,nest,ring
+     maxpix=max(hmap,mmax)
+     cra=lra[mmax]
+     cdec=ldec[mmax]
+
+;  gbmfile=locprob[0]
+     probmap=mrdfits(gbmfile,1,hdr)
 ;  cra=0.
 ;  cdec=0.
-  pix=sxpar(hdr,'CDELT1')
-  xmap=fltarr(512,512)
-  ymap=fltarr(512,512)
-  xmap[0,0]=cra-pix*512/2.
-  ymap[0,0]=cdec-pix*512/2.
-  for i=0,511 do begin
-     xmap[i,*]=xmap[0,0]+pix*i
-     ymap[*,i]=ymap[0,0]+pix*i
+     pix=sxpar(hdr,'CDELT1')
+     xmap=fltarr(512,512) ;;; NOT ALL BAYESTAR MAPS ARE NSIDE=512!!!!
+     ymap=fltarr(512,512)
+     xmap[0,0]=cra-pix*512/2.
+     ymap[0,0]=cdec-pix*512/2.
+     for i=0,511 do begin
+        xmap[i,*]=xmap[0,0]+pix*i
+        ymap[*,i]=ymap[0,0]+pix*i
+     endfor 
+     gra=xmap
+     gdec=ymap
+     phi=(360.-gra)/!radeg
+     theta=-(gdec/!radeg-0.5*!pi)
+     if nest then ang2pix_nest, nside, theta, phi, ipnest else ang2pix_ring, nside, theta, phi, ipnest
+     gmap=hmap
+     gmap[*]=0.
+
+     gmap[ipnest]=probmap
+     gmap=gmap/total(gmap)
+
+     map=gmap*hmap
+     map=map/total(map)
+
+     write_fits_map,outdir+'gbm_healpix_map_'+ntostr(s)+'.fits',gmap,coordsys='C',ordering='nest'
+     mollview,outdir+'gbm_healpix_map_'+ntostr(s)+'.fits',coord='C',colt=20,png=outdir+'gbm_healpix_map_'+ntostr(s)+'.png',window=-1
+
+     write_fits_map,outdir+'ligo_gbm_healpix_map_'+ntostr(s)+'.fits',map,coordsys='C',ordering='nest'
+     mollview,outdir+'ligo_gbm_healpix_map_'+ntostr(s)+'.fits',coord='C',colt=20,png=outdir+'ligo_gbm_healpix_map_'+ntostr(s)+'.png',window=-1
+
+     optimize_tiling,'ligo_gbm_healpix_map_'+ntostr(s)+'.fits','ligo_gbm_'+ntostr(s),outdir,pngfile='ligo_gbm_healpix_map_'+ntostr(s)+'.png',/noplot
+     ptime,systime(1)-time
   endfor 
-  gra=xmap
-  gdec=ymap
-  phi=(360.-gra)/!radeg
-  theta=-(gdec/!radeg-0.5*!pi)
-  ang2pix_nest, nside, theta, phi, ipnest
-  gmap=hmap
-  gmap[*]=0.
 
-  gmap[ipnest]=probmap
-  gmap=gmap/total(gmap)
-
-  map=gmap*hmap
-  map=map/total(map)
-
-  write_fits_map,'~/Swift/Tiling/gbm_healpix_map.fits',gmap,coordsys='C',ordering='nest'
-  mollview,'~/Swift/Tiling/gbm_healpix_map.fits',coord='C',colt=20,png=outdir+'gbm_healpix_map.png'
-
-  outdir='~/Swift/Tiling/ligo_gbm/'
-  write_fits_map,outdir+'ligo_gbm_healpix_map.fits',map,coordsys='C',ordering='nest'
-  mollview,outdir+'ligo_gbm_healpix_map.fits',coord='C',colt=20,png=outdir+'ligo_gbm_healpix_map.png'
-
-  optimize_tiling,'ligo_gbm_healpix_map.fits','ligo_gbm',outdir,pngfile='ligo_gbm_healpix_map.png'
-
-stop
+  stop
   return
 end 
 
