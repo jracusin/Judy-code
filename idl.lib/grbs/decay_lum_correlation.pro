@@ -1,6 +1,6 @@
 @fit_lc
 ;@swift_lat_pop_studies
-pro test_correlation,x,y,xerr,yerr,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=w5,add=add,out=out,xtitle=xtitle,ytitle=ytitle
+pro test_correlation,x,y,xerr,yerr,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=w5,add=add,out=out,xtitle=xtitle,ytitle=ytitle,xrange=xrange
 
   ;;w1=where(g.t90 gt 2. and g.tstart lt g.t200 and g.alpha_avg lt 3)
   nsamp=1
@@ -18,8 +18,8 @@ pro test_correlation,x,y,xerr,yerr,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=w5
   out=replicate(out,nsamp)
 
   ;;; assumes xlog 
-  w=where(x-xerr[0,*] lt 0.)
-  xerr[0,w]=x[w]-1e25
+  w=where(x-xerr[0,*] lt 0.,nw)
+  if nw gt 0 then xerr[0,w]=x[w]-min(x);1e25
   color=[!p.color,!red,!green,!blue,!magenta]
   leg=''
 
@@ -102,6 +102,88 @@ pro test_correlation,x,y,xerr,yerr,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=w5
   endfor      
 
   legend,leg[1:*],/top,/left,box=0,spacing=2.5,margin=-0.5,textcolor=color[0:nsamp-1]
+
+  return
+end 
+
+pro test_redshift
+
+  g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
+  ng=n_elements(g)
+  ;;; if z changes, so does t200, lum@t200, alpha @ t>t200
+  z=randomu(seed,ng)*6.
+  t200=200.*(1.+z)
+  lum=dblarr(ng) & lumerr=dblarr(2,ng) & alpha=dblarr(ng) & alphaerr=dblarr(2,ng)
+  mpc2cm=3.08568025d24 
+
+  for i=0,ng-1 do begin 
+     dir='~/GRBs/'+strtrim(g[i].grb,2)+'/'
+     cd,dir
+     dist=lumdist(z[i])*mpc2cm
+     lfact=4.*!pi*dist^2*(1.+z[i])^(g[i].beta-1.)
+     flux=call_function(strtrim(g[i].basemodel,2),t200[i],g[i].p)*g[i].unabs_cfratio
+     lum[i]=flux2jy(flux,g[i].beta+1.,gammaerr=g[i].beta_err,fluxerr=g[i].flux_avg_err[0]/g[i].flux_avg*flux,ferr=ferr)*1d-23*g[i].lfact
+     lumerr[0,i]=g[i].flux_avg_err[0]/g[i].flux_avg*lum[i]
+     lumerr[1,i]=g[i].flux_avg_err[1]/g[i].flux_avg*lum[i]
+
+     lc=lcout2fits()
+     t=lc.time-g[i].t90start
+     f=lc.src_rate
+     ferr=lc.src_rate_err
+     terr=rotate([[lc.time-lc.tstart],[lc.tstop-lc.time]],4)
+     wdet=where(lc.src_rate_err gt 0,nwdet)
+
+     ab=linfit(alog10(t[wdet]),alog10(f[wdet]))
+     p=[10^ab[0],-ab[1]]
+     perror=0.1*p
+     intmo='intpow'
+     pnames=['norm','pow']
+     tafter=max([t200[i],g[i].tplateau_start])
+     wdet=where(lc.src_rate_err gt 0 and lc.time ge tafter,nwdet)
+
+     if nwdet gt 0 then begin 
+        fit_pow_model,t[wdet],f[wdet],terr[*,wdet],ferr[wdet],p,intmo,pnames,yfit,newp,perror,chisq,dof,weights,lc[wdet].src_counts,lc[wdet].tot_back_cts,status=status,breaks=0,noint=noint,pmin0=pmin0,/silent
+        alpha[i]=newp[1]
+;        if not exist('lc_fit_out_idl_int6_mc.fits') or keyword_set(reallyredo) then begin 
+           lc_monte_pow,lc[wdet],newp,pnames,chisq,dof,perror2,ps=ps,nsim=1000,int='6',file=file,/noplot,nsig=nsig,breaks=0,mcfit=mcfit
+;        endif else mcfit=mrdfits('lc_fit_out_idl_int6_mc.fits',1)       
+        alphaerr[*,i]=mc_error(mcfit.pow,sig=1.)
+     endif 
+;     cd,'~/GRBs/'
+  endfor 
+
+  w=where(g.t90 gt 2 and g.tstart lt t200*2. and alpha lt 3,nw)
+  add='z rand:'
+  test_correlation,lum,-alpha,lumerr,alphaerr,z,w1=w,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L'+add+',X,>200s!N',add=leg,yrange=[-4,2],xrange=[1d24,1d32],xticks=xticks,out=out
+
+  
+
+  stop
+  return
+end 
+
+pro test_t0_shift
+
+  g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
+  ng=n_elements(g)
+
+  slope1=fltarr(ng)
+  slope3=fltarr(ng)
+
+  for i=0,ng-1 do begin
+     file1='~/GRBs/'+strtrim(g[i].grb,2)+'/lc_fit_out_idl_int1.dat'
+     file3='~/GRBs/'+strtrim(g[i].grb,2)+'/lc_fit_out_idl_int3.dat'
+     if exist(file1) and exist(file3) then begin 
+        read_lcfit,file1,pnames1,p1,perror1
+        read_lcfit,file3,pnames3,p3,perror3
+        slope1[i]=p1[1]
+        slope3[i]=p3[1]
+     endif 
+  endfor 
+
+  plot,g.t90start,slope1-slope3,psym=1
+
+  stop
 
   return
 end 
@@ -707,7 +789,20 @@ end
 pro simulate,g,doplot=doplot,noplot=noplot
 
   if n_elements(g) eq 0 then g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
-  w=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and g.lumdens_final ne 0)
+  w=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and g.lumdens_final ne 0,ng)
+
+  minctr=fltarr(ng)
+  maxtime=fltarr(ng)
+  for i=0,ng-1 do begin 
+     lc=lcout2fits(dir='~/GRBs/'+strtrim(g[i].grb)+'/')
+     wdet=where(lc.src_rate_err gt 0)
+     minctr[i]=min(lc[wdet].src_rate)
+     maxtime[i]=max(lc.tstop)
+  endfor 
+  w=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and g.lumdens_final ne 0 and minctr le 1e-3 and g.tstop gt 1e5,ng)
+
+
+stop
   lum=g[w].lumdens_final
   lumerr=g[w].lumdens_final_err
   beta=g[w].beta
@@ -722,8 +817,8 @@ pro simulate,g,doplot=doplot,noplot=noplot
   
   mpc2cm=3.08568025d24 
 ;  ratio=4e-11 ;; erg/cm2/s/(cts/s)
-  xrtlim=2e-4
-  nsim=1e4
+  xrtlim=1e-3
+  nsim=1e3
   if exist('~/Swift/decay_lum_corr/sim_decay_slope.fits') then out=mrdfits('~/Swift/decay_lum_corr/sim_decay_slope.fits',1)
   if n_elements(out) eq 0 then begin
      out=create_struct('r',0d,'p',0d,'slope',0d,'const',0d,'zd',0d,'sig',0d)
@@ -757,7 +852,7 @@ pro simulate,g,doplot=doplot,noplot=noplot
         cr2=lum[r2]/(4.*!pi*dist^2)/ratio[r2]/fdens ;;; random luminosity and random z = count rate at t_200*(1+z)
         dir='~/GRBs/'+strtrim(g[r3].grb,2)+'/'
         lc=lcout2fits(dir=dir,/silent)
-        t=lc.time
+        t=lc.time-g[r3].t90start
         f=lc.src_rate
         ferr=lc.src_rate_err
         terr=rotate([[lc.time-lc.tstart],[lc.tstop-lc.time]],4)
@@ -765,9 +860,9 @@ pro simulate,g,doplot=doplot,noplot=noplot
         if exist(dir+lcfile) then begin 
            read_lcfit,dir+lcfile,pnames,p,perror
            mo=fit_models(pnames,p,np,nf,basemo=basemo)
-           tmp=execute('cr1='+mo+'(t200[i],p)')
+           cr1=call_function(strtrim(mo,2),t200[i],p)
            norm=cr2/cr1
-           w=where(f*norm[0] gt xrtlim and t gt t200[i] and ferr gt 0,nw)
+           w=where(f*norm[0] gt xrtlim and t gt t200[i] and ferr gt 0 and t gt g[r3].tplateau_start,nw)
            if nw gt 2 then  begin 
 ;           fitexy,alog10(t[w]),alog10(f[w]),a,b,x_sig=alog10(terr[0,w]),y_sig=alog10(ferr[w])
               ab=linfit(alog10(t[w]),alog10(f[w]))
@@ -1044,18 +1139,23 @@ pro extract_redshift
   ;;; correlation: alpha=-6*loglum+7
  
   g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
+  ng=n_elements(g)
   flux=g.flux_avg2
   w=where(flux eq 0.)
   flux[w]=g[w].flux_avg
   
-  alpha=-g.alpha_avg2
-  alpha[w]=-g[w].alpha_avg
-  lum=g.lum_avg2
-  lum[w]=g[w].lum_avg
+;  alpha=-g.alpha_avg2
+;  alpha[w]=-g[w].alpha_avg
+;  lum=g.lum_avg2
+;  lum[w]=g[w].lum_avg
+  alpha=g.alpha_final
+  lum=g.lumdens_final
 
-  slope=1./(-6.012)
-  const=7.022
+  slope=-0.36
+  const=9.7
   lum0=10.^((alpha-const)/(slope))
+  fdensfact=dblarr(ng)
+  for i=0,ng-1 do fdensfact[i]=flux2jy(1.,g[i].beta+1.,gammaerr=g[i].beta_err,fluxerr=g[i].flux_avg_err[0],ferr=ferr)*1d-23
 
   d=sqrt(lum0/(4d*!pi*flux))
 
@@ -1666,7 +1766,11 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
      mwrfits,g,'~/Swift/decay_lum_corr/lum_decay_corr.fits',/create
   endif else g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
 
-  w=where(g.tstart lt g.t200*2. and finite(g.flux_avg)); and g.lum_avg ne 0 and g.lum_avg_err[0] ne 0)
+  w=where(g.tstart lt g.t200*2. and finite(g.flux_avg)); and g.tstop gt 1e5*(1.+g.z)); and g.lum_avg ne 0 and g.lum_avg_err[0] ne 0)
+  ;;; UGH - DO WE LIMIT THE TIME OVER WHICH THE AVERAGE DECAY IS MEASURED?
+  ;;; this throws away bursts that were measured for less, but does
+  ;;; that bias against those that fade much quicker?
+
   g=g[w]
   s=where(g.t90 le 2.)
   l=where(g.t90 gt 2.)
@@ -1796,6 +1900,7 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
         xrange=10d^xrange
         print,leg
         test_correlation,lum,-alpha,lumerr,alphaerr,g.z,w1=w1,w2=w2,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L'+add+',X,>200s!N',add=leg,yrange=[-4,2],xrange=[1d24,1d32],xticks=xticks,out=out
+if k eq 6 then stop
         mwrfits,out,'~/Swift/decay_lum_corr/'+outname+'_corr_out.fits',/create
   
 

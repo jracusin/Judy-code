@@ -954,7 +954,7 @@ pro bin_chandra_data,grb,gg,rad=rad
   
   day=g.time/86400.
   if grb eq 'GRB060729' then bin=25. else $ ;; 060729
-     bin=25.                                ;; all others
+     bin=10.                                ;; all others
   if ng gt 1 then begin
      plothist,day,x,y,bin=bin
      w=where(y gt 0,nw)
@@ -1108,6 +1108,7 @@ pro chandra_analysis,grb,ra,dec,skipextract=skipextract,skipprocess=skipprocess,
         acaofffile=file_search('primary/pcad*asol1.fits*')
         infile=file_search('secondary/acisf*'+dir[i]+'*_evt1.fits*')
         badpixfile=file_search('primary/acisf*'+dir[i]+'*_bpix1.fits*')
+        mtlfile=file_search('secondary/acisf*'+dir[i]+'*_mtl*fits*')
         
      ;;; LEVEL 1 EVENT FILES
         com='punlearn acis_process_events'
@@ -1115,6 +1116,7 @@ pro chandra_analysis,grb,ra,dec,skipextract=skipextract,skipprocess=skipprocess,
         com=[com,'pset acis_process_events outfile=acis_new_evt1.fits']
         com=[com,'pset acis_process_events acaofffile='+acaofffile]
         com=[com,'pset acis_process_events badpixfile='+badpixfile]
+        com=[com,'pset acis_process_events mtlfile='+mtlfile]
         com=[com,'pset acis_process_events eventdef=")stdlev1"']
 ;        com=[com,'pset acis_process_events check_vf_pha=yes']
         com=[com,'pset acis_process_events trail=0.027']

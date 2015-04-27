@@ -2,6 +2,15 @@ pro plot_st_results_new
 
   color=['red','green','blue','cyan','magenta','orange','purple','pink','dark green','salmon','grey','dodger blue']
 
+;  for st=1,3,2 do begin ;;; loop over 3 star trackers
+;     pixf=mrdfits('ST'+ntostr(st)+'_warm_pixel_list.fits',1,/silent)
+;     np=n_elements(pixf)
+;     ni=n_elements(pixf[0].comp)
+;     ;;; plot positions of suspect pixels
+;     p=plot([0,512],[0,512],xrange=[0,511],yrange=[0,511],/xsty,/ysty,xtitle='x',ytitle='y',/iso,title='ST #'+ntostr(st),/nodata)
+;     for i=0,ni-1 do begin 
+     
+
   return
 end 
 
@@ -78,7 +87,8 @@ pro plot_st_results
      pixf=mrdfits('ST'+ntostr(st)+'_warm_pixel_list.fits',1,/silent)
      np=n_elements(pixf)
      ni=n_elements(pixf[0].comp)
-     !p.multi=[0,ni+2,4]
+;     !p.multi=[0,ni+2,4]
+     !p.multi=[0,round(ni/2.+1.),4]
 ;     multiplot,[ni+1,4],/init
 
      ims=intarr(512,512,ni)
@@ -121,7 +131,8 @@ pro plot_st_results
         ;;; make plot of pixel value as function of time
 ;        multiplot
         plot,indgen(10),xtickname=replicate(' ',10),ytickname=replicate(' ',10),/nodata,color=!white
-        plot,indgen(ni)+1,pixf[p].comp,psym=5,xrange=[0,ni+1],yrange=[0,max(pixf[p].comp)+5],charsize=1,ymargin=[4,4],symsize=0.5,xtitle='IM #',ytitle='>bkg',xmargin=[-10,0]
+        if ni mod 2 eq 1 then plot,indgen(10),xtickname=replicate(' ',10),ytickname=replicate(' ',10),/nodata,color=!white
+        plot,indgen(ni)+1,pixf[p].comp,psym=5,xrange=[0,ni+1],yrange=[0,max(pixf[p].comp)+5],charsize=1,ymargin=[4,4],symsize=0.5,xtitle='IM #',ytitle='>bkg',xmargin=[-20,0]
         oplot,[0,ni+1],[8,8],color=!orange,line=1
 
 

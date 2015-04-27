@@ -1,5 +1,33 @@
 @fit_functions
 @fit_functions_flares
+pro numbers4dan
+
+  readcol,'~/stuff_for_people/Dan/LAT_gti_XRT_ctrate_WithSpectralInfo_trimmed.txt',grb, met,gtistart,gtistop, gtimean, ctrate, CTRATE_MINERR, CTRATE_MAXERR, RA, DEC, ERR, gamma, gamma_min, gamma_max,format='(a,a,f,f,f,f,f,f,f,f,f,f,f,f)'
+  
+  g=mrdfits('~/Swift/swift_grb_properties.fits',1)
+  ugrbs=grb[rem_dup(grb)]
+  ng=n_elements(ugrbs)
+  t=gtimean
+  f=ctrate
+  for i=0,ng-1 do begin
+     w=where(grb eq ugrbs[i])
+     gti0=min(gtistart[w],wm)
+     tt=[gti0,gtistop[w[wm]]]
+
+     wg=where(strtrim(g.grb,2) eq strtrim(ugrbs[i],2))
+     alpha=which_alpha(g[wg].pnames,g[wg].p,mean(tt),inds)
+     t[w[wm]]=((1./(1.-alpha))*((tt[1]^(1.-alpha)-tt[0]^(1.-alpha))/(tt[1]-tt[0])))^(-1./alpha)
+
+     f[w[wm]]=call_function(strtrim(g[wg].basemodel,2),t[0],g[wg].p)
+;     print,gtistart[w[wm]],gtistop[w[wm]], gtimean[w[wm]], ctrate[w[wm]],t[i],f[i]
+
+  endfor 
+
+  writecol,'~/stuff_for_people/Dan/LAT_gti_XRT_ctrate_WithSpectralInfo_trimmed_corr.txt',strtrim(grb,2), met,gtistart,gtistop,t,f, CTRATE_MINERR, CTRATE_MAXERR, RA, DEC, ERR, gamma, gamma_min, gamma_max
+
+  return
+end 
+
 pro numbers4carrie,lcmod=lcmod
 
   cd,'~/GRBs/'

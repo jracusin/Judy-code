@@ -5,9 +5,10 @@ pro collect_grb_properties,grb
   grbs=file_search('GRB*')
   ngrbs=n_elements(grbs)
 
-  grb=create_struct('GRB','','trigtime',0d,'z',0.,'nflares',0,'np',0,'model','','type','','xjb',0,$
+  grb=create_struct('GRB','','trigtime',0d,'z',0.,'nflares',0,'np',0,'type','','xjb',0,$
                     'ndet',0,'tstart',0d,'tstop',0d,'tlastdet',0d,'t90',0.,'fluence',0.,$
-                    'p',fltarr(30),'perror',fltarr(2,30),$
+                    'pnames',strarr(30),'p',fltarr(30),'perror',fltarr(2,30),$
+                    'model','','basemodel','',$
                     'gbmname','','unabs_cfratio',0.,'cfratio',0.,'phind',0.)
   grb=replicate(grb,ngrbs)
 
@@ -26,8 +27,9 @@ pro collect_grb_properties,grb
         endif 
         if n_elements(pnames) gt 1 then begin 
            grb[i].p[0:n_elements(p)-1]=p
+           grb[i].pnames[0:n_elements(p)-1]=pnames
            grb[i].perror[*,0:n_elements(p)-1]=perror
-           mo=fit_models(pnames,p,np,nf)
+           mo=fit_models(pnames,p,np,nf,basemo=basemo)
            lc=lcout2fits(dir=grbs[i]);grbs[i]+'/lc_newout_phil.txt')
            grb[i].tstart=lc[0].tstart
            grb[i].tstop=lc[n_elements(lc)-1].tstop
@@ -36,6 +38,7 @@ pro collect_grb_properties,grb
            grb[i].tlastdet=lc[wdet[ndet-1]].time
            if strtrim(pnames[0],2) ne 'nofit' then begin 
               grb[i].model=mo
+              grb[i].basemodel=basemo
               grb[i].nflares=nf
               grb[i].np=np
               grb[i].grb=grbs[i]
