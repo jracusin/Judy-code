@@ -20,9 +20,15 @@ pro plot_st_results
   !p.multi=[0,3,2]
   !x.margin=[10,3]
   !y.margin=[10,2]
-  color=[!red,!green,!blue,!cyan,!magenta,!orange,!purple,!pink,!forestgreen,!salmon,!dodgerblue,!violet,!darkred]
+  colors=[!red,!green,!blue,!cyan,!magenta,!orange,!purple,!pink,!forestgreen,!salmon,!dodgerblue,!violet,!darkred]
+  colors=[colors,colors]
+
   plotsym,8,0.3,/fill
   for st=1,3,2 do begin ;;; loop over 3 star trackers
+     imfiles=file_search('~/Fermi/Spacecraft/star_tracker/STimages/*ST'+ntostr(st)+'*CCD*dump*.fits*')
+     wgood=where(strpos(imfiles,'bad') eq -1)
+     color=colors[wgood]
+
      pixf=mrdfits('ST'+ntostr(st)+'_warm_pixel_list.fits',1,/silent)
      np=n_elements(pixf)
      ni=n_elements(pixf[0].comp)
@@ -48,9 +54,13 @@ pro plot_st_results
      legend,strmid(pixf[0].wim,9,15),textcolor=color[0:ni-1],box=0,/top,/right,charsize=0.9
 
      ;;; plot # of pixels >8+bkg with im
-     plot,[0,ni+1],yrange=[0,max(n8)],xtitle='IM #',ytitle='# pixels > 8+bkg',xrange=[0,ni+1],/nodata,title='ST #'+ntostr(st)
-     for i=0,ni-1 do plots,i+1,n8[i],psym=5,color=color[i]
-     oplot,indgen(ni)+1,n8,line=2
+     if st eq 1 then xrange3=[2013,round(max(pixf.date)+0.5)]
+;     plot,[0,ni+1],yrange=[0,max(n8)],xtitle='IM #',ytitle='# pixels > 8+bkg',xrange=xrange3,/nodata,title='ST #'+ntostr(st),/xsty
+;     for i=0,ni-1 do plots,i+1,n8[i],psym=5,color=color[i]
+;     oplot,indgen(ni)+1,n8,line=2
+     plot,xrange3,yrange=[0,max(n8)],xtitle='Image date',ytitle='# pixels > 8+bkg',xrange=xrange3,/nodata,title='ST #'+ntostr(st)
+     for i=0,ni-1 do plots,pixf.date[i],n8[i],psym=5,color=color[i]
+     oplot,pixf.date,n8,line=2
      print,n8
      print,'Pixels currently warm (x,y,val above background,# times warm)'
      ncomp=n_elements(pixf[w8[0]].comp)
@@ -158,7 +168,7 @@ pro star_tracker_analysis
 
   dir='~/Fermi/Spacecraft/star_tracker/'
   cd,dir
-  pix0=create_struct('ST',0,'wim','','x',0,'y',0,'val',0,'sig',0.,$
+  pix0=create_struct('ST',0,'date',0.,'wim','','x',0,'y',0,'val',0,'sig',0.,$
                      'comp',0.,'ccd_bkg',0.,'loc_bkg',0.)
   pix=replicate(pix0,1000)
   thresh=8.     ;;; pixels above background
@@ -179,6 +189,7 @@ pro star_tracker_analysis
   for st=1,3 do begin ;;; loop over 3 star trackers
 
      imfiles=file_search('STimages/*ST'+ntostr(st)+'*CCD*dump*.fits')
+     date=fltarr(n_elements(imfiles))
      nim=n_elements(imfiles)
      ims=intarr(512,512,nim)  ;;; original images
      ims2=ims                 ;;; images after stars subtracted
@@ -189,6 +200,9 @@ pro star_tracker_analysis
         for i=0,nim-1 do begin ;;; loop over image dumps from each ST
 
            im=mrdfits(imfiles[i],0,hdr,/silent)
+           d=strsplit(imfiles[i],'/-',/ex)
+           date[i]=2000.+d[1]+d[2]/365.
+
            sim=size(im)
            if sim[0] eq 3 then im=im[*,*,0]
            if st eq 1 and i le 1 then im=rotate(im,7)
@@ -239,7 +253,7 @@ pro star_tracker_analysis
 
         ;;; combine list of warm pixels to collect values for each
         ;;; non-duplicate
-        pixf=create_struct('ST',0,'wim',strarr(nim),'x',0,'y',0,$
+        pixf=create_struct('ST',0,'date',fltarr(nim),'wim',strarr(nim),'x',0,'y',0,$
                            'val',intarr(nim),'sig',fltarr(nim),$
                            'comp',fltarr(nim),'ccd_bkg',fltarr(nim),'loc_bkg',fltarr(nim),$
                            'nwarm',0)
@@ -279,6 +293,7 @@ pro star_tracker_analysis
               pixf[i].nwarm=nws
               pixf[i].st=st
               pixf[i].wim=imfiles
+              pixf[i].date=date
            endif 
         endfor  ;;; loop over each warm pixel candidate
         wn0=where(pixf.x ne 0)
