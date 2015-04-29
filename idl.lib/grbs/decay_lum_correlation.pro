@@ -1,5 +1,43 @@
 @fit_lc
+@/Users/jracusin/idl.lib/util/colorbar
 ;@swift_lat_pop_studies
+pro max_stuff
+
+  g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
+  w=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_final lt 3 and g.eiso gt 0,nw)
+  g=g[w]
+
+  begplot,name='~/Swift/decay_lum_corr/cr_tests.ps',/land,/color
+  !x.margin=[4,4]
+  plotsym,0,0.7,/fill
+  ploterror2,g.beta,g.alpha_final,g.beta_err,g.alpha_final_err,psym=8,xtitle=!tsym.beta+'!Lx!N',ytitle=!tsym.alpha+'!Lx, avg!N'
+  b=indgen(31)/10.
+  oplot,b,1.5*b+0.5,line=2;,color=!magenta
+  oplot,b,1.5*b,line=2;,color=!green
+  oplot,b,1.5*b-0.5,line=2;,color=!blue
+  xyouts,1.25,2.3,!tsym.alpha+'=3/2'+!tsym.beta+'+0.5 (Wind, '+!tsym.nu+'!Lx!N<'+!tsym.nu+'!Lc!N)';,color=!magenta
+  xyouts,1.4,2.,!tsym.alpha+'=3/2'+!tsym.beta+'-0.5 (ISM/Wind, '+!tsym.nu+'!Lx!N>'+!tsym.nu+'!Lc!N)';,color=!green
+  xyouts,1.55,1.7,!tsym.alpha+'=3/2'+!tsym.beta+' (ISM, '+!tsym.nu+'!Lx!N<'+!tsym.nu+'!Lc!N)';,color=!blue
+
+  loadct,39
+  bin=0.2
+  plothist,alog10(g.eiso),x,y,bin=bin,/noplot
+  nx=n_elements(x)
+  for i=0,nx-1 do begin 
+     w=where(alog10(g.eiso) ge x[i]-bin and alog10(g.eiso) le x[i]+bin,nw)
+     color=round((x[i]-48.729d)*43d)
+     print,color,x[i]
+     if nw gt 0 then plots,g[w].beta,g[w].alpha_final,psym=8,color=color
+  endfor 
+
+  colorbar,/vertical,min=round(min(x)*10.)/10.,max=round(max(x)*10.)/10.,position=[0.95, 0.12, 1.0, 0.94],/pscolor,/right,divisions=5,color=0
+  
+  endplot
+  spawn,'ps2pdf ~/Swift/decay_lum_corr/cr_tests.ps ~/Swift/decay_lum_corr/cr_tests.pdf'
+stop
+  return
+end 
+
 pro test_correlation,x,y,xerr,yerr,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=w5,add=add,out=out,xtitle=xtitle,ytitle=ytitle,xrange=xrange
 
   ;;w1=where(g.t90 gt 2. and g.tstart lt g.t200 and g.alpha_avg lt 3)

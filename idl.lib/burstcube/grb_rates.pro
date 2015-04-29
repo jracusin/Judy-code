@@ -36,17 +36,17 @@ pro grb_rates
 
   ;;; GBM NaI 12.7/1.27 cm
   ;;; BurstCube CsI 9.4/1.27 cm
-  rad=[12.7,9.4]
-  area=[!pi*(rad[0]/2.)^2,rad[1]^2]
-  eff=[0.452,0.488] ;; from John K
-  inst=['GBM','BurstCube']
+  rad=[12.7,9.4,4.]
+  area=[!pi*(rad[0]/2.)^2,rad[1]^2,rad[2]^2]
+  eff=[0.452,0.488,0.488] ;; from John K
+  inst=['GBM','BurstCube','HOPE']
   back=400. ;; cts/s
 
   t=[1.024,0.256,0.064]
   sig=[4.5,4.5,5]
 
   !p.multi=[0,1,3]
-  for j=0,1 do begin ;; GBM + BurstCube
+  for j=0,2 do begin ;; GBM + BurstCube
      print,inst[j]
      id=intarr(n_elements(g)) & id2=intarr(n_elements(g))
      for i=0,n_elements(t)-1 do begin ;; timescales
