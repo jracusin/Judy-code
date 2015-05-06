@@ -37,7 +37,7 @@ function numdec,num0,ndec,sci=sci,tex=tex,idlplot=idlplot
   
   w=where(num0 eq 0,nw)
   if nw gt 0 then numstr_out[w]='0.0'
-  if keyword_set(tex) then numstr_out='$'+numstr+'$'
+  if keyword_set(tex) and not keyword_set(sci) then numstr_out='$'+numstr+'$'
 
   return,numstr_out
 end  

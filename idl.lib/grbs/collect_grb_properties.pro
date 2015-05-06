@@ -162,8 +162,10 @@ pro collect_grb_properties,grb
   gbm=gbm[s]
   ng=n_elements(gbm)
   for i=0,ng-1 do begin 
-     v=date_conv(gbm[i].trigger_time+2400000.5,'V')
-     utc=ntostr(v[0],4)+'-'+ntostr(fix(v[1]))+'-'+ntostr(v[2],2)+':'+ntostr(v[3],2)+':'+ntostr(v[4],4)
+;     v=date_conv(gbm[i].trigger_time+2400000.5d,'V')
+;     utc=ntostr(v[0],4)+'-'+ntostr(fix(v[1]))+'-'+ntostr(v[2],2)+':'+ntostr(v[3],2)+':'+ntostr(v[4],4)
+     utc=strsplit(gbm[i].trigger_time,' ',/ex)
+     utc=utc[0]+'-'+utc[1]
      met=date2met(utc)
      gbm[i].trigger_time=met
   endfor 
@@ -171,7 +173,7 @@ pro collect_grb_properties,grb
   for i=0,nw-1 do begin
      d=abs(grb[i].trigtime-gbm.trigger_time)
      m=min(d,wm)
-     if d[wm] lt 300 then grb[i].gbmname=gbm[wm].name
+     if d[wm] lt 60 then grb[i].gbmname=gbm[wm].name
   endfor 
 
   wg=where(strtrim(grb.gbmname,2) ne '' and grb.trigtime eq 0.,nwg)
