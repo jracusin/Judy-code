@@ -27,7 +27,7 @@ pro plot_fit,g
               if p[1] gt p[3] and p[3] lt 1. then begin 
                  tb=p[2]
                  tmp=execute('ftb='+mo+'(tb,p)')
-                 plot_like_qdp,/withbat,flux=ff,/useflux,title=grbs[i]
+                 plot_like_qdp,/withbat,flux=ff,/useflux,title=grbs[i],lc=lc
                  if nb gt 1 then btime=median(lc[b].time) else btime=lc[b].time
                  arrow,btime,g[i].batrate_gmean*0.5*ff,btime,g[i].xrtrate*ff,style=3,/data,thick=20,color=!orange,/solid,hthick=6
                  arrow,btime,g[i].xrtrate*1.5*ff,btime,g[i].batrate_gmean*ff,style=3,/data,thick=20,color=!orange,/solid,hthick=6
@@ -37,22 +37,24 @@ pro plot_fit,g
 
 
                  oplot,[1e-3,1e6],[g[i].batrate_gmean,g[i].batrate_gmean]*ff,color=!magenta,line=1
-                 oplot,[1e-3,1e6],[g[i].batrate_amean,g[i].batrate_amean]*ff,color=!cyan,line=1
+;                 oplot,[1e-3,1e6],[g[i].batrate_amean,g[i].batrate_amean]*ff,color=!cyan,line=2
                  oplot,[1e-3,1e6],[g[i].xrtrate,g[i].xrtrate]*ff,color=!orange,line=1
                  tmp=execute('yfit='+mo+'(lc.time,p)')
                  oplot,lc.time,yfit*ff,color=!green,line=2
                  print,g[i].batrate_gmean,g[i].xrtrate,g[i].batrate_gmean/g[i].xrtrate
-                 legend,['BAT/XRT geometric mean ratio = '+ntostr(g[i].batrate_gmean/g[i].xrtrate),'BAT/XRT arithmatic mean ratio = '+ntostr(g[i].batrate_amean/g[i].xrtrate)],/top,/right,box=0
+;                 legend,['BAT/XRT geometric mean ratio =
+;                 '+ntostr(round(g[i].batrate_gmean/g[i].xrtrate)),'BAT/XRT arithmatic mean ratio = '+ntostr(round(g[i].batrate_amean/g[i].xrtrate))],/top,/right,box=0,charsize=1.,textcolor=[!magenta,!cyan]
+                 legend,['BAT/XRT ratio = '+ntostr(round(g[i].batrate_gmean/g[i].xrtrate))],/top,/right,box=0,charsize=1.
 ;                 k=get_kbrd(10)
 ;                 if k eq 's' then stop
               endif 
            endif 
         endif 
      endif
-     cd,'..' 
+     cd,'~/GRBs' 
   endfor 
   endplot
-  spawn,'ps2pdf ~/stuff_for_people/Demos/ratio_plots.eps'
+  spawn,'ps2pdf ~/stuff_for_people/Demos/ratio_plots.eps ~/stuff_for_people/Demos/ratio_plots.pdf'
 
   return
 end 
