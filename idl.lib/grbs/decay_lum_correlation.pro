@@ -53,7 +53,7 @@ pro test_correlation,x,y,xerr,yerr,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=w5
   out=create_struct('sample','','xaxis','','yaxis','',$
                     'slope',0.,'slope_err',fltarr(2),'const',0.,'const_err',fltarr(2),$
                     'spearman',0.,'null_hyp',0d,'signif',0.,$,
-                    'partial_spearman',0.,'partial_null_hyp',0.,'partial_signif',0.)
+                    'partial_spearman',0.,'partial_null_hyp',0.,'partial_signif',0.,'num',0)
   out=replicate(out,nsamp)
 
   ;;; assumes xlog 
@@ -124,6 +124,7 @@ pro test_correlation,x,y,xerr,yerr,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=w5
      out[j].slope_err=a_err
      out[j].const=a0
      out[j].const_err=b_err
+     out[j].num=n_elements(w)
 
      
      mdist=fltarr(nw)
@@ -707,6 +708,69 @@ stop
   return
 end
 
+pro grb_table
+
+  a=' & '
+  as=' & $'
+  sa='$ & '
+  sas='$ & $'
+  g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
+  w1=where(g.t90 gt 2. and g.alpha_avg2 le 3 and g.tstart lt g.t200*2.)
+  g=g[w1]
+  ng=n_elements(g)
+
+  ;;; steep decay contam
+  w1=where((g.alpha_avg2 ne 0 and abs(g.alpha_avg2-g.alpha_avg) gt 0.05) or g.alpha_avg gt 3.)
+  w2=where((g.alpha_avg2 eq 0 or abs(g.alpha_avg2-g.alpha_avg) lt 0.05) and g.alpha_avg lt 3.)
+  sdc=strarr(ng)
+  sdc[w1]='Y'
+  sdc[w2]='N'
+  ;; short/long
+  w1=where(g.t90 le 2. and g.t90 ne 0 and g.alpha_avg2 le 3)
+  w2=where(g.t90 gt 2. and g.alpha_avg2 le 3)
+  dur=strarr(ng)
+  dur[w1]='short'
+  dur[w2]='long'
+  ;; flares/noflares
+  w1=where(g.nflares gt 0 and g.t90 gt 2. and g.alpha_avg2 le 3)
+  w2=where(g.nflares eq 0 and g.t90 gt 2. and g.alpha_avg2 le 3)
+  flares=strarr(ng)
+  flares[w1]='Y'
+  flares[w2]='N'
+  ;; plateau/ no plateau
+  w1=where((strpos(g.type,'II-III') ne -1 or strpos(g.type,'II-IV') ne -1) and g.t90 gt 2. and g.alpha_avg2 le 3)
+  w2=where((strpos(g.type,'II-III') eq -1 and strpos(g.type,'II-IV') eq -1) and g.t90 gt 2. and g.alpha_avg2 le 3)
+  ptu=strarr(ng)
+  ptu[w1]='Y'
+  ptu[w2]='N'
+  ;;; final
+  w1=where(g.t90 gt 2. and g.alpha_avg2 le 3)
+  final=strarr(ng)
+  final[*]='N'
+  final[w1]='Y'
+
+  al=round(alog10(g.lumdens_final)-0.5)
+
+  stuff=strarr(ng)
+  for i=0,ng-1 do begin 
+     if abs(g[i].alpha_final_err[1]-g[i].alpha_final_err[0]) gt 0.02 then $
+        aerr='^{+'+numdec(g[i].alpha_final_err[1],2)+'}_{-'+numdec(g[i].alpha_final_err[0],2)+'}' else begin
+        if g[i].alpha_final_err[0] lt 0.01 then g[i].alpha_final_err[0]=0.01
+        aerr=' \pm '+numdec(max(g[i].alpha_final_err),2)
+     endelse 
+     if abs((g[i].lumdens_final_err[1]/10d^al[i])-(g[i].lumdens_final_err[0]/10d^al[i])) gt 0.02 then $
+        lum='('+numdec(g[i].lumdens_final/10d^al[i],2)+'^{+'+numdec(g[i].lumdens_final_err[1]/10d^al[i],2)+'}_{-'+numdec(g[i].lumdens_final_err[0]/10d^al[i],2)+'}) \times 10^{'+ntostr(al[i])+'}' else $
+           lum='('+numdec(g[i].lumdens_final/10d^al[i],2)+' \pm '+numdec(max(g[i].lumdens_final_err)/10d^al[i],2)+') \times 10^{'+ntostr(al[i])+'}'
+
+     stuff[i]=g[i].grb+a+numdec(g[i].z,2)+a+' ref '+a+numdec(g[i].t90,1)+as+numdec(g[i].alpha_final,2)+aerr+sas+lum+sa+sdc[i]+a+ptu[i]+a+flares[i]+' \\'
+  endfor 
+
+  writecol,'~/papers/decay_lum_corr/grb_table.tex',stuff
+
+
+return
+end 
+
 pro results_table
 
   a=' & '
@@ -738,7 +802,7 @@ pro results_table
 
         if out[j].null_hyp lt 0.01 then n=numdec(out[j].null_hyp,2,/sci,/tex) else n=numdec(out[j].null_hyp,2)
         if out[j].partial_null_hyp lt 0.01 then pn=numdec(out[j].partial_null_hyp,2,/sci,/tex) else pn=numdec(out[j].partial_null_hyp,2)
-        print,s+as+x+sas+y+sa+numdec(out[j].spearman,2)+as+n+sa+numdec(out[j].partial_spearman,2)+as+pn+sas+numdec(out[j].slope,2)+'_{-'+numdec(out[j].slope_err[0],2)+'}^{+'+numdec(out[j].slope_err[1],2)+'}'+sas+numdec(out[j].const,2)+'_{-'+numdec(out[j].const_err[0],2)+'}^{+'+numdec(out[j].const_err[1],2)+'}$ \\'
+        print,s+as+x+sas+y+sa+numdec(out[j].spearman,2)+as+n+sa+numdec(out[j].partial_spearman,2)+as+pn+sas+numdec(out[j].slope,2)+'_{-'+numdec(out[j].slope_err[0],2)+'}^{+'+numdec(out[j].slope_err[1],2)+'}'+sas+numdec(out[j].const,2)+'_{-'+numdec(out[j].const_err[0],2)+'}^{+'+numdec(out[j].const_err[1],2)+'}$'+a+ntostr(out[j].num)+' \\'
      endfor 
      print,'\hline'
   endfor 
@@ -910,7 +974,7 @@ stop
   nsim=1e3
   if exist('~/Swift/decay_lum_corr/sim_decay_slope.fits') then out=mrdfits('~/Swift/decay_lum_corr/sim_decay_slope.fits',1)
   if n_elements(out) eq 0 then begin
-     out=create_struct('r',0d,'p',0d,'slope',0d,'const',0d,'zd',0d,'sig',0d)
+     out=create_struct('r',0d,'p',0d,'slope',0d,'const',0d,'zd',0d,'sig',0d,'num',0)
      out=replicate(out,nsim)
      jstart=0
   endif else begin 
@@ -1012,6 +1076,7 @@ stop
      out[j].const=a;const
      out[j].zd=zd
      out[j].sig=sig
+     out[j].num=n_elements(w)
      if j mod 10 eq 0 then mwrfits,out,'~/Swift/decay_lum_corr/sim_decay_slope.fits',/create
   endfor 
 

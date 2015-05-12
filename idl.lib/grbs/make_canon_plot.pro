@@ -4,6 +4,11 @@ pro make_avg_canon_plot
   begplot,name='~/papers/decay_lum_corr/avg_canon.eps',/land,/encap,/color
 ;  !x.margin=[5,3]
   plot,[1e2,1e6],[0,1],/nodata,/xlog,/ylog,yrange=[1e-4,100],xrange=[1e2,1e6],/xstyle,ytickname=replicate(' ',7),color=!white
+
+  xyouts,1.1e2,5e-4,'log Flux',orientation=90,/data,charsize=2
+  arrow,1e2,8e-3,1e2,1e-1,/data,thick=10,hsize=!d.x_size/48.,/solid ;; flux
+  xyouts,2e2,1.8e-4,'log Time',/data,charsize=2
+  arrow,8e2,2e-4,3e3,2e-4,/data,thick=10,hsize=!d.x_size/48.,/solid ;; time
   
   p=[1,3.,5.e2,0.5,1e4,1.2,1e5,2.]
  

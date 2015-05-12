@@ -19,7 +19,7 @@ pro plot_like_qdp,t,yfit,name=name,sigma,ps=ps,file=file,siglim=siglim,_extra=_e
   endif 
 ;  if n_elements(file) eq 0 then file='lc_newout.txt'
 ;  readcol,file,time,tstarted,tstoped,cts,err,hard,harderr,expt,src,bg,sig,exp,junk1,curr_ftype,rate1,rate2,rate2,rate1err,rate2err,rate3err,hard1,hard2,hard1err,hard2err,/silent
-  if n_elements(lc) eq 0 then lc=lcout2fits(file,phil=phil,qdp=qdp,uvot=uvot,withbat=withbat,chandra=chandra)
+  if n_elements(lc) eq 0 then lc=lcout2fits(phil=phil,qdp=qdp,uvot=uvot,withbat=withbat,chandra=chandra)
   time=lc.time
   tstarted=lc.tstart
   tstoped=lc.tstop
@@ -81,7 +81,7 @@ pro plot_like_qdp,t,yfit,name=name,sigma,ps=ps,file=file,siglim=siglim,_extra=_e
   if n_elements(title) eq 0 then title='blue WT - red PC              '+name+'                                     '
 ;  if yrange[1] gt 1e8 then yrange[1]=1e8
   if yrange[1] lt yrange[0] then yrange[1]=yrange[0]
-  
+;stop  
 ;endif 
 
   xorder=round(alog10(xrange[1])-alog10(xrange[0]));+0.5)

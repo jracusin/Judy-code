@@ -1,13 +1,21 @@
-pro read_perley,p
+pro read_perley,p,s
 
   spawn,'wget http://www.astro.caltech.edu/grbox/grboxtxt.php?starttime=700101&endtime=191231&sort=time&reverse=y&showindex=y&showt90=y&showra=y&showdec=y&showz=y&comments=y&xor=y&otobs=y&hostobs=y&ref=y&observatory=t&obsdate=2014-11-18&posfmt=sexc&xrtpos=best&format=txt -O ~/Swift/grbs_perley_z.txt'
   readcol,'~/Swift/grbs_perley_z.txt',grb,t90,ra,dec,z,format='(a,f,a,a,f)'
 
-  p=create_struct('grb','','z',0.)
+  p=create_struct('grb','','z',0.,'ref','')
   p=replicate(p,n_elements(grb))
   p.grb=grb
   p.z=z
   
+  if n_elements(s) eq 0 then s=read_xml('grboxtxt.xml')
+  t=tag_names(s.grbs)
+  grbs=''
+  for i=0,n_elements(t)-1 do begin 
+     tmp=execute('grbs=[grbs,s.grbs.'+t[i]+'.index'])
+     tmp=execute('refs=[refs,s.')
+
+
   mwrfits,p,'~/Swift/grbs_perley_z.fits',/create
 
   return
