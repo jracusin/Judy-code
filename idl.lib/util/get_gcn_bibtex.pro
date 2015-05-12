@@ -1,5 +1,7 @@
 pro tablenote_grb,grb,tablenote
   
+  ;;; make latex table
+
   read_grb_z,grbs,gcn
   match,strtrim(grbs,2),strtrim(grb,2),m1,m2
   gcn=gcn[m1]
@@ -26,6 +28,8 @@ pro tablenote_grb,grb,tablenote
 end 
 pro combine_gcn_bib
   
+  ;;; combine gcns into one file
+
   cd,'~/papers/jetbreaks1/bib/'
   read_grb_z,grb,gcn
   w=where(gcn ne '')
@@ -69,6 +73,8 @@ end
   
 pro read_grb_z,grb,gcn
   
+  ;;; read gcn info
+
   cd,'~/papers/jetbreaks1/bib/'
   file='~/jetbreaks/grb_z.csv'
   readcol,file,lines,format='(a)',delim='$'  
@@ -88,7 +94,8 @@ pro read_grb_z,grb,gcn
 end 
   
 pro get_gcns
-  
+
+  ;;; get bib files for grbs in csv file
   cd,'~/papers/jetbreaks1/bib/'
   file='~/jetbreaks/grb_z.csv'
   readcol,file,lines,format='(a)',delim='$'
@@ -113,6 +120,7 @@ end
 
 pro get_gcn_bibtex,gcn,year
   
+  ;;; download bib files
   az=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'] 
  
   i=0
