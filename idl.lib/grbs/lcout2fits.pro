@@ -4,6 +4,10 @@ function lcout2fits,file,phil=phil,silent=silent,qdp=qdp,empty=empty,pcfile=pcfi
   nowrite=0
   if not keyword_set(empty) then begin
      if n_elements(file) eq 0 then begin
+        if keyword_set(withbat) then begin
+           lc=mrdfits(dir+'/UL_lc_wbat.fits',1,silent=silent)
+           if lc[0].time ne 0. then return,lc
+        endif 
         if exist(dir+'/UL_lc.fits') then begin
            lc=mrdfits(dir+'/UL_lc.fits',1,silent=silent)
            if keyword_set(chandra) and exist(dir+'/UL_lc_chandra.fits') then begin 

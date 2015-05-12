@@ -24,7 +24,6 @@ pro read_phil,time,tposerr,tnegerr,cts,err,fracexp,bgrate,bgerr,corr_fact,cts_in
      wtsfile=dir+'curve.qdp'
      nowts=0
   endif 
-
   ;;; old file or new file - March 2014
   new=0
   if exist(pcfile) then begin 
