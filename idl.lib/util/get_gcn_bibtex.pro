@@ -30,11 +30,16 @@ pro combine_gcn_bib
   
   ;;; combine gcns into one file
 
-  cd,'~/papers/jetbreaks1/bib/'
-  read_grb_z,grb,gcn
-  w=where(gcn ne '')
-  grb=grb[w]
-  gcn=gcn[w]
+;  cd,'~/papers/jetbreaks1/bib/'
+;  read_grb_z,grb,gcn
+;  w=where(gcn ne '')
+;  grb=grb[w]
+;  gcn=gcn[w]
+
+  cd,'~/Swift/redshifts/bib/'
+  p=mrdfits('~/Swift/redshifts/grbs_perley_z.fits',1)
+  w=where(strpos(p.ref[0],'GCN') ne -1,nw)
+
   files=''
 
   for i=0,n_elements(grb)-1 do begin
@@ -73,7 +78,7 @@ end
   
 pro read_grb_z,grb,gcn
   
-  ;;; read gcn info
+  ;;; read gcn info - obsolete
 
   cd,'~/papers/jetbreaks1/bib/'
   file='~/jetbreaks/grb_z.csv'
@@ -96,37 +101,67 @@ end
 pro get_gcns
 
   ;;; get bib files for grbs in csv file
-  cd,'~/papers/jetbreaks1/bib/'
-  file='~/jetbreaks/grb_z.csv'
-  readcol,file,lines,format='(a)',delim='$'
-  for i=0,n_elements(lines)-1 do begin
-     stuff=str_sep(lines[i],',')
-     grb=stuff[0]
-     year='20'+strmid(grb,0,2)
-     gpos=strpos(stuff[2],'GCN')
-     if gpos[0] ne -1 then begin
-        gcn=strmid(stuff[2],4,4)*1
-        get_gcn_bibtex,gcn,year
-     endif 
-     gpos=strpos(stuff[3],'GCN')
-     if gpos[0] ne -1 then begin 
-        gcn=strmid(stuff[3],4,4)*1
-        get_gcn_bibtex,gcn,year
+  ;;; need to create this file or collect this input from Perley?
+
+  cd,'~/Swift/redshifts/bib/'
+  p=mrdfits('~/Swift/redshifts/grbs_perley_z.fits',1)
+  w=where(strpos(p.ref[0],'GCN') ne -1,nw)
+  for i=0,nw-1 do begin
+     year=strmid(p[w[i]].grb,0,2)
+     if year lt 30. and year gt 3 then begin 
+        gcn=strmid(p[w[i]].ref[0],3,5)
+        year='20'+year
+        print,p[w[i]].grb,' ',gcn,' ',year
+        file='gcn_'+strtrim(ntostr(gcn),2)+'_*.html'
+        file=file_search(file)
+        if strtrim(file,2) eq '' then begin 
+           get_gcn_bibtex,gcn,year,p[w[i]].grb
+           endif $
+           else print,file,' exists'
      endif 
   endfor 
+
+  ;; cd,'~/papers/jetbreaks1/bib/'
+  ;; file='~/jetbreaks/grb_z.csv'
+  ;; readcol,file,lines,format='(a)',delim='$'
+  ;; for i=0,n_elements(lines)-1 do begin
+  ;;    stuff=str_sep(lines[i],',')
+  ;;    grb=stuff[0]
+  ;;    year='20'+strmid(grb,0,2)
+  ;;    gpos=strpos(stuff[2],'GCN')
+  ;;    if gpos[0] ne -1 then begin
+  ;;       gcn=strmid(stuff[2],4,4)*1
+  ;;       get_gcn_bibtex,gcn,year
+  ;;    endif 
+  ;;    gpos=strpos(stuff[3],'GCN')
+  ;;    if gpos[0] ne -1 then begin 
+  ;;       gcn=strmid(stuff[3],4,4)*1
+  ;;       get_gcn_bibtex,gcn,year
+  ;;    endif 
+  ;; endfor 
   
   return
 end 
 
-pro get_gcn_bibtex,gcn,year
+pro get_gcn_bibtex,gcn,year,grb
   
   ;;; download bib files
-  az=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'] 
+;  az=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'] 
+  az=['W','J','M','S','B','R','H','T','C','P','G','A','L','D','K','E','Y','F','N','I','O','Q','U','V','X','Z']
  
   i=0
   outfile='gcn_out.html'
-  while i lt 26 and not exist(outfile) do begin 
-     url='"http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode='+year+'GCN..'+ntostr(gcn)+'....1'+az[i]+'&data_type=BIBTEX&db_key=AST&nocookieset=1"'
+  grbs=''
+  gcns=''
+  nwno=0
+  if exist('nofiles.txt') then begin 
+     readcol,'nofiles.txt',grbs,gcns,format='(a,a)'
+     wno=where(gcns eq gcn,nwno)
+  endif
+  
+  while i lt 26 and not exist(outfile) and nwno eq 0 do begin 
+     if gcn lt 10000 then a='.' else a=''
+     url='"http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode='+year+'GCN..'+ntostr(gcn)+a+'...1'+az[i]+'&data_type=BIBTEX&db_key=AST&nocookieset=1"'
      outfile='gcn_'+ntostr(gcn)+'_'+az[i]+'.html'
      com='wget '+url+' -O '+outfile
      print,com
@@ -134,6 +169,14 @@ pro get_gcn_bibtex,gcn,year
      if numlines(outfile) eq 0 then spawn,'rm '+outfile
      i=i+1
   endwhile
+  if not exist(outfile) then begin
+     if exist('nofiles.txt') then $ 
+        readcol,'nofiles.txt',grbs,gcns,format='(a,a)'
+     grbs=[grbs,grb]
+     gcns=[gcns,gcn]
+     
+     writecol,'nofiles.txt',grbs,gcns,format='(a,a)'
+  endif 
   
 
   return

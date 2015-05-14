@@ -1,22 +1,42 @@
 pro read_perley,p,s
 
-  spawn,'wget http://www.astro.caltech.edu/grbox/grboxtxt.php?starttime=700101&endtime=191231&sort=time&reverse=y&showindex=y&showt90=y&showra=y&showdec=y&showz=y&comments=y&xor=y&otobs=y&hostobs=y&ref=y&observatory=t&obsdate=2014-11-18&posfmt=sexc&xrtpos=best&format=txt -O ~/Swift/grbs_perley_z.txt'
-  readcol,'~/Swift/grbs_perley_z.txt',grb,t90,ra,dec,z,format='(a,f,a,a,f)'
+  spawn,'wget http://www.astro.caltech.edu/grbox/grboxtxt.php?starttime=700101&endtime=191231&sort=time&reverse=y&showindex=y&showt90=y&showra=y&showdec=y&showz=y&comments=y&xor=y&otobs=y&hostobs=y&ref=y&observatory=t&obsdate=2014-11-18&posfmt=sexc&xrtpos=best&format=txt -O ~/Swift/redshifts/grbs_perley_z.txt'
+  readcol,'~/Swift/redshifts/grbs_perley_z.txt',grb,t90,ra,dec,z,format='(a,f,a,a,f)'
 
-  p=create_struct('grb','','z',0.,'ref','')
+  p=create_struct('grb','','z',0.,'ref',strarr(3))
   p=replicate(p,n_elements(grb))
   p.grb=grb
   p.z=z
   
+  cd,'~/Swift/redshifts/'
   if n_elements(s) eq 0 then s=read_xml('grboxtxt.xml')
   t=tag_names(s.grbs)
-  grbs=''
+  grbs='' & refs='' & z=''
   for i=0,n_elements(t)-1 do begin 
-     tmp=execute('grbs=[grbs,s.grbs.'+t[i]+'.index'])
-     tmp=execute('refs=[refs,s.')
+     tmp=execute('t2=tag_names(s.grbs.'+t[i]+'.redshift)')
+     w=where(strpos(t2,'REF') ne -1,nw)
+     if nw gt 0 then begin 
+        tmp=execute('n=n_elements(s.grbs.'+t[i]+'.redshift.ref)')
+        tmp=execute('n2=n_elements(s.grbs.'+t[i]+'.index)')
+        if n2 ne n then $
+           tmp=execute('grbs=[grbs,replicate(s.grbs.'+t[i]+'.index,n)]') else $
+              tmp=execute('grbs=[grbs,s.grbs.'+t[i]+'.index]')
+        tmp=execute('refs=[refs,s.grbs.'+t[i]+'.redshift.ref]')
+        tmp=execute('z=[z,s.grbs.'+t[i]+'.redshift.z._text]')
+     endif 
+  endfor 
 
+  grbs=grbs[1:*]
+  refs=refs[1:*]
+  z=z[1:*]
 
-  mwrfits,p,'~/Swift/grbs_perley_z.fits',/create
+  match,strtrim(p.grb,2),strtrim(grbs,2),m1,m2
+  for i=0,n_elements(m1)-1 do begin
+     w=where(strtrim(grbs,2) eq strtrim(p[m1[i]].grb,2),nw)
+     p[m1[i]].ref[0:nw-1]=refs[w]
+  endfor 
+  
+  mwrfits,p,'~/Swift/redshifts/grbs_perley_z.fits',/create
 
   return
 end 
@@ -24,7 +44,7 @@ end
 pro read_jochen,jg
 
   ;;; save latest html source code for http://www.mpe.mpg.de/~jcg/grbgen.html
-  file='~/Swift/grb_z_greiner.html'
+  file='~/Swift/redshifts/grb_z_greiner.html'
   spawn,'wget http://www.mpe.mpg.de/~jcg/grbgen.html -O '+file
 
   openr,lun,file,/get_lun
@@ -92,7 +112,7 @@ pro read_jochen,jg
   jg.xrf=xrf[2:*]
   jg.z=z[2:*]
 
-  mwrfits,jg,'~/Swift/jochen_z_list.fits',/create
+  mwrfits,jg,'~/Swift/redshifts/jochen_z_list.fits',/create
 
 ;  stop
 return
@@ -100,14 +120,14 @@ end
 
 pro collect_grb_z,g,grabnew=grabnew
 
-  if n_elements(g) eq 0 then g=mrdfits('~/Swift/swift_grb_properties.fits',1)
+  if n_elements(g) eq 0 then g=mrdfits('~/Swift/redshifts/swift_grb_properties.fits',1)
 
   if keyword_set(grabnew) then begin
      read_jochen,j
      read_perley,p
   endif else begin 
-     j=mrdfits('~/Swift/jochen_z_list.fits',1) ;; Jochen Greiner's list
-     p=mrdfits('~/Swift/grbs_perley_z.fits',1) ;; Dan Perley's list
+     j=mrdfits('~/Swift/redshifts/jochen_z_list.fits',1) ;; Jochen Greiner's list
+     p=mrdfits('~/Swift/redshifts/grbs_perley_z.fits',1) ;; Dan Perley's list
   endelse 
 
   ;;; Sam photo-z from Oates et al. 2012
