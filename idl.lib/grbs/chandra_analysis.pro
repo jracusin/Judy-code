@@ -370,7 +370,8 @@ pro make_comb_flux_lcs,grb,rad=rad,unabs=unabs,ps=ps,pfile=pfile,withfit=withfit
      if not exist(lcfile) then lcfile='lc_fit_out_idl_int9.dat'
      print,lcfile
      read_lcfit,lcfile,pname,p,perror
-     mo=fit_models(pname,p,np)
+     mo=fit_models(pname,p,np,basemo=basemo)
+print,mo
 ;     np=n_elements(p)
      case np of 
         2: breaks=-1
@@ -383,14 +384,17 @@ pro make_comb_flux_lcs,grb,rad=rad,unabs=unabs,ps=ps,pfile=pfile,withfit=withfit
      w=where(time gt 0)
      time=time[w]
      time=time[sort(time)]
-     case np of 
-        2: flux=pow(time,p)
-        4: flux=bknpow(time,p)
-        6: flux=bkn2pow(time,p)
-        8: flux=bkn3pow(time,p)
-        10: flux=bkn4pow(time,p)
-     endcase 
+;     case np of 
+;        2: flux=pow(time,p)
+;        4: flux=bknpow(time,p)
+;        6: flux=bkn2pow(time,p)
+;        8: flux=bkn3pow(time,p)
+;        10: flux=bkn4pow(time,p)
+;     endcase 
+     flux=call_function(mo,time,p)
+     f2=call_function(basemo,time,p)
      oplot,time,flux*xratio
+     oplot,time,f2*xratio,line=1
      print,breaks
      if breaks[0] ne -1 then for i=0,n_elements(breaks)-1 do oplot,[breaks[i],breaks[i]],[1d-20,1d-5],line=2
   endif 
