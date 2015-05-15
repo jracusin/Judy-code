@@ -1,6 +1,40 @@
 @fit_lc
 @/Users/jracusin/idl.lib/util/colorbar
 ;@swift_lat_pop_studies
+pro test_plateau_stuff
+
+  ;;; test for sam's paper
+
+  g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
+  w=where(g.sam_samp eq 1,ng)
+  g=g[w]
+
+  alpha=fltarr(ng)
+  alphaerr=fltarr(2,ng)
+  plateau=intarr(ng)
+  for i=0,ng-1 do begin 
+     t=strsplit(g[i].type,'-',/ex)
+     wp=where(t eq 'II',nwp)
+     if nwp eq 1 then plateau[i]=1
+     alpha[i]=g[i].p[wp*2+1]
+     alphaerr[*,i]=g[i].perr[*,wp*2+1]
+  endfor 
+  w1=where(plateau eq 1)
+  w2=where(plateau eq 0)
+
+  q=where(alpha[w1]-alphaerr[0,w1] gt 0.75)
+
+  begplot,name='~/stuff_for_people/Sam/plateau_corr_sam_samp.ps',/land,/color
+  test_correlation,g.lumdens_final,-g.alpha_final,g.lumdens_final_err,g.alpha_final_err,g.z,_extra=_extra,w1=w1,w2=w2,add=['plateau: ','no plateau: '],out=out,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L,X,>200s!N',xrange=xrange,yrange=[-2.5,1]
+  endplot
+  spawn,'ps2pdf ~/stuff_for_people/Sam/plateau_corr_sam_samp.ps ~/stuff_for_people/Sam/plateau_corr_sam_samp.pdf'
+
+
+  stop
+
+return
+end
+ 
 pro max_stuff
 
   g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
@@ -90,7 +124,7 @@ pro test_correlation,x,y,xerr,yerr,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=w5
      c=r_correlate(alog10(x[w]),y[w],zd=zd,probd=probd)
 ;     rsig=mpnormlim(c[1],/SLEVEL)
      rsig=zd
-     print,c[1],mpnormlim(c[1],/slevel),probd,zd
+     print,c[0],c[1],mpnormlim(c[1],/slevel),probd,zd
 
      print,'Spearman rank coeff & prob & sig: ',c[0],c[1],rsig
      pr=pr_correlate(x[w],y[w],z[w],/silent)
@@ -817,7 +851,7 @@ pro paper_plots
   
   g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
 
-;  goto,skip
+  goto,skip
   ;; T90start
   
   bin=10.
@@ -901,23 +935,26 @@ pro paper_plots
   multiplot,/reset,/default
   endplot
   spawn,'ps2pdf ~/Swift/decay_lum_corr/parrot_avg_plot.ps ~/Swift/decay_lum_corr/parrot_avg_plot.pdf'
-;  skip:
+  skip:
 
   ;;;; simulation p plot
   begplot,name='~/Swift/decay_lum_corr/sim_prob_plot.ps',/land,/color
   g=mrdfits('~/Swift/decay_lum_corr/sim_decay_slope_nosteepcorr.fits',1)
   w=where(g.p gt 0,nw)
-  bin=0.1
-  plothist,alog10(g[w].p),x,y,bin=bin,/noplot
-  y=y*1./nw
-  plot,[1e-6,1],[0,0.08],/xlog,xtitle='null hypothesis p',ytitle='Fraction of Simulations',xtickformat='loglabels',/nodata,/ysty,charsize=2
-  for i=0,n_elements(x)-1 do begin
-     polyfill,10^[x[i]-bin/1.8,x[i]+bin/2.,x[i]+bin/2.,x[i]-bin/1.8],[0,0,y[i],y[i]],color=!blue
-  endfor 
-  oplot,[10^(x[0]-bin),10^x,10^(x[n_elements(x)-1]+bin)],[0,y,0],psym=10
-  oplot,[1,1],[0,0.08]
-  axis,xaxis=0,/xlog,xrange=[1e-6,1],xtickname=replicate(' ',7)
-;  polyfill,[10^(x[0]-bin),10^x,10^(x[n_elements(x)-1]+bin),1,0],[0,y,0,0,0],color=!blue
+  bin=0.01
+  plothist,g.r,x,y,bin=bin,xtitle='R!Lsp!N',ytitle='Number of Simulations',/fill,fcolor=!blue
+  axis,xaxis=0,xrange=[-0.2,0.4],xminor=10,/xsty,xtickname=replicate(' ',7)
+;  y=(y*1.)/nw
+;  plot,[-0.2,0.4],[0,0.1],xtitle='R!Lsp!N',ytitle='Fraction of Simulations',/nodata
+;  oplot,x,y,psym=10,color=!blue
+;  plot,[1e-6,1],[0,0.08],/xlog,xtitle='null hypothesis p',ytitle='Fraction of Simulations',xtickformat='loglabels',/nodata,/ysty,charsize=2
+;  for i=0,n_elements(x)-1 do begin
+;     polyfill,10^[x[i]-bin/1.8,x[i]+bin/2.,x[i]+bin/2.,x[i]-bin/1.8],[0,0,y[i],y[i]],color=!blue
+;  endfor 
+;  oplot,[10^(x[0]-bin),10^x,10^(x[n_elements(x)-1]+bin)],[0,y,0],psym=10
+;  oplot,[1,1],[0,0.08]
+;  axis,xaxis=0,/xlog,xrange=[1e-6,1],xtickname=replicate(' ',7)
+;;  polyfill,[10^(x[0]-bin),10^x,10^(x[n_elements(x)-1]+bin),1,0],[0,y,0,0,0],color=!blue
   endplot
   spawn,'ps2pdf ~/Swift/decay_lum_corr/sim_prob_plot.ps ~/Swift/decay_lum_corr/sim_prob_plot.pdf'
 
@@ -2068,8 +2105,17 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
               outname='breaks'
            end
            5: begin ;; plateau/ no plateau
-              w1=where((strpos(g.type,'II-III') ne -1 or strpos(g.type,'II-IV') ne -1) and g.t90 gt 2. and g.alpha_avg2 le 3)
-              w2=where((strpos(g.type,'II-III') eq -1 and strpos(g.type,'II-IV') eq -1) and g.t90 gt 2. and g.alpha_avg2 le 3)
+;              w1=where((strpos(g.type,'II-III') ne -1 or strpos(g.type,'II-IV') ne -1) and g.t90 gt 2. and g.alpha_avg2 le 3)
+;              w2=where((strpos(g.type,'II-III') eq -1 and
+;              strpos(g.type,'II-IV') eq -1) and g.t90 gt 2. and
+;              g.alpha_avg2 le 3)
+              plateau=intarr(n_elements(g))
+              for i=0,ng-1 do begin 
+                 t=strsplit(g[i].type,'-',/ex)
+                 wp=where(t eq 'II',nwp)
+                 if nwp eq 1 then plateau[i]=1
+              endfor 
+
 ;              leg=['Have Plateau, long, corrected','No Plateau, long,
 ;              corrected']
               leg=['Plateau: ','No Plateau: ']
