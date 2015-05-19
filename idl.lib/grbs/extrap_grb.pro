@@ -10,6 +10,7 @@ pro numbers4dan
   t=gtimean
   f=ctrate
   for i=0,ng-1 do begin
+     print,ugrbs[i]
      w=where(grb eq ugrbs[i])
      gti0=min(gtistart[w],wm)
      tt=[gti0,gtistop[w[wm]]]
@@ -18,7 +19,8 @@ pro numbers4dan
      alpha=which_alpha(g[wg].pnames,g[wg].p,mean(tt),inds)
      t[w[wm]]=((1./(1.-alpha))*((tt[1]^(1.-alpha)-tt[0]^(1.-alpha))/(tt[1]-tt[0])))^(-1./alpha)
 
-     f[w[wm]]=call_function(strtrim(g[wg].basemodel,2),t[0],g[wg].p)
+     f[w[wm]]=call_function(strtrim(g[wg].basemodel,2),t[w[wm]],g[wg].p)
+;     if ugrbs[i] eq 'GRB110205A' then stop
 ;     print,gtistart[w[wm]],gtistop[w[wm]], gtimean[w[wm]], ctrate[w[wm]],t[i],f[i]
 
   endfor 
