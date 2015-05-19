@@ -1,3 +1,74 @@
+pro run_com,com
+  for j=0,n_elements(com)-1 do begin
+     print,com[j]
+     spawn,com[j]
+  endfor 
+end
+ 
+pro hardness_ratio,grb,rad
+
+  cd,'~/Chandra/'+grb
+  afile=file_search('*/acis_evt2_clean.fits')
+  na=n_elements(afile)
+
+  eng=['500:2000','2000:8000']
+  engout=['500_2000','2000_8000']
+
+  outfile=file_search('*/*2000*.dat')
+  if not exist(outfile[0]) then begin 
+     for i=0,na-1 do begin ;;; each Chandra obs
+        s=strsplit(afile[i],'/',/ex)
+        cd,s[0]
+
+        for j=0,1 do begin ;;; each energy range
+           
+           com='punlearn dmcopy'
+           com=[com,'/Users/jracusin/CIAO/ciao-4.6/bin/dmcopy "acis_evt2.fits[energy='+eng[j]+']" acis_evt2_clean_'+engout[j]+'.fits opt=all clobber=yes']
+           run_com,com
+           
+           mfile='acis_evt2_clean_'+engout[j]+'.fits'
+           if n_elements(rad) eq 0 then rad=2
+           mfile1='src_acis_evt2_clean_'+ntostr(rad)+'_'+engout[j]+'.fits'
+
+           com='punlearn dmextract'
+           com=[com,'pset dmextract infile="'+mfile+'[bin sky=region(src_'+ntostr(rad)+'.reg)]"'] ;circle('+ra+','+dec+',10)]"']
+           com=[com,'pset dmextract outfile='+mfile1]
+           com=[com,'pset dmextract bkg="'+mfile+'[bin sky=region(bg.reg)]"'] ;annulus('+ra+','+dec+',5,20)]"']
+           com=[com,'/Users/jracusin/CIAO/ciao-4.6/bin/dmextract clobber=yes']
+           run_com,com
+
+           out=mrdfits(mfile1,1)
+           com='/Users/jracusin/CIAO/ciao-4.6/bin/dmlist "'+mfile1+'[cols counts,area,bg_counts,bg_area,net_counts,net_err,exposure]" data > results'+ntostr(rad)+'_'+engout[j]+'.dat'
+           print,com
+           spawn,com
+
+;stop
+        endfor 
+        cd,'..'
+     endfor 
+  endif 
+  
+  read_chandra_results,grb,str,rad=rad,/hard
+
+  useq=str[rem_dup(str.seq)].seq
+  for i=0,n_elements(useq)-1 do begin
+     w=where(str.seq eq useq[i])
+     w1=where(strpos(str[w].file,'500_2000') ne -1)
+     w2=where(strpos(str[w].file,'2000_8000') ne -1)
+     c1=str[w[w1]].netcts
+     c2=str[w[w2]].netcts
+     e1=str[w[w1]].neterr
+     e2=str[w[w2]].neterr
+     h=c1/c2
+     err=sqrt((1/c2^2)*e1^2+c1^2/c2^4*e2^2)
+
+     print,str[w[w1]].seq,c1,c2,str[w[w1]].exposure,h,err
+  endfor 
+
+stop
+  return 
+end 
+
 pro write_datfile,grb=grb
 
   name='~/Chandra/'+grb+'/'+grb+'_xrt_cxo.txt'
@@ -989,18 +1060,19 @@ pro bin_chandra_data,grb,gg,rad=rad
   return
 end 
 
-pro read_chandra_results,grb,str,rad=rad
+pro read_chandra_results,grb,str,rad=rad,hard=hard
   
   dir=!adata+'Chandra/'+grb+'/'
   if n_elements(rad) eq 0 then rad=2
-  files=file_search(dir+'*/results'+ntostr(rad)+'.dat')
-  efiles=file_search(dir+'*/acis_evt2_clean.fits')
+  if keyword_set(hard) then add='*2000*' else add=''
+  files=file_search(dir+'*/results'+ntostr(rad)+add+'.dat')
+  efiles=file_search(dir+'*/acis_evt2_clean'+add+'.fits')
   readcol,'~/Chandra/positions.txt',grbs,ra,dec,posinfo,trigtime,format='(a,a,a,a,d)',skipline=1,delim=','
   match,grb,grbs,m1,m2
   n=n_elements(files)
   print,grbs[m2],trigtime[m2]
   
-  str=create_struct('seq','','counts',0.,'area',0.,'bgcts',0.,'bgarea',0.,$
+  str=create_struct('file','','seq','','counts',0.,'area',0.,'bgcts',0.,'bgarea',0.,$
                     'netcts',0.,'neterr',0.,'exposure',0d,'time',0d,'date','',$
                     'tstart',0d,'tstop',0d,'smin',0.,'smax',0.)
   str=replicate(str,n)
@@ -1008,8 +1080,9 @@ pro read_chandra_results,grb,str,rad=rad
   for i=0,n-1 do begin
      file=files[i]
      s=strpos(file,'results')
-     dir=strmid(file,s-5,4)
+     dir=strmid(file,s-6,5)
      readcol,file,row,counts,area,bgcts,bgarea,netcounts,neterr,exposure,format='(i,f,d,i,d,d,d,d)',/silent
+     str[i].file=file
      str[i].seq=dir
      str[i].counts=counts
      str[i].area=area
