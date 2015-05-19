@@ -120,7 +120,7 @@ end
 
 pro collect_grb_z,g,grabnew=grabnew
 
-  if n_elements(g) eq 0 then g=mrdfits('~/Swift/redshifts/swift_grb_properties.fits',1)
+  if n_elements(g) eq 0 then g=mrdfits('~/Swift/swift_grb_properties.fits',1)
 
   if keyword_set(grabnew) then begin
      read_jochen,j

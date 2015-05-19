@@ -1,6 +1,6 @@
 @fit_lc
 @/Users/jracusin/idl.lib/util/colorbar
-;@swift_lat_pop_studies
+@swift_lat_pop_studies
 pro test_plateau_stuff
 
   ;;; test for sam's paper
@@ -26,6 +26,9 @@ pro test_plateau_stuff
 
   begplot,name='~/stuff_for_people/Sam/plateau_corr_sam_samp.ps',/land,/color
   test_correlation,g.lumdens_final,-g.alpha_final,g.lumdens_final_err,g.alpha_final_err,g.z,_extra=_extra,w1=w1,w2=w2,add=['plateau: ','no plateau: '],out=out,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L,X,>200s!N',xrange=xrange,yrange=[-2.5,1]
+
+  test_correlation,g.lumdens_final,-g.alpha_final,g.lumdens_final_err,g.alpha_final_err,g.z,_extra=_extra,out=out,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L,X,>200s!N',xrange=xrange,yrange=[-2.5,1]
+
   endplot
   spawn,'ps2pdf ~/stuff_for_people/Sam/plateau_corr_sam_samp.ps ~/stuff_for_people/Sam/plateau_corr_sam_samp.pdf'
 
@@ -72,7 +75,7 @@ stop
   return
 end 
 
-pro test_correlation,x,y,xerr,yerr,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=w5,add=add,out=out,xtitle=xtitle,ytitle=ytitle,xrange=xrange,yrange=yrange
+pro test_correlation,x,y,xerr0,yerr,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=w5,add=add,out=out,xtitle=xtitle,ytitle=ytitle,xrange=xrange,yrange=yrange
 
   ;;w1=where(g.t90 gt 2. and g.tstart lt g.t200 and g.alpha_avg lt 3)
   nsamp=1
@@ -91,7 +94,8 @@ pro test_correlation,x,y,xerr,yerr,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=w5
   out=replicate(out,nsamp)
 
   ;;; assumes xlog 
-  w=where(x-xerr[0,*] lt 0.,nw)
+  w=where(x-xerr0[0,*] lt 0.,nw)
+  xerr=xerr0
   if nw gt 0 then xerr[0,w]=x[w]-min(x);1e25
   color=[!p.color,!red,!green,!blue,!magenta]
   leg=''
@@ -134,16 +138,19 @@ pro test_correlation,x,y,xerr,yerr,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=w5
      a0=a
      b0=b
      
-     aa=fltarr(1e4) & bb=fltarr(1e4)
+     aa=fltarr(1e4) & bb=fltarr(1e4) & cc=fltarr(1e4)
      n=nw
      for o=0,1e4-1 do begin
         r=round(randomu(seed,n)*n)
         fitexy,alog10(x[w[r]]),y[w[r]],x_sig=alog10(x[w[r]])-alog10(x[w[r]]-xerr[0,w[r]]),y_sig=yerr[0,w[r]],a,b
+        ccr=r_correlate(alog10(x[w[r]]),y[w[r]])
+        cc[o]=ccr[0]
         aa[o]=a
         bb[o]=b
      endfor 
      a_err=mc_error(aa,sig=1.)
      b_err=mc_error(bb,sig=1.)
+     c_err=mc_error(cc,sig=1.)
 
      if n_elements(add) gt 0 then out[j].sample=add[j]
      if n_elements(xtitle) gt 0 then out[j].xaxis=xtitle
@@ -2060,7 +2067,8 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
      for k=0,6 do begin  ;;; loop over sample cuts (long/short, flares/no flares)
         case k of
            0: begin ;; all
-              w1=indgen(n_elements(g))
+;              w1=indgen(n_elements(g))
+              w1=where(g.alpha_avg2 le 3)
               w2=-1
               leg=['All: ']
               outname='all'
@@ -2110,12 +2118,13 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
 ;              strpos(g.type,'II-IV') eq -1) and g.t90 gt 2. and
 ;              g.alpha_avg2 le 3)
               plateau=intarr(n_elements(g))
-              for i=0,ng-1 do begin 
+              for i=0,n_elements(g)-1 do begin 
                  t=strsplit(g[i].type,'-',/ex)
                  wp=where(t eq 'II',nwp)
                  if nwp eq 1 then plateau[i]=1
               endfor 
-
+              w1=where(plateau eq 1 and g.t90 gt 2. and g.alpha_avg2 le 3)
+              w2=where(plateau eq 0 and g.t90 gt 2. and g.alpha_avg2 le 3)
 ;              leg=['Have Plateau, long, corrected','No Plateau, long,
 ;              corrected']
               leg=['Plateau: ','No Plateau: ']
