@@ -222,15 +222,15 @@ pro ligo_gbm
      pix2ang_nest,nside,lindgen(n_elements(hmap)),theta,phi
      lra=360.-phi*!radeg
      ldec=(0.5*!pi-theta)*!radeg
-     nest=1
-     if max(ldec) gt 1000 then begin 
-        pix2ang_ring,nside,lindgen(n_elements(hmap)),theta,phi
-        lra=360.-phi*!radeg
-        ldec=(0.5*!pi-theta)*!radeg
-        ring=1
-        nest=0
-     endif 
-     print,nest,ring
+;     nest=1
+;     if max(ldec) gt 1000 then begin 
+;        pix2ang_ring,nside,lindgen(n_elements(hmap)),theta,phi
+;        lra=360.-phi*!radeg
+;        ldec=(0.5*!pi-theta)*!radeg
+;        ring=1
+;        nest=0
+;     endif 
+;     print,nest,ring
      maxpix=max(hmap,mmax)
      cra=lra[mmax]
      cdec=ldec[mmax]
@@ -240,10 +240,10 @@ pro ligo_gbm
 ;  cra=0.
 ;  cdec=0.
      pix=sxpar(hdr,'CDELT1')
-     xmap=fltarr(512,512) ;;; NOT ALL BAYESTAR MAPS ARE NSIDE=512!!!!
-     ymap=fltarr(512,512)
-     xmap[0,0]=cra-pix*512/2.
-     ymap[0,0]=cdec-pix*512/2.
+     xmap=fltarr(nside,nside);512,512) ;;; NOT ALL BAYESTAR MAPS ARE NSIDE=512!!!!
+     ymap=fltarr(nside,nside);512,512)
+     xmap[0,0]=cra-pix*nside/2.
+     ymap[0,0]=cdec-pix*nside/2.
      for i=0,511 do begin
         xmap[i,*]=xmap[0,0]+pix*i
         ymap[*,i]=ymap[0,0]+pix*i
