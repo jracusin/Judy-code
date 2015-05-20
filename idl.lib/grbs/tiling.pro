@@ -203,14 +203,17 @@ pro ligo_gbm
   outdir='~/Swift/Tiling/ligo_gbm/sim_same_center/'
 
   nsim=1000
-  done=file_search(outdir+'tiles_probsligo_gbm_*.fits')
-  dd=intarr(n_elements(done))
-  for i=0,n_elements(done)-1 do begin
-     d=strsplit(done[i],'_.',/ex)
-     dd[i]=d[6]
-  endfor 
+;  done=file_search(outdir+'tiles_probsligo_gbm_*.fits')
+  done=file_search(outdir+'ligo_gbm_healpix_map_*.fits')
+  if done[0] ne '' then begin 
+     dd=intarr(n_elements(done))
+     for i=0,n_elements(done)-1 do begin
+        d=strsplit(done[i],'_.',/ex)
+        dd[i]=d[7]
+     endfor
+  endif else dd=0
   md=max(dd)
-  nest=0 & ring=0
+;  nest=0 & ring=0
   for s=md+1,nsim-1 do begin
      time=systime(1)
      l=randomu(seed,1.)*nligo
@@ -219,6 +222,7 @@ pro ligo_gbm
      gbmfile=gbmfiles[g]
 
      read_fits_map,ligofile,hmap,nside=nside
+     print,nside
      pix2ang_nest,nside,lindgen(n_elements(hmap)),theta,phi
      lra=360.-phi*!radeg
      ldec=(0.5*!pi-theta)*!radeg
@@ -235,24 +239,21 @@ pro ligo_gbm
      cra=lra[mmax]
      cdec=ldec[mmax]
 
-;  gbmfile=locprob[0]
+     ;;; GBM Map
      probmap=mrdfits(gbmfile,1,hdr)
-;  cra=0.
-;  cdec=0.
      pix=sxpar(hdr,'CDELT1')
-     xmap=fltarr(nside,nside);512,512) ;;; NOT ALL BAYESTAR MAPS ARE NSIDE=512!!!!
-     ymap=fltarr(nside,nside);512,512)
-     xmap[0,0]=cra-pix*nside/2.
-     ymap[0,0]=cdec-pix*nside/2.
-     for i=0,511 do begin
-        xmap[i,*]=xmap[0,0]+pix*i
-        ymap[*,i]=ymap[0,0]+pix*i
-     endfor 
+     smap=size(probmap)
+     xmap=fltarr(smap[1],smap[2])
+     ymap=fltarr(smap[1],smap[2])
+     xmap[0,0]=cra-pix*smap[1]/2.
+     ymap[0,0]=cdec-pix*smap[2]/2.
+     for i=0,smap[1]-1 do xmap[i,*]=xmap[0,0]+pix*i
+     for i=0,smap[2]-1 do ymap[*,i]=ymap[0,0]+pix*i
      gra=xmap
      gdec=ymap
      phi=(360.-gra)/!radeg
      theta=-(gdec/!radeg-0.5*!pi)
-     if nest then ang2pix_nest, nside, theta, phi, ipnest else ang2pix_ring, nside, theta, phi, ipnest
+     ang2pix_nest, nside, theta, phi, ipnest 
      gmap=hmap
      gmap[*]=0.
 
@@ -262,14 +263,17 @@ pro ligo_gbm
      map=gmap*hmap
      map=map/total(map)
 
+     mollview,ligofile,coord='C',colt=20,png=outdir+'ligo_healpix_map_'+ntostr(s)+'.png',window=-1
+
      write_fits_map,outdir+'gbm_healpix_map_'+ntostr(s)+'.fits',gmap,coordsys='C',ordering='nest'
      mollview,outdir+'gbm_healpix_map_'+ntostr(s)+'.fits',coord='C',colt=20,png=outdir+'gbm_healpix_map_'+ntostr(s)+'.png',window=-1
 
      write_fits_map,outdir+'ligo_gbm_healpix_map_'+ntostr(s)+'.fits',map,coordsys='C',ordering='nest'
      mollview,outdir+'ligo_gbm_healpix_map_'+ntostr(s)+'.fits',coord='C',colt=20,png=outdir+'ligo_gbm_healpix_map_'+ntostr(s)+'.png',window=-1
 
-     optimize_tiling,'ligo_gbm_healpix_map_'+ntostr(s)+'.fits','ligo_gbm_'+ntostr(s),outdir,pngfile='ligo_gbm_healpix_map_'+ntostr(s)+'.png',/noplot
+;     optimize_tiling,'ligo_gbm_healpix_map_'+ntostr(s)+'.fits','ligo_gbm_'+ntostr(s),outdir,pngfile='ligo_gbm_healpix_map_'+ntostr(s)+'.png',/noplot
      ptime,systime(1)-time
+stop
   endfor 
 
   stop
