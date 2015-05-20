@@ -49,21 +49,34 @@ pro hardness_ratio,grb,rad
   endif 
   
   read_chandra_results,grb,str,rad=rad,/hard
+  lc=mrdfits('UL_lc_chandra.fits',1)
 
   useq=str[rem_dup(str.seq)].seq
   for i=0,n_elements(useq)-1 do begin
      w=where(str.seq eq useq[i])
      w1=where(strpos(str[w].file,'500_2000') ne -1)
      w2=where(strpos(str[w].file,'2000_8000') ne -1)
-     c1=str[w[w1]].netcts
-     c2=str[w[w2]].netcts
-     e1=str[w[w1]].neterr
-     e2=str[w[w2]].neterr
-     h=c1/c2
-     err=sqrt((1/c2^2)*e1^2+c1^2/c2^4*e2^2)
+     s=str[w[w1]].netcts
+     h=str[w[w2]].netcts
+     serr=str[w[w1]].neterr
+     herr=str[w[w2]].neterr
+;     h=c1/c2
+;     err=sqrt((1/c2^2)*e1^2+c1^2/c2^4*e2^2)
+     r=(h-s)/(h+s)
+     dr_dh=1/(h+s)-(h-s)/(h+s)^2
+     dr_ds=-1/(h+s)-(h-s)/(h+s)^2
+     err=sqrt(dr_dh^2*herr^2+dr_ds^2*serr^2)
 
-     print,str[w[w1]].seq,c1,c2,str[w[w1]].exposure,h,err
+     print,str[w[w1]].seq,s,h,str[w[w1]].exposure,r,err
+     lc[i].tot_hard=r
+     lc[i].tot_hard_err=err
   endfor 
+
+  begplot,name=grb+'_hardness_ratio.ps',/land
+  ploterror,lc.time,lc.tot_hard,lc.tot_hard_err,/nohat,/xlog,psym=2,xtitle='Time since T0 (s)',ytitle='(hard-soft)/(hard+soft)'
+  endplot
+  ps2pdf,grb+'_hardness_ratio.ps'
+
 
 stop
   return 
