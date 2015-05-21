@@ -11,11 +11,16 @@ pro hardness_ratio,grb,rad
   afile=file_search('*/acis_evt2_clean.fits')
   na=n_elements(afile)
 
-  eng=['500:2000','2000:8000']
-  engout=['500_2000','2000_8000']
+;  e=[300,1500,10000]
+  e=[300,2000,10000]
+  se=ntostr(e)
+  eng=[se[0]+':'+se[1],se[1]+':'+se[2]]
+  engout=[se[0]+'_'+se[1],se[1]+'_'+se[2]]
+  legeng=[numdec(e[0]/1000.,1)+'-'+numdec(e[1]/1000.,1),numdec(e[1]/1000.,1)+'-'+numdec(e[2]/1000.,1)]
 
-  outfile=file_search('*/*2000*.dat')
-  if not exist(outfile[0]) then begin 
+  outfile=file_search('*/*'+se[0]+'*'+se[1]+'*.dat')
+;  if not exist(outfile[0]) then begin 
+  if outfile[0] eq '' then begin 
      for i=0,na-1 do begin ;;; each Chandra obs
         s=strsplit(afile[i],'/',/ex)
         cd,s[0]
@@ -48,14 +53,14 @@ pro hardness_ratio,grb,rad
      endfor 
   endif 
   
-  read_chandra_results,grb,str,rad=rad,/hard
+  read_chandra_results,grb,str,rad=rad,add='*'+se[1]+'*' 
   lc=mrdfits('UL_lc_chandra.fits',1)
 
   useq=str[rem_dup(str.seq)].seq
   for i=0,n_elements(useq)-1 do begin
      w=where(str.seq eq useq[i])
-     w1=where(strpos(str[w].file,'500_2000') ne -1)
-     w2=where(strpos(str[w].file,'2000_8000') ne -1)
+     w1=where(strpos(str[w].file,engout[0]) ne -1)
+     w2=where(strpos(str[w].file,engout[1]) ne -1)
      s=str[w[w1]].netcts
      h=str[w[w2]].netcts
      serr=str[w[w1]].neterr
@@ -72,8 +77,53 @@ pro hardness_ratio,grb,rad
      lc[i].tot_hard_err=err
   endfor 
 
+  read_qdp,'hardrat_2keV.qdp',time,tpos,tneg,rate,rerr,type=type
+  wh=where(strpos(type,'hard data') ne -1,nwh)
+  ws=where(strpos(type,'soft data') ne -1)
+  h=rate[wh]
+  s=rate[ws]
+  herr=rerr[wh]
+  serr=rerr[ws]
+
+  r=(h-s)/(h+s)
+  dr_dh=1/(h+s)-(h-s)/(h+s)^2
+  dr_ds=-1/(h+s)-(h-s)/(h+s)^2
+  err=sqrt(dr_dh^2*herr^2+dr_ds^2*serr^2)
+
   begplot,name=grb+'_hardness_ratio.ps',/land
-  ploterror,lc.time,lc.tot_hard,lc.tot_hard_err,/nohat,/xlog,psym=2,xtitle='Time since T0 (s)',ytitle='(hard-soft)/(hard+soft)'
+  f2='bat_xrt_flux_with_gamma_DENSITY_BATSNR5.qdp'
+  if exist(f2) then !p.multi=[0,1,2]
+  plotsym,0,0.8,/fill
+  ploterror,time[wh],r,err,/nohat,/xlog,psym=8,xtitle='Time since T!L0!N (s)',ytitle='(hard-soft)/(hard+soft)',xrange=[5e1,1e7],yrange=[-1,0.5],/xsty
+  for i=0,nwh-1 do oplot,time[wh[i]]+[tneg[wh[i]],tpos[wh[i]]],[r[i],r[i]]
+  oploterror,lc.time,lc.tot_hard,lc.tot_hard_err,psym=8,errcolor=!red,/nohat,color=!red
+;  ploterror,lc.time,lc.tot_hard,lc.tot_hard_err,/nohat,/xlog,psym=8,xtitle='Time since T0 (s)',ytitle='(hard-soft)/(hard+soft)'
+  legend,['hard band: ','soft band: ']+legeng+' kev',/top,/right,box=0
+
+  if exist(f2) then begin
+     read_qdp,'bat_xrt_flux_with_gamma_DENSITY_BATSNR5.qdp',Time,Poserr,Negerr,gamma,gammaposerr,gammanegerr,type=type,tpos=1
+     w=where(strpos(type,'photon indices') ne -1)
+     w2=where(strpos(type[w],'XRT') ne -1)
+     w=w[w2]
+     terr=fltarr(2,n_elements(time))
+     terr[0,*]=-negerr
+     terr[1,*]=poserr
+     gerr=fltarr(2,n_elements(gamma))
+     gerr[0,*]=-gammanegerr
+     gerr[1,*]=gammaposerr
+     ploterror2,time[w],gamma[w],terr[*,w],gerr[*,w],psym=8,xrange=[5e1,1e7],xtitle='Time since T!L0!N (s)',ytitle=!tsym.gamma_cap,/xlog,/xsty,yrange=[0.5,3]
+
+     ;;; specific to GRB150314A
+     if grb eq 'GRB150314A' then begin 
+        nlc=n_elements(lc)
+        cgam=[2.7,2.63,2.1]
+        cgamerr=[[0.74,0.82],[0.82,0.96],[0.66,0.77]]
+        terr=fltarr(2,3)
+        oploterror2,lc[nlc-3:*].time,cgam,terr,cgamerr,psym=8,color=!red,/nohat,errcolor=!red
+     endif 
+     !p.multi=0
+  endif 
+
   endplot
   ps2pdf,grb+'_hardness_ratio.ps'
 
@@ -1073,11 +1123,11 @@ pro bin_chandra_data,grb,gg,rad=rad
   return
 end 
 
-pro read_chandra_results,grb,str,rad=rad,hard=hard
+pro read_chandra_results,grb,str,rad=rad,add=add
   
   dir=!adata+'Chandra/'+grb+'/'
   if n_elements(rad) eq 0 then rad=2
-  if keyword_set(hard) then add='*2000*' else add=''
+  if not keyword_set(add) then add=''
   files=file_search(dir+'*/results'+ntostr(rad)+add+'.dat')
   efiles=file_search(dir+'*/acis_evt2_clean'+add+'.fits')
   readcol,'~/Chandra/positions.txt',grbs,ra,dec,posinfo,trigtime,format='(a,a,a,a,d)',skipline=1,delim=','

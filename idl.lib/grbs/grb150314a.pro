@@ -40,7 +40,7 @@ pro grb150314a
 
   xrt=mrdfits('~/Chandra/GRB150314A/UL_specfits.fits',1)
 
-  r=xrt[0].unabs_cfratio
+  r=xrt[2].unabs_cfratio
   begplot,name='~/Chandra/GRB150314A/GRB150314A_combined_lc_wcons.ps',/land,/color
   plot_like_qdp,lc=lc,/nohard,yrange=[1e-15,1e-7],/ysty,flux=r,/useflux
 
@@ -51,7 +51,7 @@ pro grb150314a
   oplot,t,gauss(t,newp[8:10])*r,color=!green,line=2
   oplot,minmax(t),[newp[0],newp[0]]*r,line=2,color=!magenta
   endplot
-  spawn,'ps2pdf ~/Chandra/GRB150314A/GRB150314A_combined_lc_wcons.ps ~/Chandra/GRB150314A/GRB150314A_combined_lc_wcons.pdf'
+  ps2pdf,'~/Chandra/GRB150314A/GRB150314A_combined_lc_wcons.ps'
 
   stop
 

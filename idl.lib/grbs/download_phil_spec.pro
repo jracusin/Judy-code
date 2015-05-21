@@ -36,18 +36,21 @@ pro download_phil_spec,grb,tid,dir=dir
   for i=g,n_elements(grb)-1 do begin 
 
      if n_elements(dir) eq 0 then cd,grb[i]
-     wt=0 & pc=0
-     if exist('WTCURVE.qdp') then wt=1
-     if exist('PCCURVE.qdp') then pc=1
+     wt=0 & pc=0 & pc2=0
+     if exist('interval0wt_fit.fit') then wt=1
+     if exist('interval0pc_fit.fit') then pc=1
+     if exist('latepc_fit.fit') then pc2=1
      if wt and pc then begin
-        spec=replicate(spec0,2)
+        spec=replicate(spec0,wt+pc+pc2)
         spec[0].mode='WT'
         spec[1].mode='PC'
+        if pc2 then spec[2].mode='PC late'
         j=1
      endif else begin
         j=0
         spec=spec0
      endelse 
+     
      if pc and not wt then spec.mode='PC'
      if wt and not pc then spec.mode='WT'
      if wt then begin 
@@ -135,6 +138,35 @@ pro download_phil_spec,grb,tid,dir=dir
            endif 
         endif 
      endif 
+     file='latepc_fit.fit'
+     if exist(file) then begin 
+        j=2
+        if numlines(file) gt 2 then begin 
+           readcol,file,pname,p,perr0,perr1,format='(a,f,f,f)',delim=' (',/silent
+           spec[j].nhgal=p[0]
+           spec[j].nh=p[1]*1d22
+           spec[j].nherr=[p[1]-perr0[1],perr1[1]-p[1]]*1d22
+           if numlines(file) ge 10 then begin
+              spec[j].z=p[2]
+              a=1
+           endif else a=0
+           spec[j].phind=p[a+2]
+           spec[j].phinderr=[p[a+2]-perr0[a+2],perr1[a+2]-p[a+2]]
+           readcol,file,pname1,pname2,p,unit1,unit2,unit3,format='(a,a,f,a,a,a)',delim=' (',/silent
+           obsflux=p[0]
+           unabsflux=p[1]
+           obsfluxerr=[obsflux-unit1[0],unit2[0]-obsflux]
+           unabsfluxerr=[unabsflux-unit1[1],unit2[1]-unabsflux]
+           readcol,file,pname1,p,format='(a,f)',delim=':',/silent
+           rate=p[0]
+           corr=p[1]
+           spec[j].cfratio=obsflux/rate/corr
+           spec[j].unabs_cfratio=unabsflux/rate/corr
+           spec[j].cfratioerr=obsfluxerr/rate/corr
+           spec[j].unabs_cfratioerr=unabsfluxerr/rate/corr
+        endif 
+     endif 
+
      mwrfits,spec,'UL_specfits.fits',/create
 
      if n_elements(dir) eq 0 then cd,'..'
