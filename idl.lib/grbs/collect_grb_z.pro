@@ -35,7 +35,11 @@ pro read_perley,p,s
      w=where(strtrim(grbs,2) eq strtrim(p[m1[i]].grb,2),nw)
      p[m1[i]].ref[0:nw-1]=refs[w]
   endfor 
-  
+
+  ;;; fixing wrong GCN ref
+  q=where(p.grb eq '131108A')
+  p[q].ref[0]='GCN15470'
+
   mwrfits,p,'~/Swift/redshifts/grbs_perley_z.fits',/create
 
   return
