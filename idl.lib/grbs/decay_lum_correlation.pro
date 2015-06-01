@@ -313,14 +313,16 @@ pro test_policy_shift
   x=date[s];mdate
   y=g[s].tstop;mtime
   c=r_correlate(x,alog10(y),zd=zd)
-  print,'sig=',mpnormlim(c[1],/SLEVEL)
+
+  print,c,'sig=',mpnormlim(c[1],/SLEVEL)
 
 
   ab=linfit(x,alog10(y))
-  print,ab
+  print,'fit: ',ab
   oplot,[2004,x,2016],10^([2004,x,2016]*ab[1]+ab[0]),color=!red
 
-  legend,['Individual GRBs','R!Lsp!N='+numdec(c[0],2)+'  p='+numdec(c[1],1,/idlplot,/sci)],textcolor=[!p.color,!red],/top,/right,box=0,charsize=1.5
+  legend,['Individual GRBs'],$;'R!Lsp!N='+numdec(c[0],2)+'  p='+numdec(c[1],1,/idlplot,/sci)]
+         textcolor=[!p.color],/top,/right,box=0,charsize=1.5
 
   alpha=g.alpha_avg
   w=where(g.alpha_avg2 gt 0)
@@ -334,13 +336,14 @@ pro test_policy_shift
   plot,x,y,psym=8,xtitle='Stop Time of GRB Observations (s)',ytitle=!tsym.alpha+'!Lavg,x,t>200s!N',/xlog
 
   ab=linfit(alog10(x),y)
-  print,ab
+  print,'fit: ',ab
   oplot,x,alog10(x)*ab[1]+ab[0],color=!red
   c=r_correlate(alog10(x),y)
-  print,'sig=',mpnormlim(c[1],/SLEVEL)
+  print,c,'sig=',mpnormlim(c[1],/SLEVEL)
 
 ;  oplot,[2004,x,2016],[2004,x,2016]*ab[1]+ab[0],color=!red
-  legend,['Individual GRBs','R!Lsp!N='+numdec(c[0],2)+'  p='+numdec(c[1],1,/idlplot,/sci)],textcolor=[!p.color,!red],/top,/right,box=0,charsize=1.5
+  legend,['Individual GRBs'],$;,'R!Lsp!N='+numdec(c[0],2)+'  p='+numdec(c[1],1,/idlplot,/sci)],
+         textcolor=[!p.color],/top,/right,box=0,charsize=1.5
 
   !p.multi=0
   endplot
@@ -357,6 +360,7 @@ pro test_policy_shift
   w4=where(g.grb gt 'GRB'+years[3]+'0000' and g.grb lt 'GRB'+years[4])
 ;  w5=where(g.grb gt 'GRB'+years[4]+'0000' and g.grb lt 'GRB'+years[5])
   help,w1,w2,w3,w4,w5
+  print,median(g[w1].tstop),median(g[w2].tstop),median(g[w3].tstop),median(g[w4].tstop)
   begplot,name='~/Swift/decay_lum_corr/flux_decay_years.ps',/land,/color
 
   test_correlation,g.lumdens_final,-g.alpha_final,g.lumdens_final_err,g.alpha_final_err,g.z,yrange=[-3,3],/ysty,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!LX,avg,200s!N',w1=w1,w2=w2,w3=w3,w4=w4,add=['2004-2006: ','2007-2008: ','2009-2011: ','2012-2014: '],out=out
@@ -764,8 +768,8 @@ pro grb_table
   w1=where((g.alpha_avg2 ne 0 and abs(g.alpha_avg2-g.alpha_avg) gt 0.05) or g.alpha_avg gt 3.)
   w2=where((g.alpha_avg2 eq 0 or abs(g.alpha_avg2-g.alpha_avg) lt 0.05) and g.alpha_avg lt 3.)
   sdc=strarr(ng)
-  sdc[w1]='Y'
-  sdc[w2]='N'
+  sdc[w1]='y'
+  sdc[w2]='n'
   ;; short/long
   w1=where(g.t90 le 2. and g.t90 ne 0 and g.alpha_avg2 le 3)
   w2=where(g.t90 gt 2. and g.alpha_avg2 le 3)
@@ -776,22 +780,31 @@ pro grb_table
   w1=where(g.nflares gt 0 and g.t90 gt 2. and g.alpha_avg2 le 3)
   w2=where(g.nflares eq 0 and g.t90 gt 2. and g.alpha_avg2 le 3)
   flares=strarr(ng)
-  flares[w1]='Y'
-  flares[w2]='N'
+  flares[w1]='y'
+  flares[w2]='n'
   ;; plateau/ no plateau
   w1=where((strpos(g.type,'II-III') ne -1 or strpos(g.type,'II-IV') ne -1) and g.t90 gt 2. and g.alpha_avg2 le 3)
   w2=where((strpos(g.type,'II-III') eq -1 and strpos(g.type,'II-IV') eq -1) and g.t90 gt 2. and g.alpha_avg2 le 3)
   ptu=strarr(ng)
-  ptu[w1]='Y'
-  ptu[w2]='N'
+  ptu[w1]='y'
+  ptu[w2]='n'
   ;;; final
   w1=where(g.t90 gt 2. and g.alpha_avg2 le 3)
   final=strarr(ng)
-  final[*]='N'
-  final[w1]='Y'
+  final[*]='n'
+  final[w1]='y'
 
   al=round(alog10(g.lumdens_final)-0.5)
 
+  ;;; z ref
+  p=mrdfits('~/Swift/redshifts/grbs_perley_z.fits',1)
+  match,strtrim('GRB'+p.grb,2),strtrim(g.grb,2),m1,m2
+  ref=strarr(n_elements(g))
+  ref[m2]='\cite{'+strtrim(g[m2].grb,2)+'_zref}'
+
+  match,strtrim('GRB'+p.grb,2)+'A',strtrim(g.grb,2),m1,m2
+  if m2[0] ne -1 then ref[m2]='\cite{'+strtrim(g[m2].grb,2)+'_zref}'
+help,m2
   stuff=strarr(ng)
   for i=0,ng-1 do begin 
      if abs(g[i].alpha_final_err[1]-g[i].alpha_final_err[0]) gt 0.02 then $
@@ -803,7 +816,7 @@ pro grb_table
         lum='('+numdec(g[i].lumdens_final/10d^al[i],2)+'^{+'+numdec(g[i].lumdens_final_err[1]/10d^al[i],2)+'}_{-'+numdec(g[i].lumdens_final_err[0]/10d^al[i],2)+'}) \times 10^{'+ntostr(al[i])+'}' else $
            lum='('+numdec(g[i].lumdens_final/10d^al[i],2)+' \pm '+numdec(max(g[i].lumdens_final_err)/10d^al[i],2)+') \times 10^{'+ntostr(al[i])+'}'
 
-     stuff[i]=g[i].grb+a+numdec(g[i].z,2)+a+' ref '+a+numdec(g[i].t90,1)+as+numdec(g[i].alpha_final,2)+aerr+sas+lum+sa+sdc[i]+a+ptu[i]+a+flares[i]+' \\'
+     stuff[i]=g[i].grb+a+numdec(g[i].z,2)+a+ref[i]+a+numdec(g[i].t90,1)+as+numdec(-g[i].alpha_final,2)+aerr+sas+lum+sa+sdc[i]+a+ptu[i]+a+flares[i]+' \\'
   endfor 
 
   writecol,'~/papers/decay_lum_corr/grb_table.tex',stuff
@@ -2144,7 +2157,7 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
         xticks=xrange[1]-xrange[0]
         xrange=10d^xrange
         print,leg
-        test_correlation,lum,-alpha,lumerr,alphaerr,g.z,w1=w1,w2=w2,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L'+add+',X,>200s!N',add=leg,yrange=[-4,2],xrange=[1d24,1d32],xticks=xticks,out=out
+        test_correlation,lum,-alpha,lumerr,alphaerr,g.z,w1=w1,w2=w2,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L'+add+',X,>200s!N',add=leg,yrange=[-4,2],xrange=[1d24,1d32],out=out,xticks=xticks
 ;if k eq 6 then stop
         mwrfits,out,'~/Swift/decay_lum_corr/'+outname+'_corr_out.fits',/create
   
