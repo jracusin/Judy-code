@@ -13,8 +13,8 @@ pro compair_sensitivity
 ;  oplot,energy,sens,psym=1
   arr=intarr(n_elements(energy))
 
-  t=text(3e-2,3e-7,'T!Lobs!N=10!U6!N s',font_size=15,/data)
-  t=text(3e-2,1e-7,!tsym.delta_cap+'E=E',font_size=15,/data)
+  t=text(1e4,3e-7,'T!Lobs!N=10!U6!N s',font_size=15,/data)
+  t=text(1e4,1e-7,!tsym.delta_cap+'E=E',font_size=15,/data)
 
 
   ;;;; JEM-X
@@ -62,7 +62,7 @@ pro compair_sensitivity
   ;;;; ComPair
   ind=74+indgen(80-74)
   p2=plot(energy[ind],sens[ind],thick=4,/overplot,/current,linestyle='--')
-  t=text(1,3e-6,'ComPair',/data,/overplot,font_size=15)
+  t=text(1,3e-6,'ComPair',/data,/overplot,font_size=18,font_style='bold')
   arr[ind]=arr[ind]+1
 
   ;;;; Fermi-LAT
@@ -70,6 +70,13 @@ pro compair_sensitivity
   p2=plot(energy[ind],sens[ind],color='magenta',thick=4,/overplot,/current)
   t=text(5e3,1e-6,'Fermi-LAT',color='magenta',/data,/overplot,font_size=15)
   arr[ind]=arr[ind]+1
+
+  ;;; NuSTAR
+  ind=84+indgen(147-84)
+  p2=plot(energy[ind]/1e3,sens[ind]*(energy[ind]/1e3)^2*1e3,color='purple',thick=4,/overplot,/current)
+  t=text(1e-1,1e-7,'NuSTAR',color='purple',/data,/overplot,font_size=15)
+  arr[ind]=arr[ind]+1
+  
 
   p.save,'~/proposals/COMPAIR/instruments_sensitivities.png'
   p.close
