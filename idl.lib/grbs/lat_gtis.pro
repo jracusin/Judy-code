@@ -26,20 +26,24 @@ end
 pro download_ft2s
 
   cd,'~/Fermi/weekly_ft2'
-  ft2s=file_search('lat_spacecraft_weekly*fits')
+  ft2s=file_search('lat_1sec_spacecraft_weekly*fits')
 
-  week=strmid(ft2s,23,3)
+  week=strmid(ft2s,28,3)
   
-  com='wget ftp://legacy.gsfc.nasa.gov/fermi/data/lat/weekly/spacecraft/ -O ft2_list.txt'
+  com='wget ftp://legacy.gsfc.nasa.gov/fermi/data/lat/weekly/1s_spacecraft/ -O ft2_list.txt'
   spawn,com
 
+  readcol,'ft2_list.txt',b1a,b2a,b3a,b4a,b5a,b6a,b7a,b8a,format='(a,a,a,a,a,a,a,a)'
   readcol,'ft2_list.txt',b1,b2,b3,b4,b5,b6,b7,b8,b9,format='(a,a,a,a,a,a,a,a,a)'
-  weeks=strmid(b7,92,3)
+  weeks=strmid([b6a,b7],100,3)
+  weeks=weeks[sort(weeks)]
+  w=where(strtrim(weeks,2) ne '')
+  weeks=weeks[w]
 
   dont_match,week,weeks,m1,m2
   print,weeks[m2]
-  newfiles='ftp://legacy.gsfc.nasa.gov/fermi/data/lat/weekly/spacecraft/lat_spacecraft_weekly_w'+weeks[m2]+'_p202_v001.fits'
-
+  newfiles='ftp://legacy.gsfc.nasa.gov/fermi/data/lat/weekly/1s_spacecraft/lat_1sec_spacecraft_weekly_w'+weeks[m2]+'_p203_v001.fits'
+stop
   for i=0,n_elements(m2)-1 do spawn,'wget '+newfiles[i]
 
 end 
@@ -96,8 +100,8 @@ pro swift_grbs,go=go
   fermistart=date2met('2008-09-01 00:00:00',/fermi)
 
   out=create_struct('grb','','ra',0.,'dec',0.,'err',0.,'trigtime',0d,$
-                    'gti_start',dblarr(20),'gti_stop',dblarr(20),'gti_mean',dblarr(20),$
-                    'ctrate',dblarr(20),'ctrate_err',dblarr(2,20),$
+                    'gti_start',dblarr(25),'gti_stop',dblarr(25),'gti_mean',dblarr(25),$
+                    'ctrate',dblarr(25),'ctrate_err',dblarr(2,25),$
                     'first_gti',dblarr(2),'first_gti_ctrate',0.,'first_gti_ctrate_err',dblarr(2))
   out=replicate(out,ng)
   if keyword_set(go) then begin 
@@ -167,7 +171,7 @@ pro get_ft2,trigtime,ft2
         mweekstr=ntostr(mweek[j])
         if mweek[j] lt 100 then mweekstr='0'+mweekstr
         if mweek[j] lt 10 then mweekstr='0'+mweekstr
-        ft2file=file_search('~/Fermi/weekly_ft2/lat_spacecraft_weekly_w'+mweekstr+'_*_v001.fits')
+        ft2file=file_search('~/Fermi/weekly_ft2/lat_1sec_spacecraft_weekly_w'+mweekstr+'_*_v001.fits')
 ;        ft2file='~/Fermi/weekly_ft2/lat_1sec_spacecraft_weekly_w'+mweekstr+'_p202_v001.fits'
         ft2file=ft2file[0]
         print,ft2file
@@ -206,31 +210,28 @@ pro lat_gtis,ra,dec,trigtime,gtistart,gtistop,noplot=noplot,altstart=altstart,al
      ft2=ft2[w1]
 ;     print,nw1*30d
 
-     start=dindgen(nw1*30d)+ft2[0].start
-     stop=start+1
-;     ra_scz=interpol(ft2.ra_scz,ft2.start,start)
-;     dec_scz=interpol(ft2.dec_scz,ft2.start,start)
-;     ra_zenith=interpol(ft2.ra_zenith,ft2.start,start)
-;     dec_zenith=interpol(ft2.dec_zenith,ft2.start,start)
+;     start=dindgen(nw1*30d)+ft2[0].start
+;     stop=start+1
+     start=ft2.start
+     stop=ft2.stop
 
      d1=separation(ra,dec,ft2.ra_scz,ft2.dec_scz)/3600.
      d2=separation(ra,dec,ft2.ra_zenith,ft2.dec_zenith)/3600.
-;     gcirc,2,ra,dec,ft2.ra_scz,ft2.dec_scz,d1
-;     d1=d1/3600.
-;     gcirc,2,ra,dec,ft2.ra_zenith,ft2.dec_zenith,d2
-;     d2=d2/3600.
-
      
-     dist1=interpol(d1,ft2.start,start)
-     dist2=interpol(d2,ft2.start,start)
+;     dist1=interpol(d1,ft2.start,start)
+;     dist2=interpol(d2,ft2.start,start)
+     dist1=d1 ;; use 1s FT2
+     dist2=d2
 
-     data_qual=intarr(n_elements(start)) & lat_config=data_qual
-     for j=0L,nw1-1 do begin 
-        data_qual[j*30:(j+1)*30-1]=ft2[j].data_qual
-        lat_config[j*30:(j+1)*30-1]=ft2[j].lat_config
-     endfor 
+;     data_qual=intarr(n_elements(start)) & lat_config=data_qual
+;     for j=0L,nw1-1 do begin 
+;        data_qual[j*30:(j+1)*30-1]=ft2[j].data_qual
+;        lat_config[j*30:(j+1)*30-1]=ft2[j].lat_config
+;     endfor 
+     data_qual=ft2.data_qual
+     lat_config=ft2.lat_config
 
-     w=where(dist1 le 70. and dist2 le 105. and data_qual eq 1,nw); and lat_config eq 1,nw)
+     w=where(dist1 le 65. and dist2 le 105. and data_qual eq 1,nw); and lat_config eq 1,nw)
      
      if nw gt 0 then begin 
         gtis=start[w]-trigtime
@@ -258,7 +259,7 @@ pro lat_gtis,ra,dec,trigtime,gtistart,gtistop,noplot=noplot,altstart=altstart,al
 
            plot,start-trigtime,dist1,ytitle='SCZ-RA,DEC',psym=1,xtitle='Time (s)'
            oplot,start[w]-trigtime,dist1[w],color=!blue,psym=1
-           oplot,[0,2.5e4],[70,70],line=2
+           oplot,[0,2.5e4],[65,65],line=2
 
            if n_elements(altstart) gt 0 then begin
               if altstop[0] ne 0 then begin 
