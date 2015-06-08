@@ -60,9 +60,10 @@ pro compair_sensitivity
   arr[ind]=arr[ind]+1
 
   ;;;; ComPair
-  ind=74+indgen(80-74)
+;  ind=74+indgen(80-74)
+  ind=147+indgen(158-147)
   p2=plot(energy[ind],sens[ind],thick=4,/overplot,/current,linestyle='--')
-  t=text(1,3e-6,'ComPair',/data,/overplot,font_size=18,font_style='bold')
+  t=text(1,2e-6,'ComPair',/data,/overplot,font_size=18,font_style='bold')
   arr[ind]=arr[ind]+1
 
   ;;;; Fermi-LAT
