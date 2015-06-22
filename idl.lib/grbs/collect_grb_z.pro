@@ -1,7 +1,7 @@
 pro read_perley,p,s
 
-  spawn,'wget http://www.astro.caltech.edu/grbox/grboxtxt.php?starttime=700101&endtime=191231&sort=time&reverse=y&showindex=y&showt90=y&showra=y&showdec=y&showz=y&comments=y&xor=y&otobs=y&hostobs=y&ref=y&observatory=t&obsdate=2014-11-18&posfmt=sexc&xrtpos=best&format=txt -O ~/Swift/redshifts/grbs_perley_z.txt'
-  readcol,'~/Swift/redshifts/grbs_perley_z.txt',grb,t90,ra,dec,z,format='(a,f,a,a,f)'
+;  spawn,'wget http://www.astro.caltech.edu/grbox/grboxtxt.php?starttime=700101&endtime=191231&sort=time&reverse=y&showindex=y&showt90=y&showra=y&showdec=y&showz=y&comments=y&xor=y&otobs=y&hostobs=y&ref=y&observatory=t&obsdate=2014-11-18&posfmt=sexc&xrtpos=best&format=txt -O ~/Swift/redshifts/grbs_perley_z.txt'
+  readcol,'~/Swift/redshifts/grbs_perley_z.txt',grb,t90,ra,dec,z,format='(a,f,a,a,f)',/silent
 
   p=create_struct('grb','','z',0.,'ref',strarr(3))
   p=replicate(p,n_elements(grb))
@@ -39,6 +39,48 @@ pro read_perley,p,s
   ;;; fixing wrong GCN ref
   q=where(p.grb eq '131108A')
   p[q].ref[0]='GCN15470'
+
+  ;;; missing GCN ref
+  q=where(p.grb eq '070506')
+  p[q].ref[0]='GCN6379'
+  q=where(p.grb eq '100424A')
+  p[q].ref[0]='GCN14291'
+  
+  ;;; fixing wrong ADS ref
+  q=where(p.grb eq '080916C')
+  p[q].ref[0]='ADS/2009A%26A...498...89G'
+
+  ;;; fixing arXiv -> published
+  q=where(p.ref[0] eq 'ADS/2013arXiv1301.5903P')
+  p[q].ref[0]='ADS/2013ApJ...778..128P'
+  q=where(p.ref[0] eq 'arXiv/1409.5791')
+  p[q].ref[0]='ADS/2015MNRAS.446.3911S'
+  q=where(p.ref[0] eq 'arXiv/1302.2352')
+  p[q].ref[0]='ADS/2014ApJ...781...13L'
+
+  q=where(strtrim(p.ref[0],2) eq 'astro-ph/0803.4017')
+  p[q].ref[0]='ADS/2008ApJ...681..453J'
+
+  ;;; ADDING PHOTO-Zs
+  o=p[0]
+  o=replicate(o,6)
+  o.grb=['060510A','090401B','100805A','081230','111215A','111225A']
+  o.z=[1.2,3.1,1.85,2.03,2.06,0.297]
+  o[0:2].ref[0]='ADS/2012MNRAS.426L..86O'
+  o[3].ref[0]='ADS/2011AA...526A.153K'
+  o[4].ref[0]='ADS/2015MNRAS.446.4116V'
+  o[5].ref[0]='GCN16079'
+  concat_structs,p,o,newp
+  p=newp
+
+  ;;; missed z (trouble reading in txt file)
+  o=p[0]
+  o=replicate(o,2)
+  o.grb=['090102','130925A']
+  o.z=[1.547,0.35]
+  o.ref[0]=['GCN8766','GCN15249']
+  concat_structs,p,o,newp
+  p=newp
 
   mwrfits,p,'~/Swift/redshifts/grbs_perley_z.fits',/create
 
@@ -139,22 +181,22 @@ pro collect_grb_z,g,grabnew=grabnew
   sz=[1.2,3.1,1.85]
 
   match,strtrim(g.grb,2),strtrim(j.grb,2),m1,m2
-  g[m1].z=j[m2].z
+  if m1[0] ne -1 then g[m1].z=j[m2].z
   match,strtrim(g.grb,2),strtrim(j.grb,2)+'A',m1,m2
   if m2[0] ne -1 then g[m1].z=j[m2].z
 
   match,strtrim(g.grb,2),strtrim(p.grb,2),m1,m2
-  g[m1].z=p[m2].z
+  if m1[0] ne -1 then g[m1].z=p[m2].z
   match,strtrim(g.grb,2),strtrim(p.grb,2)+'A',m1,m2
   if m2[0] ne -1 then g[m1].z=p[m2].z
 
   match,strtrim(g.grb,2),strtrim(slist,2),m1,m2
-  g[m1].z=sz[m2]
+  if m1[0] ne -1 then g[m1].z=sz[m2]
   match,strtrim(g.grb,2),strtrim(slist,2)+'A',m1,m2
   if m2[0] ne -1 then g[m1].z=sz[m2]
 
   ;; remove questionable redshifts
-  q=['GRB121011A','GRB060923C']
+  q=['GRB121011A','GRB060923C','GRB050713A','GRB060805A','GRB060807','GRB070223','GRB070224','GRB070330','GRB080205','GRB080212','GRB080307','GRB080319A','GRB080320','GRB080523','GRB080703','GRB121212A']
   match,strtrim(g.grb,2),strtrim(q,2),m1,m2
   g[m1].z=0.
 

@@ -35,12 +35,18 @@ pro get_ads
   w=where(strpos(p.ref[0],'ADS') ne -1 or strpos(p.ref[0],'ads') ne -1,nw)
   for i=0,nw-1 do begin 
      ads=strsplit(p[w[i]].ref[0],'/',/ex)
+     noamp=strsplit(ads[1],'&',/ex)
+     if n_elements(noamp) gt 1 then ads[1]=noamp[0]+'%26'+noamp[1]
+
      url='"http://adsabs.harvard.edu/cgi-bin/nph-bib_query?bibcode='+strtrim(ads[1],2)+'&data_type=BIBTEX&db_key=AST&nocookieset=1"'
 ;     outfile=strtrim(grb[w[i]],2)+'_ADS.html'
      outfile=strtrim(ads[1],2)+'_ADS.html'
      com='wget '+url+' -O '+outfile
-     print,com
-     spawn,com
+     print,p[w[i]].grb,p[w[i]].ref[0]
+     if not exist(outfile) then begin
+        print,com
+        spawn,com
+     endif 
      if numlines(outfile) eq 0 then spawn,'rm '+outfile
 ;;; need to swap & for %26
   endfor 
@@ -86,12 +92,12 @@ pro combine_gcn_bib
   files=[gfiles,afiles]
   
   
-  com='cat '+ntostrarr(files)+' > grb_z.bib'
+  com='cat '+ntostrarr(files)+' > grb_z0.bib'
   print,com
   spawn,com
   
 ;  readcol,'grb_z.bib',lines,format='(a)',delim='#',/silent
-  openr,lun,'grb_z.bib',/get_lun
+  openr,lun,'grb_z0.bib',/get_lun
   lines=''
   readf,lun,lines
   line=''
@@ -111,17 +117,23 @@ pro combine_gcn_bib
   apos=strpos(lines,'@ARTICLE')
   w=where(apos ne -1,nw)
   for i=0,nw-1 do begin 
-     pgrb=''
+;     pgrb=''
      if strpos(lines[w[i]],'GCN') ne -1 then begin
         chunks=strsplit(lines[w[i]],'.',/ex)
         q=where(strpos(p.ref[0],'GCN') ne -1 and strtrim(p.ref[0],2) eq 'GCN'+strtrim(chunks[1],2) ,nw)
-        pgrb='GRB'+p[q].grb
-     endif else begin 
-        chunks=strsplit(lines[w[i]],'{,',/ex)
-        q=where(strpos(p.ref[0],chunks[1]) ne -1)
-        pgrb='GRB'+p[q].grb
-     endelse
-     if pgrb[0] ne '' then lines[w[i]]='@ARTICLE{'+strtrim(pgrb[0],2)+'_zref,'
+;        pgrb='GRB'+p[q].grb
+        lines[w[i]]='@ARTICLE{'+strtrim(p[q[0]].ref[0],2)+','
+     endif 
+     if strpos(lines[w[i]],'%') ne -1 or strpos(lines[w[i]],'&') ne -1 then begin 
+        chunks=strsplit(lines[w[i]],'%&',/ex)
+        lines[w[i]]=chunks[0]+strtrim(chunks[1],2)
+     endif 
+;else begin 
+;        chunks=strsplit(lines[w[i]],'{,',/ex)
+;        q=where(strpos(p.ref[0],chunks[1]) ne -1)
+;        pgrb='GRB'+p[q].grb
+;     endelse
+;     if pgrb[0] ne '' then lines[w[i]]='@ARTICLE{'+strtrim(pgrb[0],2)+'_zref,'
   endfor 
   w=where(strtrim(lines,2) ne '')
   lines=lines[w]

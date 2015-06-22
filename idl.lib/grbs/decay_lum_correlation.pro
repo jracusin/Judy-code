@@ -799,11 +799,37 @@ pro grb_table
   ;;; z ref
   p=mrdfits('~/Swift/redshifts/grbs_perley_z.fits',1)
   match,strtrim('GRB'+p.grb,2),strtrim(g.grb,2),m1,m2
+  match,strtrim('GRB'+p.grb,2)+'A',strtrim(g.grb,2),m1a,m2a
+  match,strtrim('GRB'+p.grb,2),strtrim(g.grb,2)+'A',m1b,m2b
+  m1=[m1,m1a,m1b]
+  m2=[m2,m2a,m2b]
   ref=strarr(n_elements(g))
-  ref[m2]='\cite{'+strtrim(g[m2].grb,2)+'_zref}'
+  wgcn=where(strpos(p[m1].ref[0],'GCN') ne -1)
+  ref[m2[wgcn]]='\cite{'+strtrim(p[m1[wgcn]].ref[0],2)+'}'
+  wads=where(strpos(strupcase(p[m1].ref[0]),'ADS') ne -1,nads)
+  aref=strarr(nads)
+  for i=0,nads-1 do begin 
+     af=strsplit(p[m1[wads[i]]].ref[0],'/',/ex)
+     aref[i]=strtrim(af[1],2)
+  endfor 
+  ref[m2[wads]]='\cite{'+aref+'}'
 
-  match,strtrim('GRB'+p.grb,2)+'A',strtrim(g.grb,2),m1,m2
-  if m2[0] ne -1 then ref[m2]='\cite{'+strtrim(g[m2].grb,2)+'_zref}'
+  wper=where(strpos(ref,'%') ne -1,nwper)
+  pref=strarr(nwper)
+  for i=0,nwper-1 do begin
+     ap=strsplit(ref[wper[i]],'%&',/ex)
+     pref[i]=strtrim(ap[0],2)+strtrim(strmid(ap[1],2,100),2)
+  endfor 
+  ref[wper]=strtrim(pref,2)
+
+  wweird=where(g.grb eq 'GRB060111A' or g.grb eq 'GRB070518 ' or g.grb eq 'GRB070714A') ;; only in preliminary host list not final paper
+  ref[wweird[0]]='Perley Host\footnote{\url{http://www.astro.caltech.edu/grbhosts/redshifts.html}}'
+  ref[wweird[1:*]]='Perley Host\footnotemark[\value{footnote}]'
+
+;  ref[m2]='\cite{'+strtrim(g[m2].grb,2)+'_zref}'
+
+;  match,strtrim('GRB'+p.grb,2)+'A',strtrim(g.grb,2),m1,m2
+;  if m2[0] ne -1 then ref[m2]='\cite{'+strtrim(g[m2].grb,2)+'_zref}'
 help,m2
   stuff=strarr(ng)
   for i=0,ng-1 do begin 
@@ -821,7 +847,7 @@ help,m2
 
   writecol,'~/papers/decay_lum_corr/grb_table.tex',stuff
 
-
+stop
 return
 end 
 
@@ -835,7 +861,7 @@ pro results_table
   cd,'~/Swift/decay_lum_corr'
   outfiles=file_search('*out.fits')
   colprint,indgen(n_elements(outfiles)),outfiles
-
+  openw,lun,'~/papers/decay_lum_corr/results_table.tex',/get_lun
   ind=[3,2,4,7,6,9,5]
   for k=0,n_elements(ind)-1 do begin
      i=ind[k]
@@ -856,11 +882,12 @@ pro results_table
 
         if out[j].null_hyp lt 0.01 then n=numdec(out[j].null_hyp,2,/sci,/tex) else n=numdec(out[j].null_hyp,2)
         if out[j].partial_null_hyp lt 0.01 then pn=numdec(out[j].partial_null_hyp,2,/sci,/tex) else pn=numdec(out[j].partial_null_hyp,2)
-        print,s+as+x+sas+y+sa+numdec(out[j].spearman,2)+as+n+sa+numdec(out[j].partial_spearman,2)+as+pn+sas+numdec(out[j].slope,2)+'_{-'+numdec(out[j].slope_err[0],2)+'}^{+'+numdec(out[j].slope_err[1],2)+'}'+sas+numdec(out[j].const,2)+'_{-'+numdec(out[j].const_err[0],2)+'}^{+'+numdec(out[j].const_err[1],2)+'}$'+a+ntostr(out[j].num)+' \\'
+        printf,lun,s+as+x+sas+y+sa+numdec(out[j].spearman,2)+as+n+sa+numdec(out[j].partial_spearman,2)+as+pn+sas+numdec(out[j].slope,2)+'_{-'+numdec(out[j].slope_err[0],2)+'}^{+'+numdec(out[j].slope_err[1],2)+'}'+sas+numdec(out[j].const,2)+'_{-'+numdec(out[j].const_err[0],2)+'}^{+'+numdec(out[j].const_err[1],2)+'}$'+a+ntostr(out[j].num)+' \\'
      endfor 
-     print,'\hline'
+     printf,lun,'\hline'
   endfor 
-
+  close,lun
+  free_lun,lun
 
 
   stop
@@ -871,7 +898,7 @@ pro paper_plots
   
   g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
 
-  goto,skip
+;  goto,skip
   ;; T90start
   
   bin=10.
@@ -955,7 +982,7 @@ pro paper_plots
   multiplot,/reset,/default
   endplot
   spawn,'ps2pdf ~/Swift/decay_lum_corr/parrot_avg_plot.ps ~/Swift/decay_lum_corr/parrot_avg_plot.pdf'
-  skip:
+;  skip:
 
   ;;;; simulation p plot
   begplot,name='~/Swift/decay_lum_corr/sim_prob_plot.ps',/land,/color
