@@ -10,11 +10,11 @@ pro oploterror2,x,y,xerr,yerr,color=color,_extra=_extra,xmin=xmin,ymin=ymin
   n=n_elements(x)
   sx=size(xerr)
   if sx[0] le 1 then xerr=[[xerr],[xerr]]
-  xerr=rotate(xerr,4)
+  if sx[1] gt 2 then xerr=rotate(xerr,4)
 
   sy=size(yerr)
   if sy[0] le 1 then yerr=[[yerr],[yerr]]
-  yerr=rotate(yerr,4)
+  if sy[1] gt 2 then yerr=rotate(yerr,4)
 
 ;  if n_elements(xmin) eq 0 then xmin=min([x,0.])
 ;  if n_elements(ymin) eq 0 then ymin=min([y,0.])

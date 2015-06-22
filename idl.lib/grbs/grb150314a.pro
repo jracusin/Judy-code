@@ -1,83 +1,90 @@
 @fit_functions
 @fit_functions_flares
-pro xy2rd,x,y,cra,cdec,ra,dec,s=s
-  if n_elements(s) eq 0 then s=1.
-  cd=cdec*!dtor
-  cr=cra*!dtor
-  theta=tan(-x/y)
-  phi=tan(s*sqrt(x^2+y^2))
-  ra=cra+asin(sin(phi)*sin(theta)/(cos(cd)*cos(theta)-sin(cd)*sin(phi)*cos(theta)))*!radeg
-  dec=asin(sin(cd)*cos(theta)+cos(cd)*sin(phi)*cos(theta))*!radeg
-
-return
-end 
-
-pro rd2xy,ra,dec,raerr,decerr,cra,cdec,x,y,xerr,yerr,s=s
-  if n_elements(s) eq 0 then s=1.
-  d=dec*!dtor
-  cd=cdec*!dtor
-  r=ra*!dtor
-  cr=cra*!dtor
-
-  x=-1./s*cos(d)*sin(r-cr)/(sin(d)*sin(cd)+cos(d)*cos(cd)*cos(r-cr))
-  y=1./s*(sin(d)*cos(cd)-cos(d)*sin(cd)*cos(r-cr))/(sin(d)*sin(cd)+cos(d)*cos(cd)*cos(r-cr))
-
-  d=d+decerr*!dtor
-  r=r+raerr*!dtor
-  x2=-1./s*cos(d)*sin(r-cr)/(sin(d)*sin(cd)+cos(d)*cos(cd)*cos(r-cr))
-  y2=1./s*(sin(d)*cos(cd)-cos(d)*sin(cd)*cos(r-cr))/(sin(d)*sin(cd)+cos(d)*cos(cd)*cos(r-cr))
-
-  xerr=x2-x
-  yerr=y2-y
-
-return
-end 
-
-function ast_str,ra,dec,raerr,decerr
-
-  g=create_struct('ra',0.,'dec',0.,'raerr',0.,'decerr',0.)
-  g=replicate(g,n_elements(ra))
-  g.ra=ra
-  g.dec=dec
-  g.raerr=raerr
-  g.decerr=decerr
-
-  return,g
-end 
-
-
-pro rel_ast,ra1,dec1,ra1err,dec1err,ra2,dec2,ra2err,dec2err,newra2,newdec2,newra2err,newdec2err
+pro rel_ast,astr,g,ra1,dec1,ra1err,dec1err,ra2,dec2,ra2err,dec2err,newra2,newdec2,newra2err,newdec2err,dra=dra,ddec=ddec
 
   ;;; correct g2 relative to g1, cra & cdec are center
 ;; should setup fits structures maybe or arrays, too many parameters
 
-  cra=weighted_mean(ra1,ra1err)
-  cdec=weighted_mean(dec1,dec1err)
+;  cra=weighted_mean(ra1,ra1err)
+;  cdec=weighted_mean(dec1,dec1err)
 
-  rd2xy,ra1,dec1,ra1err,dec1err,cra,cdec,x1,y1,x1err,y1err
-  rd2xy,ra2,dec2,ra2err,dec2err,cra,cdec,x2,y2,x2err,y2err
+  ind=indgen(n_elements(ra1))
+  ind[g]=-1
+  wng=where(ind ge 0)
+  ng=ind[wng]
 
-  xerr12=sqrt(x1err^2+x2err^2)
-  yerr12=sqrt(y1err^2+y2err^2)
+  ad2xy,ra1,dec1,astr,x1,y1
+  ad2xy,ra1+ra1err,dec1+dec1err,astr,x1err,y1err
+  x1err=x1err-x1
+  y1err=y1err-y1
 
-  dx=weighted_mean(x1-x2,xerr12,dxerr)
-  dy=weighted_mean(y1-y2,yerr12,dyerr)
+  ad2xy,ra2,dec2,astr,x2,y2
+  ad2xy,ra2+ra2err,dec2+dec2err,astr,x2err,y2err
+  x2err=x2err-x2
+  y2err=y2err-y2
 
-  newx2=x2-dx
-  newy2=y2-dy
+  ;;; weighted mean method
+ xerr12=sqrt(x1err^2+x2err^2)
+ yerr12=sqrt(y1err^2+y2err^2)
 
-  newx2err=sqrt(dxerr^2+xerr12^2)
-  newy2err=sqrt(dyerr^2+yerr12^2)
+ dx=weighted_mean(x1[ng]-x2[ng],xerr12[ng],dxerr)
+ dy=weighted_mean(y1[ng]-y2[ng],yerr12[ng],dyerr)
 
-  xy2rd,newx2,newy2,cra,cdec,newra2,newdec2
-  xy2rd,newx2+newx2err,newy2+newy2err,cra,cdec,newra2err,newdec2err
-  newra2err=newra2err-newra2
-  newdec2err=newdec2err-newdec2
+ newx2=x2+dx
+ newy2=y2+dy
 
+ newx2err=sqrt(dxerr^2+xerr12^2)
+ newy2err=sqrt(dyerr^2+yerr12^2)
+
+  ;;; linear regression method
+;;   fitexy,x2[ng],x1[ng],xa,xb,x_sig=x2err[ng],y_sig=x1err[ng],xsigab,xchisq,xq
+;;   fitexy,y2[ng],y1[ng],ya,yb,x_sig=y2err[ng],y_sig=y1err[ng],ysigab,ychisq,yq
+
+;;   newx2=xa+x2*xb
+;;   newy2=ya+y2*yb
+
+;;   aa=fltarr(1e4) & bb=fltarr(1e4)
+;;   n=n_elements(ng)
+;;   for i=0,1 do begin 
+;;      x=x1 & y=x2 & xerr=x1err & yerr=x2err
+;;      if i eq 1 then begin 
+;;         x=y1
+;;         y=y2
+;;         xerr=y1err
+;;         yerr=y2err
+;;      endif
+     
+;;      for o=0,1e4-1 do begin
+;;         r=round(randomu(seed,n)*n)
+;;         fitexy,x[ng[r]],y[ng[r]],x_sig=xerr[ng[r]],y_sig=yerr[ng[r]],a,b
+;;         aa[o]=a
+;;         bb[o]=b
+;;      endfor 
+;;      a_err=mc_error(aa,sig=1.)
+;;      b_err=mc_error(bb,sig=1.)
+
+;;      if i eq 0 then xsigab=[[a_err],[b_err]] else ysigab=[[a_err],[b_err]]
+;;   endfor 
+
+;;   newx2err=sqrt(xsigab[0,0]^2+x1^2*xsigab[0,1]^2)
+;;   newy2err=sqrt(ysigab[0,0]^2+y1^2*ysigab[0,1]^2)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+   xy2ad,newx2,newy2,astr,newra2,newdec2
+   xy2ad,newx2+newx2err,newy2+newy2err,astr,newra2err,newdec2err
+   newra2err=newra2err-newra2
+   newdec2err=newdec2err-newdec2
+
+;  dra=(ra2[g]-ra1[g])*3600.*cos(dec2[g]*!dtor)
+;  ddec=(dec2[g]-dec1[g])*3600.
+  xy2ad,x1[g]+dx,y1[g]+dy,astr,dra,ddec
+  dra=(ra1[g]-dra)*3600.*cos(dec1[g]*!dtor)
+  ddec=(dec1[g]-ddec)*3600.
+print,dra,ddec
   return
 end 
 
-pro relative_astrometry
+pro relative_astrometry,cell=cell,wav=wav
   
   cd,'~/Chandra/GRB150314A'
   dirs=['16959','16960','16961']
@@ -102,8 +109,8 @@ pro relative_astrometry
 
 ;  colprint,ra,dec
 
-  print,separation(ra[0],dec[0],ra[1],dec[1])
-  print,separation(ra[1],dec[1],ra[2],dec[2])
+;  print,separation(ra[0],dec[0],ra[1],dec[1])
+;  print,separation(ra[1],dec[1],ra[2],dec[2])
 
   d=60*60.
   rar=(ra-ra[0])*d
@@ -118,13 +125,22 @@ pro relative_astrometry
 ;mkpsfmap acis_evt2_clean.fits mypsfmap.fits energy=1.49 ecf=0.393
 ;wavdetect acis_evt2_clean.fits source_list.fits source_cell.fits image.fits background.fits psffile=mypsfmap.fits regfile=wavregfile.reg scales=1 clobber=yes
 
-  cell1=mrdfits(dirs[0]+'/cell_output.fits',1)
-  cell2=mrdfits(dirs[1]+'/cell_output.fits',1)
-  cell3=mrdfits(dirs[2]+'/cell_output.fits',1)
-
-;  cell1=mrdfits(dirs[0]+'/source_list.fits',1)
-;  cell2=mrdfits(dirs[1]+'/source_list.fits',1)
-;  cell3=mrdfits(dirs[2]+'/source_list.fits',1)
+  if keyword_set(cell) then begin 
+     cell1=mrdfits(dirs[0]+'/cell_output.fits',1)
+     cell2=mrdfits(dirs[1]+'/cell_output.fits',1)
+     cell3=mrdfits(dirs[2]+'/cell_output.fits',1)
+     add='_celldetect'
+  endif
+  if keyword_set(wav) then begin 
+     cell1=mrdfits(dirs[0]+'/source_list.fits',1)
+     cell2=mrdfits(dirs[1]+'/source_list.fits',1)
+     cell3=mrdfits(dirs[2]+'/source_list.fits',1)
+     add='_wavdetect'
+  endif 
+  if not keyword_set(cell) and not keyword_set(wav) then begin
+     print,'Choose cell or wav'
+     return
+  endif 
 
   w=where(cell2.ra_err gt 0)
   cell2=cell2[w]
@@ -139,13 +155,13 @@ pro relative_astrometry
 ;  endfor 
 
   ;; sources in both 1 & 2
-  m21=match_2d(cell1.ra,cell1.dec,cell2.ra,cell2.dec,2./3600.)
+  m21=match_2d(cell1.ra,cell1.dec,cell2.ra,cell2.dec,1./3600.)
   wm12=where(m21 ne -1)
   wm21=m21[wm12]
   dist12a=separation(cell1[wm12].ra,cell1[wm12].dec,cell2[wm21].ra,cell2[wm21].dec)
 
   ;; sources in both 1 & 2 to see if in 3
-  m123=match_2d(cell1[wm12].ra,cell1[wm12].dec,cell3.ra,cell3.dec,2./3600.)
+  m123=match_2d(cell1[wm12].ra,cell1[wm12].dec,cell3.ra,cell3.dec,1./3600.)
   wm123=where(m123 ne -1)
   wm312=m123[wm123]
   wm213=wm21[wm123]
@@ -171,9 +187,9 @@ pro relative_astrometry
   dist23=separation(ra2,dec2,ra3,dec3)
   dist13=separation(ra1,dec1,ra3,dec3)
 
-  colprint,dist12,dist23,dist13
+;  colprint,dist12,dist23,dist13
 
-  begplot,name='~/Chandra/GRB150314A/relative_astrometry.ps',/land,/color
+  begplot,name='~/Chandra/GRB150314A/relative_astrometry'+add+'.ps',/land,/color
 
   ;;; which one is the grb
   gdist=separation(ra1,dec1,ra[0],dec[0])*3600.
@@ -183,38 +199,49 @@ pro relative_astrometry
   wnotg=where(ind eq 0,nsrc)
   plotsym,0,0.8,/fill
 
-  raoff2=(ra2-ra1)*3600.;*cos(dec1*!dtor)
-  raoff3=(ra3-ra1)*3600.;*cos(dec1*!dtor)
+  raoff2=(ra2-ra1)*3600.*cos(dec1*!dtor)
+  raoff3=(ra3-ra1)*3600.*cos(dec1*!dtor)
   decoff2=(dec2-dec1)*3600.
   decoff3=(dec3-dec1)*3600.
 
-  sigra2=ra_err2*3600.;*cos(dec1*!dtor)
-  sigra3=ra_err3*3600.;*cos(dec1*!dtor)
+  sigra2=ra_err2*3600.*cos(dec1*!dtor)
+  sigra3=ra_err3*3600.*cos(dec1*!dtor)
   sigdec2=dec_err2*3600.
   sigdec3=dec_err3*3600.
 
-  plot,[0,1],/nodata,/yno,xrange=[-1,1],yrange=[-2,1],xtitle=!tsym.delta_cap+' RA (arcsec)',ytitle=!tsym.delta_cap+' Dec (arcsec)'
+  plot,[0,1],/nodata,/yno,xrange=[-1,1],yrange=[-1,1],xtitle=!tsym.delta_cap+' RA (arcsec)',ytitle=!tsym.delta_cap+' Dec (arcsec)'
 ;  oplot,raoff,decoff,psym=1,color=!green
-  plots,[0,0],[0,0],psym=8,color=!green
+  plots,[0,0],[0,0],psym=8,symsize=2,color=!green
   oploterror2,raoff2[wnotg],decoff2[wnotg],sigra2[wnotg],sigdec2[wnotg],psym=8,color=!pink,errcolor=!pink,/nohat
   oploterror2,raoff3[wnotg],decoff3[wnotg],sigra3[wnotg],sigdec3[wnotg],psym=8,color=!lightblue,errcolor=!lightblue,/nohat
 
 ;  tvcircle,0.05,(ra2[g]-ra1[g])*3600.,(dec2[g]-dec1[g])*3600.,/data,!red
 ;  tvcircle,0.05,(ra3[g]-ra1[g])*3600.,(dec3[g]-dec1[g])*3600.,/data,!blue
-  oploterror2,raoff2[g],decoff2[g],sigra2[g],sigdec2[g],psym=4,color=!red,symsize=1.5,/nohat,errcolor=!red
-  oploterror2,raoff3[g],decoff3[g],sigra3[g],sigdec3[g],psym=4,color=!blue,symsize=1.5,/nohat,errcolor=!blue
 
-  rel_ast,ra1[wnotg],dec1[wnotg],ra_err1[wnotg],dec_err1[wnotg],ra2[wnotg],dec2[wnotg],ra_err2[wnotg],dec_err2[wnotg],newra2,newdec2,newra_err2,newdec_err2
+  for i=0,n_elements(dirs)-1 do begin 
+     hdr=headfits('~/Chandra/GRB150314A/'+dirs[i]+'/acis_evt2_clean.fits',exten=1)
+     crpix=[sxpar(hdr,'TCRPX11'),sxpar(hdr,'TCRPX12')]
+     crval=[sxpar(hdr,'TCRVL11'),sxpar(hdr,'TCRVL12')]
+     delt=[sxpar(hdr,'TCDLT11'),sxpar(hdr,'TCDLT12')]
+     ctype=[sxpar(hdr,'TCTYP11'),sxpar(hdr,'TCTYP12')]
+     
+     make_astr,astr,crpix=crpix,crval=crval,delt=delt,ctype=ctype
+     if i eq 0 then astr1=astr
+     if i eq 1 then astr2=astr
+     if i eq 2 then astr3=astr
 
-  rel_ast,ra1[wnotg],dec1[wnotg],ra_err1[wnotg],dec_err1[wnotg],ra3[wnotg],dec3[wnotg],ra_err3[wnotg],dec_err3[wnotg],newra3,newdec3,newra_err3,newdec_err3
+  endfor 
 
+  rel_ast,astr2,g,ra1,dec1,ra_err1,dec_err1,ra2,dec2,ra_err2,dec_err2,newra2,newdec2,newra_err2,newdec_err2,dra=mra2,ddec=mdec2
+
+  rel_ast,astr3,g,ra1,dec1,ra_err1,dec_err1,ra3,dec3,ra_err3,dec_err3,newra3,newdec3,newra_err3,newdec_err3,dra=mra3,ddec=mdec3
 
   ;;; find weighted mean offset
-  mra2=weighted_mean(raoff2[wnotg],sigra2[wnotg],mraerr2)
-  mdec2=weighted_mean(decoff2[wnotg],sigdec2[wnotg],mdecerr2)
+;  mra2=weighted_mean(raoff2[wnotg],sigra2[wnotg],mraerr2)
+;  mdec2=weighted_mean(decoff2[wnotg],sigdec2[wnotg],mdecerr2)
 
-  mra3=weighted_mean(raoff3[wnotg],sigra3[wnotg],mraerr3)
-  mdec3=weighted_mean(decoff3[wnotg],sigdec3[wnotg],mdecerr3)
+;  mra3=weighted_mean(raoff3[wnotg],sigra3[wnotg],mraerr3)
+;  mdec3=weighted_mean(decoff3[wnotg],sigdec3[wnotg],mdecerr3)
 
 ;  newra2=ra2[g]-mra2/3600./cos(dec3[g]*!dtor)
 ;  newdec2=dec2[g]-mdec2/3600.
@@ -226,31 +253,30 @@ pro relative_astrometry
 ;  newra_err3=sqrt((mraerr3/3600.)^2+ra_err3[g]^2)
 ;  newdec_err3=sqrt((mdecerr3/3600.)^2+dec_err3[g]^2)
 
-  newraoff2=(newra2-ra1[g])*3600.;*cos(newdec2*!dtor)
-  newraoff3=(newra3-ra1[g])*3600.;*cos(newdec2*!dtor)
+  newraoff2=(newra2-ra1[g])*3600.*cos(newdec2*!dtor)
+  newraoff3=(newra3-ra1[g])*3600.*cos(newdec3*!dtor)
   newdecoff2=(newdec2-dec1[g])*3600.
   newdecoff3=(newdec3-dec1[g])*3600.
 
-  newsigra2=newra_err2*3600.;*cos(newdec2*!dtor)
-  newsigra3=newra_err3*3600.;*cos(newdec2*!dtor)
+  newsigra2=newra_err2*3600.*cos(newdec2*!dtor)
+  newsigra3=newra_err3*3600.*cos(newdec2*!dtor)
   newsigdec2=newdec_err2*3600.
   newsigdec3=newdec_err3*3600.
-
-
-;  print,newra2,newdec2,(newra2-ra1[g])*3600.,(newdec2-dec1[g])*3600.,mra2*3600.,mdec2*3600.
-;  print,newra3,newdec3,(newra3-ra1[g])*3600.,(newdec3-dec1[g])*3600.,mra3*3600.,mdec3*3600.
-
-  oploterror2,newraoff2,newdecoff2,newsigra2,newsigdec2,psym=6,color=!red
-  oploterror2,newraoff3,newdecoff3,newsigra3,newsigdec3,psym=6,color=!blue
 
   plots,mra2,mdec2,psym=2,color=!pink,symsize=2
   plots,mra3,mdec3,psym=2,color=!lightblue,symsize=2
 
+  oploterror2,raoff2[g],decoff2[g],sigra2[g],sigdec2[g],psym=4,color=!red,symsize=1.5,/nohat,errcolor=!red
+  oploterror2,raoff3[g],decoff3[g],sigra3[g],sigdec3[g],psym=4,color=!blue,symsize=1.5,/nohat,errcolor=!blue
+
+  oploterror2,newraoff2,newdecoff2,newsigra2,newsigdec2,psym=6,color=!red
+  oploterror2,newraoff3,newdecoff3,newsigra3,newsigdec3,psym=6,color=!blue
+
   legend,dirs,/top,/left,textcolor=[!green,!red,!blue],box=0
-  legend,['Background Sources','Weighted Means','GRB Start','GRB Corrected'],/top,/right,psym=[8,2,4,6],box=0
+  legend,['Background Sources','Weighted Mean','GRB Start','GRB Corrected'],/top,/right,psym=[8,2,4,6],box=0
 
   endplot
-  ps2pdf,'~/Chandra/GRB150314A/relative_astrometry.ps'
+  ps2pdf,'~/Chandra/GRB150314A/relative_astrometry'+add+'.ps'
 
 stop
 return
