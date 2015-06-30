@@ -1,6 +1,42 @@
 @fit_lc
 @/Users/jracusin/idl.lib/util/colorbar
 @swift_lat_pop_studies
+pro obs_angle
+
+  readcol,'~/Swift/decay_lum_corr/ryanetal_table.txt',grb,theta0,theta0poserr,theta0negerr,theta_obs0,theta_obs0poserr,theta_obs0negerr,p,pposerr,pnegerr,minchi,extrap,format='(a,f,f,f,f,f,f,f,f,f,a,a)',delim=' '
+  perr=fltarr(2,n_elements(p))
+  perr[0,*]=pnegerr
+  perr[1,*]=pposerr
+
+  theta0err=fltarr(2,n_elements(theta0))
+  theta0err[0,*]=theta0negerr
+  theta0err[1,*]=theta0poserr
+
+  theta_obs0err=fltarr(2,n_elements(theta_obs0))
+  theta_obs0err[0,*]=theta_obs0negerr
+  theta_obs0err[1,*]=theta_obs0poserr
+
+  g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
+  w=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3,nw)
+  g=g[w]
+  match,'GRB'+strtrim(grb,2),strtrim(g.grb,2),m1,m2
+  g=g[m2]
+  theta0=theta0[m1]
+  theta0err=theta0err[*,m1]
+  theta_obs0=theta_obs0[m1]
+  theta_obs0err=theta_obs0err[*,m1]
+  p=p[m1]
+  perr=perr[*,m1]
+
+stop
+;  test_correlation,-g.alpha_final,theta0,g.alpha_final_err,theta0err,g.z,xtitle=!tsym.alpha+'!L,X,>200s!N',ytitle=!tsym.theta+'!L0!N'
+
+  test_correlation,g.lumdens_final,theta0*!radeg,g.lumdens_final_err,theta0err*!radeg,g.z,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.theta+'!L0!N'
+
+stop
+  return
+end 
+
 pro test_plateau_stuff
 
   ;;; test for sam's paper
@@ -829,7 +865,7 @@ pro grb_table
 ;  ref[m2]='\cite{'+strtrim(g[m2].grb,2)+'_zref}'
 
 ;  match,strtrim('GRB'+p.grb,2)+'A',strtrim(g.grb,2),m1,m2
-;  if m2[0] ne -1 then ref[m2]='\cite{'+strtrim(g[m2].grb,2)+'_zref}'
+;  if m2[0] ne -1 then ref[m2]='\citep{'+strtrim(g[m2].grb,2)+'_zref}'
 help,m2
   stuff=strarr(ng)
   for i=0,ng-1 do begin 
