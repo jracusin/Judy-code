@@ -49,8 +49,8 @@ function date2met,date,fermi=fermi
   if keyword_set(fermi) then begin 
      if year gt 2005 then met=met+1.
      if year gt 2008 then met=met+1.
-     if year gt 2012.7 then met=met+1.
-     if year gt 2015.7 then met=met+1.
+     if year gt 2012.5 then met=met+1.
+     if year gt 2015.5 then met=met+1.
   endif 
   return,met
 end 

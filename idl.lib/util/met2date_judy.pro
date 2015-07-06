@@ -9,8 +9,8 @@ function met2date_judy,met,fermi=fermi
 ;  if met gt 252460801d then met=met-1
 ;  if met gt 157766400d then met=met-1
   if keyword_set(fermi) then begin 
-     if met gt 457401600d then met=met-1.
-     if met gt 362793600d then met=met-1.
+     if met gt 457315203d then met=met-1.
+     if met gt 362707202d then met=met-1.
      if met gt 252460801d then met=met-1.
      if met gt 157766400d then met=met-1.
   endif 
