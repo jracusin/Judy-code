@@ -46,9 +46,13 @@ pro read_perley,p,s
   q=where(p.grb eq '100424A')
   p[q].ref[0]='GCN14291'
   
-  ;;; fixing wrong ADS ref
+  ;;; fixing wrong or missing ADS ref
   q=where(p.grb eq '080916C')
   p[q].ref[0]='ADS/2009A%26A...498...89G'
+  q=where(p.grb eq '080207')
+  p[q].ref[0]='ADS/2012ApJ...756..187H'
+  q=where(p.grb eq '081109')
+  p[q].ref[0]='ADS/2011AA...534A.108K'
 
   ;;; fixing arXiv -> published
   q=where(p.ref[0] eq 'ADS/2013arXiv1301.5903P')
@@ -73,12 +77,12 @@ pro read_perley,p,s
   concat_structs,p,o,newp
   p=newp
 
-  ;;; missed z (trouble reading in txt file)
+  ;;; missed z (trouble reading in txt file or just missed)
   o=p[0]
-  o=replicate(o,2)
-  o.grb=['090102','130925A']
-  o.z=[1.547,0.35]
-  o.ref[0]=['GCN8766','GCN15249']
+  o=replicate(o,4)
+  o.grb=['090102','130925A','080123','080905A']
+  o.z=[1.547,0.35,0.495,0.1218]
+  o.ref[0]=['GCN8766','GCN15249','ADS/2010ApJ...725.1202L','ADS/2010MNRAS.408..383R']
   concat_structs,p,o,newp
   p=newp
 
