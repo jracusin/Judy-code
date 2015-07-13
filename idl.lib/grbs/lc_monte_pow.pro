@@ -360,7 +360,7 @@ fa=0
 ;     if i gt 0 then begin 
      w0=where((ppp gt 0 or ppp le 0) and finite(ppp),nw0)
      if max(ppp)-min(ppp) gt 0 then begin 
-        plothist,ppp[w0],bin=bin,xtitle=pnames2[i],charsize=2,ytitle='N'
+        plothist,ppp[w0],bin=bin,xtitle=pnames2[i],charsize=2,ytitle='N',noplot=noplot
         oplot,[sp[n5],sp[n5]],[0,n],line=1
         oplot,[sp[n95],sp[n95]],[0,n],line=1
 ;           if i eq 2 then stop
