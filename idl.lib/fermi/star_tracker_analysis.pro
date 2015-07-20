@@ -58,7 +58,7 @@ pro plot_st_results
 ;     plot,[0,ni+1],yrange=[0,max(n8)],xtitle='IM #',ytitle='# pixels > 8+bkg',xrange=xrange3,/nodata,title='ST #'+ntostr(st),/xsty
 ;     for i=0,ni-1 do plots,i+1,n8[i],psym=5,color=color[i]
 ;     oplot,indgen(ni)+1,n8,line=2
-     plot,xrange3,yrange=[0,max(n8)],xtitle='Image date',ytitle='# pixels > 8+bkg',xrange=xrange3,/nodata,title='ST #'+ntostr(st)
+     plot,xrange3,yrange=[0,max(n8)],xtitle='Image Year',ytitle='# pixels > 8+bkg',xrange=xrange3,/nodata,title='ST #'+ntostr(st)
      for i=0,ni-1 do plots,pixf.date[i],n8[i],psym=5,color=color[i]
      oplot,pixf.date,n8,line=2
      print,n8
@@ -94,8 +94,11 @@ pro plot_st_results
   ;;; loop through each pixel
   for st=1,3,2 do begin ;;; loop over 3 star trackers
      print,'Star Tracker #',st
-     pixf=mrdfits('ST'+ntostr(st)+'_warm_pixel_list.fits',1,/silent)
-     np=n_elements(pixf)
+     pixf=mrdfits('~/Fermi/Spacecraft/star_tracker/ST'+ntostr(st)+'_warm_pixel_list.fits',1,/silent)
+;     np=n_elements(pixf)
+     wp=where(pixf.nwarm gt 4,np) 
+     pixf=pixf[wp]
+;;; plot only those pixels which have been hot >4 times
      ni=n_elements(pixf[0].comp)
 ;     !p.multi=[0,ni+2,4]
      !p.multi=[0,round(ni/2.+1.),4]
@@ -142,8 +145,10 @@ pro plot_st_results
 ;        multiplot
         plot,indgen(10),xtickname=replicate(' ',10),ytickname=replicate(' ',10),/nodata,color=!white
         if ni mod 2 eq 1 then plot,indgen(10),xtickname=replicate(' ',10),ytickname=replicate(' ',10),/nodata,color=!white
-        plot,indgen(ni)+1,pixf[p].comp,psym=5,xrange=[0,ni+1],yrange=[0,max(pixf[p].comp)+5],charsize=1,ymargin=[4,4],symsize=0.5,xtitle='IM #',ytitle='>bkg',xmargin=[-20,0]
-        oplot,[0,ni+1],[8,8],color=!orange,line=1
+;        plot,indgen(ni)+1,pixf[p].comp,psym=5,xrange=[0,ni+1],yrange=[0,max(pixf[p].comp)+5],charsize=1,ymargin=[4,4],symsize=0.5,xtitle='IM #',ytitle='>bkg',xmargin=[-20,0]
+        plot,pixf[p].date,pixf[p].comp,psym=5,xrange=xrange3,yrange=[0,max(pixf[p].comp)+5],charsize=1,ymargin=[4,4],symsize=0.5,xtitle='Image Year',ytitle='>bkg',xmargin=[-20,0]
+;        oplot,[0,ni+1],[8,8],color=!orange,line=1
+        oplot,xrange3,[8,8],color=!orange,line=1
 
 
 ;        if not keyword_set(ps) then begin 
@@ -194,7 +199,7 @@ pro star_tracker_analysis
      ims=intarr(512,512,nim)  ;;; original images
      ims2=ims                 ;;; images after stars subtracted
      sigs=fltarr(512,512,nim) ;;; sigma above background
-     pix=replicate(pix0,1000) ;;; new pix structure for each ST
+     pix=replicate(pix0,5000) ;;; new pix structure for each ST
 
      if imfiles[0] ne '' then begin 
         for i=0,nim-1 do begin ;;; loop over image dumps from each ST
@@ -273,9 +278,11 @@ pro star_tracker_analysis
         ns=n_elements(s)
         pixf=replicate(pixf,ns)
         mloc=fltarr(nim)
+
         for i=0,ns-1 do begin ;;; loop over each warm pixel candidate
            ws=where(pix.x eq pix[s[i]].x and pix.y eq pix[s[i]].y,nws)
-           if nws gt 2 then begin ;;; warm pixel must be warm >2 times ;; changed from 1->2 on 1/14/14
+           if nws gt 2 then begin ;;; warm pixel must be warm >2 times 
+                ;; changed from 1->2 on 1/14/14
               pixf[i].x=pix[ws[0]].x
               pixf[i].y=pix[ws[0]].y
               pixf[i].val=ims[pixf[i].x,pixf[i].y,*]
