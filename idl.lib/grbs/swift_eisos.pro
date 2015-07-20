@@ -68,9 +68,9 @@ end
 pro swift_eisos
 
   gbm=mrdfits('~/Fermi/GBM_GRB_Catalog_parse.fits',1)
-  bat=mrdfits('~/jetbreaks/batcat.fits',1)
-  kw=mrdfits('~/stuff_for_people/Sam/Konustable.fits',1)
-  in=mrdfits('~/stuff_for_people/Sam/Integral.fits',1)
+  bat=mrdfits('~/Swift/batcat.fits',1)
+  kw=mrdfits('~/Swift/decay_lum_corr/Konustable.fits',1)
+  in=mrdfits('~/Swift/decay_lum_corr/Integral.fits',1)
   ngbm=n_elements(gbm)
   nbat=n_elements(bat)
   nkw=n_elements(kw)
@@ -330,7 +330,7 @@ pro swift_eisos
   ;; need pivot energy for each model (diff for BAT & GBM) - done
   ;; probably need to run eiso2 and eiso (for old non-bat/gbm bursts)
 
-  mwrfits,bat,'~/jetbreaks/batcat.fits',/create
+  mwrfits,bat,'~/Swift/batcat.fits',/create
   stop
   return
 end 

@@ -1,10 +1,11 @@
 pro batcat
 
-  readcol,'~/jetbreaks/bat_grb_timeave_spec_para_PL_bat2.txt',grb,trig1,inst,model,alphapl,alphaplerr1,alphaplerr,kpl,kpl_err1,kplerr,nee,chi2pl,dof,format='(a,l,a,a,a,a,a,a,a,a,a,f,i)',/silent
-  readcol,'~/jetbreaks/bat_grb_timeave_spec_para_CPL_bat2.txt',grb2a,trig,inst,model,alphacpl,alphacplerr1,alphacplerr2,eobspeak,eobspeakerr1,eobspeakerr2,kcpl,kcplerr1,kcplerr2,nee,chi2cpl,dof,format='(a,l,a,a,f,f,f,f,f,f,f,f,f,a,f,a)',/silent
-  readcol,'~/jetbreaks/bat_grb_fluence_pflux_bat2.txt',grb2,trig,model,s1,s1err,s2,s2err,s3,s3err,s4,s4err,s5,s5err,start,stop,format='(a,l,a,a,a,a,a,a,a,a,a,d,d,d,d)',/silent
-  readcol,'~/jetbreaks/bat_grb_summary_bat2.txt',grb3,trig,trigtime,f_ra,f_dec,f_lc,f_im,g_ra,g_dec,theta,phi,gim,g_cir,t90,t90err,t50,t50err,tstart,tstop,pcode,format='(a,l,a,a,a,a,a,a,a,a,a,a,a,f,f,f,f,a,a,a)',/silent
-  readcol,'~/Swift/bat_grb_peak_eneflux_bat2.txt',grb4,trig4,model4,p_st,p_end,pe15_25,pe15_25e,pe25_50,pe25_50e,pe50_100,pe50_100e,pe100_150,pe100_150e,pe15_150,pe15_150e,format='(a,l,a,a,a,a,a,a,a,a,a,a,a,a,a)',/silent
+  readcol,'~/Swift/BATCAT/bat_grb_timeave_spec_para_PL_bat2.txt',grb1,trig1,inst,model,alphapl,alphaplerr1,alphaplerr,kpl,kpl_err1,kplerr,nee,chi2pl,dof,format='(a,l,a,a,a,a,a,a,a,a,a,f,i)',/silent
+  readcol,'~/Swift/BATCAT/bat_grb_timeave_spec_para_CPL_bat2.txt',grb2a,trig,inst,model,alphacpl,alphacplerr1,alphacplerr2,eobspeak,eobspeakerr1,eobspeakerr2,kcpl,kcplerr1,kcplerr2,nee,chi2cpl,dof,format='(a,l,a,a,f,f,f,f,f,f,f,f,f,a,f,a)',/silent
+  readcol,'~/Swift/BATCAT/bat_grb_fluence_pflux_bat2.txt',grb2,trig,model,s1,s1err,s2,s2err,s3,s3err,s4,s4err,s5,s5err,start,stop,format='(a,l,a,a,a,a,a,a,a,a,a,d,d,d,d)',/silent
+;  readcol,'~/jetbreaks/bat_grb_summary_bat2.txt',grb3,trig,trigtime,f_ra,f_dec,f_lc,f_im,g_ra,g_dec,theta,phi,gim,g_cir,t90,t90err,t50,t50err,tstart,tstop,pcode,format='(a,l,a,a,a,a,a,a,a,a,a,a,a,f,f,f,f,a,a,a)',/silent
+  readcol,'~/Swift/BATCAT/summary_general.txt',grb,trig,trigmet,trigtime,f_ra,f_dec,f_im,i_snr,t90,t90err,t50,t50err,evstart,evstop,pcode,format='(a,l,d,a,f,f,f,f,f,f,f,f,i,i,f)',delim='|',/silent
+  readcol,'~/Swift/BATCAT/bat_grb_peak_eneflux_bat2.txt',grb4,trig4,model4,p_st,p_end,pe15_25,pe15_25e,pe25_50,pe25_50e,pe50_100,pe50_100e,pe100_150,pe100_150e,pe15_150,pe15_150e,format='(a,l,a,a,a,a,a,a,a,a,a,a,a,a,a)',/silent
 
 
  grbstr1=create_struct('grb','','targid',0L,'trigtime',0d,'z',0.,$
@@ -50,19 +51,26 @@ pro batcat
   grbstr2=grbstr1
   grbstr=replicate(grbstr1,n)
   grbstr.grb=grb
-  grbstr.targid=trig1
-  grbstr.alpha_pl=alphapl
-  grbstr.nenergy_pl=50.
+  grbstr.targid=trig
+  grbstr.t90=t90
+  grbstr.t90_err=t90err
+  s=where(grbstr.t90 lt 2.)
+  grbstr[s].shb=1
+  grbstr.trigtime=trigmet
+
+  match,grb,grb1,m1,m2
+  grbstr[m1].alpha_pl=alphapl[m2]
+  grbstr[m1].nenergy_pl=50.
   w=where(alphaplerr eq '-')
   alphaplerr[w]=0.
-  grbstr.alpha_pl_err=alphaplerr
+  grbstr[m1].alpha_pl_err=alphaplerr[m2]
   w=where(kpl eq '-')
   kpl[w]=0.
-  grbstr.norm_pl=kpl;*1.e-4
+  grbstr[m1].norm_pl=kpl[m2];*1.e-4
   w=where(kplerr eq '-')
   kplerr[w]=0.
-  grbstr.norm_pl_err=kplerr;*1.e-4
-  grbstr.chi2pl=chi2pl
+  grbstr[m1].norm_pl_err=kplerr[m2];*1.e-4
+  grbstr[m1].chi2pl=chi2pl[m2]
   
   match,grb,grb2a,m1,m2
   grbstr[m1].alpha_cpl=alphacpl[m2]
@@ -88,14 +96,14 @@ pro batcat
 ;  grbstr[m1].hr=s3[m2]/(s2[m2]*1.)
 ;  grbstr[m1].hr_err=sqrt((s3err[m2]/(s3[m2]*1.))^2.+(s2err[m2]/(s2[m2]*1.))^2.)*grbstr[m1].hr
 
-  match,strtrim(grbstr.grb,2),strtrim(grb3,2),m1,m2
-  grbstr[m1].t90=t90[m2]
-  grbstr[m1].t90_err=t90err[m2]
-  s=where(grbstr[m1].t90 lt 2.)
-  grbstr[m1[s]].shb=1
-  for i=0,n_elements(m1)-1 do grbstr[m1[i]].trigtime=date2met(trigtime[m2[i]])
+;  match,strtrim(grbstr.grb,2),strtrim(grb3,2),m1,m2
+;  grbstr[m1].t90=t90[m2]
+;  grbstr[m1].t90_err=t90err[m2]
+;  s=where(grbstr[m1].t90 lt 2.)
+;  grbstr[m1[s]].shb=1
+;  for i=0,n_elements(m1)-1 do grbstr[m1[i]].trigtime=date2met(trigtime[m2[i]])
 
-  match,strtrim(grbstr.grb,2),strtrim(grb3,2),m1,m2
+  match,strtrim(grbstr.grb,2),strtrim(grb4,2),m1,m2
   grbstr[m1].pflux_15_150=pe15_150[m2]
   grbstr[m1].pflux_15_150_err=pe15_150e[m2]
 
@@ -104,11 +112,11 @@ pro batcat
 
 ;  readcol,'~/jetbreaks/bat_grb_table.txt',grb,trig,trigtime,f_ra,f_dec,f_lc,f_im,g_ra,g_dec,theta,phi,gim,g_cir,t90,t90err,t50,t50err,tstart,tstop,pcode
 
-  readcol,'~/Swift/bat_grb_spec_para_PL.txt',grb,trig,inst,model,alphapl,alphaplerr1,alphaplerr,ep,eplo,ephi,beta,be_low,be_high,kpl,kpl_err1,kplerr,nee,chi2pl,dof,format='(a,l,a,a,a,a,a,a,a,a,a,a,a,a,f,i)',/silent
-  readcol,'~/Swift/bat_grb_spec_para_CPL.txt',grb2a,trig,inst,model,alphacpl,alphacplerr1,alphacplerr2,eobspeak,eobspeakerr1,eobspeakerr2,beta,belo,behi,kcpl,kcplerr1,kcplerr2,nee,chi2cpl,dof,format='(a,l,a,a,f,f,f,f,f,f,f,f,f,f,f,f,a,f,a)',/silent
-  readcol,'~/Swift/bat_grb_flux.txt',grb2,trig,model,s1,s1err,s2,s2err,s3,s3err,s4,s4err,s5,s5err,start,stop,format='(a,l,a,a,a,a,a,a,a,a,a,d,d,d,d)',/silent
-  readcol,'~/Swift/bat_grb_table.txt',grb3,trig,trigtime,f_ra,f_dec,f_lc,f_im,g_ra,g_dec,theta,phi,gim,g_cir,t90,t90err,t50,t50err,tstart,tstop,pcode,format='(a,l,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a)',/silent
-  readcol,'~/Swift/bat_grb_peakeneflux.txt',grb4,trig,mo,p_st,p_end, pe15_25,pe15_25e,pe25_50,pe25_50e,pe50_100,pe50_100e,pe100_150,pe100_150e,pe15_150, pe15_150e,format='(a,a,a,f,f,f,f,f,f,f,f,f,f,f,f)',/silent
+  readcol,'~/Swift/BATCAT/bat_grb_spec_para_PL.txt',grb,trig,inst,model,alphapl,alphaplerr1,alphaplerr,ep,eplo,ephi,beta,be_low,be_high,kpl,kpl_err1,kplerr,nee,chi2pl,dof,format='(a,l,a,a,a,a,a,a,a,a,a,a,a,a,f,i)',/silent
+  readcol,'~/Swift/BATCAT/bat_grb_spec_para_CPL.txt',grb2a,trig,inst,model,alphacpl,alphacplerr1,alphacplerr2,eobspeak,eobspeakerr1,eobspeakerr2,beta,belo,behi,kcpl,kcplerr1,kcplerr2,nee,chi2cpl,dof,format='(a,l,a,a,f,f,f,f,f,f,f,f,f,f,f,f,a,f,a)',/silent
+  readcol,'~/Swift/BATCAT/bat_grb_flux.txt',grb2,trig,model,s1,s1err,s2,s2err,s3,s3err,s4,s4err,s5,s5err,start,stop,format='(a,l,a,a,a,a,a,a,a,a,a,d,d,d,d)',/silent
+  readcol,'~/Swift/BATCAT/bat_grb_table.txt',grb3,trig,trigtime,f_ra,f_dec,f_lc,f_im,g_ra,g_dec,theta,phi,gim,g_cir,t90,t90err,t50,t50err,tstart,tstop,pcode,format='(a,l,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a)',/silent
+  readcol,'~/Swift/BATCAT/bat_grb_peakeneflux.txt',grb4,trig,mo,p_st,p_end, pe15_25,pe15_25e,pe25_50,pe25_50e,pe50_100,pe50_100e,pe100_150,pe100_150e,pe15_150, pe15_150e,format='(a,a,a,f,f,f,f,f,f,f,f,f,f,f,f)',/silent
 
   n=n_elements(grb)
   grbstr=replicate(grbstr2,n)
