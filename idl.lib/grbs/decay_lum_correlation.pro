@@ -95,6 +95,7 @@ pro test_flare_removal,doplot=doplot,redo=redo,ind=ind
   a3[w]=g[w].alpha_avg3
   a3err[*,w]=g[w].alpha_avg3_err
 
+  !x.margin=[2,0]
   begplot,name='~/stuff_for_people/Sam/alpha_no_flares.ps',/land,/color
   ploterror2,a3,a2,a3err,a2err,psym=3,/nohat,xtitle=!tsym.alpha+'!Lavg!N no flares',ytitle=!tsym.alpha+'!Lavg!N',/iso
   q=where(abs(a3-a2) gt sqrt(a3err[0]^2+a2err[0]^2)*2.)
@@ -178,10 +179,11 @@ pro test_plateau_stuff
 
   q=where(alpha[w1]-alphaerr[0,w1] gt 0.75)
 
+  !x.margin=[2,0]
   begplot,name='~/stuff_for_people/Sam/plateau_corr_sam_samp.ps',/land,/color
-  test_correlation,g.lumdens_final,-g.alpha_final,g.lumdens_final_err,g.alpha_final_err,g.z,_extra=_extra,w1=w1,w2=w2,add=['plateau: ','no plateau: '],out=out,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L,X,>200s!N',xrange=xrange,yrange=[-2.5,1],/xlog
+  test_correlation,g.lumdens_final,g.alpha_final,g.lumdens_final_err,g.alpha_final_err,g.z,_extra=_extra,w1=w1,w2=w2,add=['plateau: ','no plateau: '],out=out,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L,X,>200s!N',xrange=xrange,yrange=[-1,2.5],/xlog
 
-  test_correlation,g.lumdens_final,-g.alpha_final,g.lumdens_final_err,g.alpha_final_err,g.z,_extra=_extra,out=out,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L,X,>200s!N',xrange=xrange,yrange=[-2.5,1],/xlog
+  test_correlation,g.lumdens_final,g.alpha_final,g.lumdens_final_err,g.alpha_final_err,g.z,_extra=_extra,out=out,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L,X,>200s!N',xrange=xrange,yrange=[-1,2.5],/xlog
 
   endplot
   spawn,'ps2pdf ~/stuff_for_people/Sam/plateau_corr_sam_samp.ps ~/stuff_for_people/Sam/plateau_corr_sam_samp.pdf'
@@ -195,13 +197,13 @@ end
 pro max_stuff
 
   g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
-  w=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_final lt 3 and g.eiso gt 0,nw)
+  w=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_final lt 3 and g.lumdens_final gt 0,nw)
   g=g[w]
 
   begplot,name='~/Swift/decay_lum_corr/cr_tests.ps',/land,/color
-  !x.margin=[4,4]
+;  !x.margin=[4,4]
   plotsym,0,0.7,/fill
-  ploterror2,g.beta,g.alpha_final,g.beta_err,g.alpha_final_err,psym=8,xtitle=!tsym.beta+'!Lx!N',ytitle=!tsym.alpha+'!Lx, avg!N'
+  ploterror2,g.beta,g.alpha_final,g.beta_err,g.alpha_final_err,psym=8,xtitle=!tsym.beta+'!Lx!N',ytitle=!tsym.alpha+'!Lx,avg,>200s!N'
   b=indgen(31)/10.
   oplot,b,1.5*b+0.5,line=2;,color=!magenta
   oplot,b,1.5*b,line=2;,color=!green
@@ -212,11 +214,12 @@ pro max_stuff
 
   loadct,39
   bin=0.2
-  plothist,alog10(g.eiso),x,y,bin=bin,/noplot
+  plothist,alog10(g.lumdens_final),x,y,bin=bin,/noplot
   nx=n_elements(x)
   for i=0,nx-1 do begin 
-     w=where(alog10(g.eiso) ge x[i]-bin and alog10(g.eiso) le x[i]+bin,nw)
-     color=round((x[i]-48.729d)*43d)
+     w=where(alog10(g.lumdens_final) ge x[i]-bin and alog10(g.lumdens_final) le x[i]+bin,nw)
+;     color=round((x[i]-48.729d)*43d) ;; for eiso
+     color=round((x[i]-min(x))*254./(max(x)-min(x)))
      print,color,x[i]
      if nw gt 0 then plots,g[w].beta,g[w].alpha_final,psym=8,color=color
   endfor 
@@ -229,7 +232,7 @@ stop
   return
 end 
 
-pro test_correlation,x,y,xerr0,yerr0,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=w5,add=add,out=out,xtitle=xtitle,ytitle=ytitle,xrange=xrange,yrange=yrange,xlog=xlog,ylog=ylog
+pro test_correlation,x,y,xerr0,yerr0,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=w5,w6=w6,add=add,out=out,xtitle=xtitle,ytitle=ytitle,xrange=xrange,yrange=yrange,xlog=xlog,ylog=ylog
 
   ;;w1=where(g.t90 gt 2. and g.tstart lt g.t200 and g.alpha_avg lt 3)
   nsamp=1
@@ -238,6 +241,7 @@ pro test_correlation,x,y,xerr0,yerr0,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=
   if n_elements(w3) gt 1 then nsamp=nsamp+1
   if n_elements(w4) gt 1 then nsamp=nsamp+1
   if n_elements(w5) gt 1 then nsamp=nsamp+1
+  if n_elements(w6) gt 1 then nsamp=nsamp+1
   if n_elements(add) eq 0 then add=strarr(nsamp)
   if n_elements(yrange) eq 0 then yrange=[-2,2]
 
@@ -259,9 +263,9 @@ pro test_correlation,x,y,xerr0,yerr0,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=
      if nw gt 0 then yerr[0,w]=y[w]-min(y) ;1e25
   endif else yerr=yerr0
 
-  color=[!p.color,!red,!green,!blue,!magenta]
+  color=[!p.color,!red,!green,!blue,!magenta,!orange]
   leg=''
-  leglimit=[1.5,1.2,0.9,0.5,0.6]
+  leglimit=[1.5,1.2,0.9,0.5,0.6,0.6]
   for j=0,nsamp-1 do begin
      case j of
         0: ws=w1
@@ -269,6 +273,7 @@ pro test_correlation,x,y,xerr0,yerr0,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=
         2: ws=w3
         3: ws=w4
         4: ws=w5
+        5: ws=w6
      endcase 
      
      w=where(y[ws] ne 0 and x[ws] gt 0 and finite(yerr[0,ws]) and finite(xerr[0,ws]),nw)
@@ -305,7 +310,9 @@ pro test_correlation,x,y,xerr0,yerr0,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=
         yw=y[w]
      endelse 
 
-     if j eq 0 then ploterror2,x[w],y[w],xerr[*,w],yerr[*,w],psym=8,xlog=xlog,ylog=ylog,/nohat,charsize=2,_extra=_extra,xminor=9,xticks=xticks,/xsty,xrange=xrange,yrange=yrange,xtitle=xtitle,ytitle=ytitle else oploterror2,x[w],y[w],xerr[*,w],yerr[*,w],psym=8,color=color[j]
+     ww=where(x[w] gt xrange[0])
+     ww=w[ww]
+     if j eq 0 then ploterror2,x[ww],y[ww],xerr[*,ww],yerr[*,ww],psym=8,xlog=xlog,ylog=ylog,/nohat,charsize=2,_extra=_extra,xminor=9,xticks=xticks,/xsty,xrange=xrange,yrange=yrange,xtitle=xtitle,ytitle=ytitle else oploterror2,x[ww],y[ww],xerr[*,ww],yerr[*,ww],psym=8,color=color[j]
 
      fitexy,alog10(x[w]),y[w],x_sig=x_sig,y_sig=y_sig,a,b
      line=xw*b+a
@@ -427,7 +434,7 @@ pro test_redshift
 
   w=where(g.t90 gt 2 and g.tstart lt t200*2. and alpha lt 3,nw)
   add='z rand:'
-  test_correlation,lum,-alpha,lumerr,alphaerr,z,w1=w,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L'+add+',X,>200s!N',add=leg,yrange=[-4,2],xrange=[1d24,1d32],xticks=xticks,out=out,/xlog
+  test_correlation,lum,alpha,lumerr,alphaerr,z,w1=w,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L'+add+',X,>200s!N',add=leg,yrange=[-2,4],xrange=[1d24,1d32],xticks=xticks,out=out,/xlog
 
   
 
@@ -474,7 +481,7 @@ pro test_policy_shift
   ndiv=2.
   mdate=fltarr(n)
   mtime=fltarr(n)
-
+  !x.margin=[2,0]
   begplot,name='~/Swift/decay_lum_corr/tstop_trend.ps',/color
   !p.multi=[0,1,2]
   plotsym,0,0.8,/fill
@@ -539,18 +546,22 @@ pro test_policy_shift
   ;;;;;; test correlation per year
   years=['04','07','09','12','15'];,'15']
   n=n_elements(years)
-  w=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3,nw)
+  w=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_final lt 3 and g.p[3] gt -2.,nw)
   g=g[w]
+
   w1=where(g.grb gt 'GRB'+years[0]+'0000' and g.grb lt 'GRB'+years[1])
   w2=where(g.grb gt 'GRB'+years[1]+'0000' and g.grb lt 'GRB'+years[2])
   w3=where(g.grb gt 'GRB'+years[2]+'0000' and g.grb lt 'GRB'+years[3])
   w4=where(g.grb gt 'GRB'+years[3]+'0000' and g.grb lt 'GRB'+years[4])
 ;  w5=where(g.grb gt 'GRB'+years[4]+'0000' and g.grb lt 'GRB'+years[5])
   help,w1,w2,w3,w4,w5
+
   print,median(g[w1].tstop),median(g[w2].tstop),median(g[w3].tstop),median(g[w4].tstop)
+  !x.margin=[2,0]
+
   begplot,name='~/Swift/decay_lum_corr/flux_decay_years.ps',/land,/color
 
-  test_correlation,g.lumdens_final,-g.alpha_final,g.lumdens_final_err,g.alpha_final_err,g.z,yrange=[-3,3],/ysty,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!LX,avg,200s!N',w1=w1,w2=w2,w3=w3,w4=w4,add=['2004-2006: ','2007-2008: ','2009-2011: ','2012-2014: '],out=out,/xlog
+  test_correlation,g.lumdens_final,g.alpha_final,g.lumdens_final_err,g.alpha_final_err,g.z,yrange=[-2,4],/ysty,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!LX,avg,200s!N',w1=w1,w2=w2,w3=w3,w4=w4,add=['2004-2006: ','2007-2008: ','2009-2011: ','2012-2014: '],out=out,/xlog
   mwrfits,out,'~/Swift/decay_lum_corr/years_corr_out.fits',/create
   endplot
   spawn,'ps2pdf ~/Swift/decay_lum_corr/flux_decay_years.ps ~/Swift/decay_lum_corr/flux_decay_years.pdf'
@@ -654,6 +665,8 @@ pro dainotti
   endfor 
   w=where(ptime ne 0 and ptime-ptimerr[0,*] gt 0)
 help,w
+  !x.margin=[2,0]
+
   begplot,name='~/Swift/decay_lum_corr/dianotti.ps',/color,/land,font='helvetica'
   ploterror2,ptime[w],lump[w],ptimerr[*,w],lumperr[*,w],psym=3,/xlog,/ylog,xtitle='Time at end of plateau (s)',ytitle='Luminosity at end of Plateau (erg s!U-1!N Hz!U-1!N)'
   fitexy,alog10(ptime[w]),alog10(lump[w]),x_sig=alog10(ptime[w])-alog10(ptime[w]-ptimerr[0,w]),y_sig=alog10(lump[w])-alog10(lump[w]-lumperr[0,w]),a,b
@@ -706,6 +719,8 @@ stop
 end 
 
 pro explore_plateau
+
+  !x.margin=[2,0]
 
   begplot,name='~/Swift/decay_lum_corr/plateau_plots_lum.ps',/land,/color,font='helvetica'
   g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
@@ -844,6 +859,8 @@ pro gendre,doplot=doplot,reallyredo=reallyredo
      endif 
   endfor 
 ;  begplot,name='~/stuff_for_people/Sam/gendre.ps',/color
+  !x.margin=[2,0]
+
   begplot,name='~/Swift/decay_lum_corr/lum_plateau_decay.ps',/color,/land
 ;  !p.multi=[0,1,3]
   plotsym,0,1
@@ -867,7 +884,7 @@ pro gendre,doplot=doplot,reallyredo=reallyredo
   ;; legend,['slope='+numdec(r[1],2),'spearman='+numdec(c[0],2),'sig='+numdec(mpnormlim(c[1],/SLEVEL),1)],/top,/left,box=0
 
   w0=where(alphaav ne 0 and lum1 gt 0 and finite(alphaaverr[0,*]))
-  test_correlation,lum1[w0],-alphaav[w0],lum1err[*,w0],alphaaverr[*,w0],g[w0].z,xtitle='L!LX,1 day!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!LX,avg,>t!Iplateau!N',xrange=[1d23,1d29],xticks=6,yrange=[-5,1],/ysty,out=out,add='All:',/xlog
+  test_correlation,lum1[w0],alphaav[w0],lum1err[*,w0],alphaaverr[*,w0],g[w0].z,xtitle='L!LX,1 day!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!LX,avg,>t!Iplateau!N',xrange=[1d23,1d29],xticks=6,yrange=[-1,5],/ysty,out=out,add='All:',/xlog
 
   mwrfits,out,'~/Swift/decay_lum_corr/gendre_corr_out.fits',/create
 
@@ -927,6 +944,7 @@ pro gendre,doplot=doplot,reallyredo=reallyredo
      sigff[j]=stddev(ffit[w,j])/median(ffit[w,j])
      n[j]=nw
   endfor 
+  !x.margin=[2,0]
 
   begplot,name='~/Swift/decay_lum_corr/lum_spread_w_time.ps',/land,/color
   plot,t,sigfa,/xlog,/ylog,xtitle='Time (s)',ytitle=!tsym.sigma+'!LLum(t)!N/!S!A   ~!R!NLum(t)',thick=10,charsize=2.
@@ -1029,7 +1047,7 @@ help,m2
         lum='('+numdec(g[i].lumdens_final/10d^al[i],2)+'^{+'+numdec(g[i].lumdens_final_err[1]/10d^al[i],2)+'}_{-'+numdec(g[i].lumdens_final_err[0]/10d^al[i],2)+'}) \times 10^{'+ntostr(al[i])+'}' else $
            lum='('+numdec(g[i].lumdens_final/10d^al[i],2)+' \pm '+numdec(max(g[i].lumdens_final_err)/10d^al[i],2)+') \times 10^{'+ntostr(al[i])+'}'
 
-     stuff[i]=g[i].grb+a+numdec(g[i].z,2)+a+ref[i]+a+numdec(g[i].t90,2)+as+numdec(-g[i].alpha_final,2)+aerr+sas+lum+sa+sdc[i]+a+ptu[i]+a+flares[i]+' \\'
+     stuff[i]=g[i].grb+a+numdec(g[i].z,2)+a+ref[i]+a+numdec(g[i].t90,2)+as+numdec(g[i].alpha_final,2)+aerr+sas+lum+sa+sdc[i]+a+ptu[i]+a+flares[i]+' \\'
   endfor 
 
   writecol,'~/papers/decay_lum_corr/grb_table.tex',stuff
@@ -1057,6 +1075,7 @@ pro results_table
      for j=0,n_elements(out)-1 do begin 
         s=strsplit(out[j].sample,':',/ex)
         s=s[0]
+;        if strtrim(s,2) eq 'All' then s='All (1 day,$>t_{plateau}$)'
         x=out[j].xaxis
         x=str_replace(x,' (erg s!U-1!N Hz!U-1!N)','')
         x=str_replace(x,'L!L','log L_{')
@@ -1078,10 +1097,11 @@ pro results_table
         
         bf='{\bf '
         e='}'
-        ebf=e+bf
+        bm='\bm{'
         if i eq 3 then begin 
 ;;; totally broken
-           printf,lun,bf+s+ebf+as+ebf+x+ebf+sas+ebf+y+ebf+sa+ebf+numdec(out[j].spearman,2)+ebf+as+ebf+n+ebf+sa+ps+as+pn+sas+numdec(out[j].slope,2)+'_{-'+numdec(out[j].slope_err[0],2)+'}^{+'+numdec(out[j].slope_err[1],2)+'}'+sas+numdec(out[j].const,2)+'_{-'+numdec(out[j].const_err[0],2)+'}^{+'+numdec(out[j].const_err[1],2)+'}$'+a+ntostr(out[j].num)+' \\'
+           printf,lun,bf+s+e+as+bm+x+e+sas+bm+y+e+sa+bf+numdec(out[j].spearman,2)+e+as+bm+n+e+sa+bf+ps+e+as+bm+pn+e+sas+bm+numdec(out[j].slope,2)+'_{-'+numdec(out[j].slope_err[0],2)+'}^{+'+numdec(out[j].slope_err[1],2)+'}'+e+sas+bm+numdec(out[j].const,2)+'_{-'+numdec(out[j].const_err[0],2)+'}^{+'+numdec(out[j].const_err[1],2)+e+'}$'+a+bf+ntostr(out[j].num)+e+' \\'
+           printf,lun,'\hline'
         endif else begin 
            printf,lun,s+as+x+sas+y+sa+numdec(out[j].spearman,2)+as+n+sa+ps+as+pn+sas+numdec(out[j].slope,2)+'_{-'+numdec(out[j].slope_err[0],2)+'}^{+'+numdec(out[j].slope_err[1],2)+'}'+sas+numdec(out[j].const,2)+'_{-'+numdec(out[j].const_err[0],2)+'}^{+'+numdec(out[j].const_err[1],2)+'}$'+a+ntostr(out[j].num)+' \\'
         endelse 
@@ -1118,23 +1138,26 @@ pro paper_plots
 ;  skip:
 
   ;;; individual segments at t200
+  !x.margin=[2,0]
 
   begplot,name='~/Swift/decay_lum_corr/flux_decay_und.ps',/land,/color
-  !x.margin=[5,2]
+;  !x.margin=[5,2]
   atype=strarr(n_elements(g))
   for i=0,n_elements(g)-1 do begin
      alpha=which_alpha(g[i].pnames,g[i].p,g[i].t200,aa)
      t=strsplit(g[i].type,'-',/ex)
      atype[i]=t[aa/2]
   endfor 
-  w1=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and strtrim(atype,2) eq 'I')
-  w2=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and strtrim(atype,2) eq 'II')
-  w3=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and strtrim(atype,2) eq 'III')
-  w4=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and strtrim(atype,2) eq 'IV')
-  w5=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and strtrim(atype,2) eq 'SPL')
-  help,w1,w2,w3,w4
-;  w4=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3 and atype eq 'SPL')
-  test_correlation,g.lumdens_final,-g.alpha_und,g.lumdens_final_err,g.alpha_und_err,g.z,yrange=[-7,6],/ysty,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!LX,fit,200s!N',w1=w1,w2=w2,w3=w3,w4=w4,w5=w5,add=['I:   ','II:  ','III: ','IV:  ','SPL: '],out=out,/xlog
+  w0=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_final lt 3 and strtrim(atype,2) eq '0')
+  w1=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_final lt 3 and strtrim(atype,2) eq 'I')
+  w2=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_final lt 3 and strtrim(atype,2) eq 'II')
+  w3=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_final lt 3 and strtrim(atype,2) eq 'III')
+  w4=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_final lt 3 and strtrim(atype,2) eq 'IV')
+  w5=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_final lt 3 and strtrim(atype,2) eq 'SPL')
+  help,w0,w1,w2,w3,w4,w5
+
+;  w4=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_final lt 3 and atype eq 'SPL')
+  test_correlation,g.lumdens_final,g.alpha_und,g.lumdens_final_err,g.alpha_und_err,g.z,yrange=[-2,10],xrange=[1d27,1d32],/xsty,/ysty,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!LX,fit,200s!N',w1=w0,w2=w1,w3=w2,w4=w3,w5=w4,w6=w5,add=['0:   ','I:   ','II:  ','III: ','IV:  ','SPL: '],out=out,/xlog
   mwrfits,out,'~/Swift/decay_lum_corr/indiv_seg_corr_out.fits',/create
 
 ;;add in by color which ones are SPL, I, II, III
@@ -1143,6 +1166,7 @@ pro paper_plots
   
 ;  skip:
   ;;; parrot plot
+  !x.margin=[4,0]
 
   begplot,name='~/Swift/decay_lum_corr/parrot_avg_plot.ps',/color
   loadct,39
@@ -1187,6 +1211,8 @@ pro paper_plots
 ;  skip:
 
   ;;;; simulation p plot
+  !x.margin=[2,0]
+
   begplot,name='~/Swift/decay_lum_corr/sim_prob_plot.ps',/land,/color
   g=mrdfits('~/Swift/decay_lum_corr/sim_decay_slope_nosteepcorr.fits',1)
   w=where(g.p gt 0,nw)
@@ -1339,13 +1365,13 @@ stop
      endfor 
 
      w=where(lum200 ne 0 and alpha200 gt 0 and alpha200 lt 3,nw)
-     fitexy,alog10(lum200[w]),-alpha200[w],x_sig=alog10(lum200[w])-alog10(lum200[w]-lum200err[0,w]),y_sig=alpha200err[w],a,b
+     fitexy,alog10(lum200[w]),alpha200[w],x_sig=alog10(lum200[w])-alog10(lum200[w]-lum200err[0,w]),y_sig=alpha200err[w],a,b
      line=alog10(lum200[w])*b+a
-     c=r_correlate(alog10(lum200[w]),-alpha200[w],zd=zd)
+     c=r_correlate(alog10(lum200[w]),alpha200[w],zd=zd)
      sig=mpnormlim(c[1],/SLEVEL)
 
      if not keyword_set(noplot) then begin 
-        ploterror,alog10(lum200[w]),-alpha200[w],alpha200err[w],psym=3,xtitle='Lum',ytitle=!tsym.alpha,yrange=[-3,0],/nohat
+        ploterror,alog10(lum200[w]),alpha200[w],alpha200err[w],psym=3,xtitle='Lum',ytitle=!tsym.alpha,yrange=[-3,0],/nohat
         for i=0,nw-1 do oplot,alog10([lum200[w[i]]-lum200err[0,w[i]],lum200[w[i]]+lum200err[1,w[i]]]),-[alpha200[w[i]],alpha200[w[i]]],color=color
 ;     r=regress(alog10(lum200[w]),-alpha200[w],const=const,yfit=yfit,correlation=linearcorr,measure_error=alpha200err[w])
 ;     line=(r[0]*alog10(lum200[w])+const)
@@ -1392,8 +1418,8 @@ pro hypothesis,grb,simr,noplot=noplot,plotone=plotone,pind=pind,ps=ps
      print,j,' ',grb[j]
      !p.multi=[0,2,4]
      if keyword_set(ps) then begplot,name='~/Swift/decay_lum_corr/'+grb[j]+'_decay_lum_sim.ps',/color
-     !x.margin=[4,4]
-     !y.margin=[4,2]
+;     !x.margin=[4,4]
+;     !y.margin=[4,2]
 
      lc=lcout2fits(dir=grb[j],/silent);'~/GRBs/'+grb[j]+'/lc_newout_phil.txt')
      read_lcfit,'~/GRBs/'+grb[j]+'/lc_fit_out_idl_int9.dat',pnames,p0,perror0
@@ -1596,7 +1622,7 @@ pro extract_redshift
 
   slope=-0.36
   const=9.71
-  lum0=10.^((-alpha-const)/(slope))
+  lum0=10.^((alpha-const)/(slope))
   fdens=dblarr(ng)
   for i=0,ng-1 do fdens[i]=flux2jy(flux[i],g[i].beta+1.,gammaerr=g[i].beta_err,fluxerr=g[i].flux_avg_err[0],ferr=ferr)*1d-23
 
@@ -1890,7 +1916,7 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
 
 
      ;;; prompt emission properties
-     bat=mrdfits('~/jetbreaks/batcat.fits',1)
+     bat=mrdfits('~/Swift/batcat.fits',1)
      match,strtrim(bat.grb,2),strtrim(g.grb,2),m1,m2
      match,strtrim(bat.grb,2)+'A',strtrim(g.grb,2),m1a,m2a
      match,strtrim(bat.grb,2),strtrim(g.grb,2)+'A',m1b,m2b
@@ -1990,10 +2016,12 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
                  lc=lcout2fits(/phil)
                  lc.time=lc.time-g[i].t90start
                  spec=mrdfits('UL_specfits.fits',1)
-                 if n_elements(spec) eq 1 then xs=n_elements(spec)-1 else begin 
-                    wpc=where(lc.type eq 1)
-                    if lc[wpc[0]].time ge t200 then xs=0 else xs=1
-                 endelse
+;                 if n_elements(spec) eq 1 then 
+                 xs=n_elements(spec)-1 
+;                 else begin 
+;                    wpc=where(lc.type eq 1)
+;                    if lc[wpc[0]].time ge t200 then xs=0 else xs=1
+;                 endelse
                  corr=spec[xs].unabs_cfratio
                  g[i].unabs_cfratio=corr/1.645 ;; convert 90% to 1-sigma via sigprob(0.9)
                  if tag_exist(spec,'unabs_cfratioerr') then g[i].unabs_cfratioerr=spec[xs].unabs_cfratioerr
@@ -2246,7 +2274,7 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
      endfor 
      if n_elements(testgrb) gt 0 then stop
 
-     w=where(g.model ne '' and finite(g.flux_avg) and g.flux_avg gt 0 and g.flux_und2-g.flux_und2_err[0] ge 0)
+     w=where(g.model ne '' and finite(g.flux_avg) and g.flux_avg gt 0 and g.flux_und2-g.flux_und2_err[0] ge 0 and g.t90 gt 0)
      g=g[w]
 
      match,strtrim(g.grb,2),strtrim(sgrb,2),m1,m2
@@ -2257,16 +2285,16 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
      g[w].theta=0
 
      ;;; special case of only steep
-     wbad=where(g.alpha_avg gt 3 or g.fluxdens_und2 gt 1)
-     g[wbad].alpha_avg2=g[wbad].alpha_avg
-     g[wbad].alpha_avg2_err=g[wbad].alpha_avg_err
-     g[wbad].flux_avg2=g[wbad].flux_avg
-     g[wbad].flux_avg2_err=g[wbad].flux_avg_err
-;     g[wbad].lum_avg2=g[wbad].lum_avg
-;     g[wbad].lum_avg2_err=g[wbad].lum_avg_err
-     g[wbad].fluxdens_avg2=g[wbad].fluxdens_avg
-     g[wbad].fluxdens_avg2_err=g[wbad].fluxdens_avg_err
-     g[wbad].norm_avg2=g[wbad].norm_avg
+;     wbad=where(g.alpha_avg gt 3 or g.fluxdens_und2 gt 1)
+;     g[wbad].alpha_avg2=g[wbad].alpha_avg
+;     g[wbad].alpha_avg2_err=g[wbad].alpha_avg_err
+;     g[wbad].flux_avg2=g[wbad].flux_avg
+;     g[wbad].flux_avg2_err=g[wbad].flux_avg_err
+;;     g[wbad].lum_avg2=g[wbad].lum_avg
+;;     g[wbad].lum_avg2_err=g[wbad].lum_avg_err
+;     g[wbad].fluxdens_avg2=g[wbad].fluxdens_avg
+;     g[wbad].fluxdens_avg2_err=g[wbad].fluxdens_avg_err
+;     g[wbad].norm_avg2=g[wbad].norm_avg
      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
      ;;; get final results
@@ -2296,10 +2324,7 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
      if n_elements(testgrb) eq 0 then mwrfits,g,'~/Swift/decay_lum_corr/lum_decay_corr.fits',/create
   endif else g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
 
-  w=where(g.tstart lt g.t200*2. and g.t90 gt 0. and finite(g.flux_avg)); and g.tstop gt 1e5*(1.+g.z)); and g.lum_avg ne 0 and g.lum_avg_err[0] ne 0)
-  ;;; UGH - DO WE LIMIT THE TIME OVER WHICH THE AVERAGE DECAY IS MEASURED?
-  ;;; this throws away bursts that were measured for less, but does
-  ;;; that bias against those that fade much quicker?
+  w=where(g.tstart lt g.t200*2. and g.t90 gt 0. and finite(g.flux_avg) and g.alpha_final lt 3. and g.p[3] gt -2.)
 
   g=g[w]
   s=where(g.t90 le 2.)
@@ -2316,10 +2341,11 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
   xrange=[1d26,1d33]
 ;  yrange=[-2.5,0.5]
   yrange=[-4,2]
-  
+  !x.margin=[2,0]
+
   begplot,name='~/Swift/decay_lum_corr/flux_decay.eps',/color,/land;,font='helvetica'
-  !x.margin=[3,2]
-  !y.margin=[3,2]
+;  !x.margin=[3,2]
+;  !y.margin=[3,2]
 ;  !p.multi=[0,1,3]
   plotsym,0,1
 
@@ -2363,8 +2389,8 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
      for k=0,6 do begin  ;;; loop over sample cuts (long/short, flares/no flares)
         case k of
            0: begin ;; all
-;              w1=indgen(n_elements(g))
-              w1=where(g.alpha_avg2 le 3)
+              w1=indgen(n_elements(g))
+;              w1=where(g.alpha_avg2 le 3)
               w2=-1
               leg=['Initial: ']
               outname='all'
@@ -2377,8 +2403,8 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
               outname='steep_decay_contam'
            end
            2: begin ;; short/long
-              w1=where(g.t90 le 2. and g.t90 ne 0 and g.alpha_avg2 le 3)
-              w2=where(g.t90 gt 2. and g.alpha_avg2 le 3)
+              w1=where(g.t90 le 2. and g.t90 ne 0 and g.alpha_final le 3)
+              w2=where(g.t90 gt 2. and g.alpha_final le 3)
               leg=['Short: ','Long: ']
               ;;; fix steep decay contamination
 ;              wcontam=where((g.alpha_avg2 ne 0 and abs(g.alpha_avg2-g.alpha_avg) gt 0.05) or g.alpha_avg gt 3.)
@@ -2394,17 +2420,17 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
               outname='duration'
            end
            3: begin ;; flares/noflares
-              w1=where(g.nflares gt 0 and g.t90 gt 2. and g.alpha_avg2 le 3)
-              w2=where(g.nflares eq 0 and g.t90 gt 2. and g.alpha_avg2 le 3)
+              w1=where(g.nflares gt 0 and g.t90 gt 2. and g.alpha_final le 3)
+              w2=where(g.nflares eq 0 and g.t90 gt 2. and g.alpha_final le 3)
               leg=['Flares: ','No Flares: ']
               outname='flares'
            end
            4: begin ;; pow or other
               model=strtrim(g.model,2)
               ind=intarr(n_elements(g))
-              w1=where((model eq 'pow' or model eq 'gauss1_pow' or model eq 'gauss2_pow' or model eq 'gauss3_pow' or model eq 'gauss4_pow' or model eq 'gauss5_pow') and g.t90 gt 2. and g.alpha_avg2 le 3)
+              w1=where((model eq 'pow' or model eq 'gauss1_pow' or model eq 'gauss2_pow' or model eq 'gauss3_pow' or model eq 'gauss4_pow' or model eq 'gauss5_pow') and g.t90 gt 2. and g.alpha_final le 3)
               ind[w1]=1
-              w2=where(ind eq 0 and g.t90 gt 2. and g.alpha_avg2 le 3)
+              w2=where(ind eq 0 and g.t90 gt 2. and g.alpha_final le 3)
               leg=['SPL: ','breaks: ']
               outname='breaks'
            end
@@ -2419,15 +2445,15 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
                  wp=where(t eq 'II',nwp)
                  if nwp eq 1 then plateau[i]=1
               endfor 
-              w1=where(plateau eq 1 and g.t90 gt 2. and g.alpha_avg2 le 3)
-              w2=where(plateau eq 0 and g.t90 gt 2. and g.alpha_avg2 le 3)
+              w1=where(plateau eq 1 and g.t90 gt 2. and g.alpha_final le 3)
+              w2=where(plateau eq 0 and g.t90 gt 2. and g.alpha_final le 3)
 ;              leg=['Have Plateau, long, corrected','No Plateau, long,
 ;              corrected']
               leg=['Plateau: ','No Plateau: ']
               outname='plateaus'
            end 
            6: begin
-              w1=where(g.t90 gt 2. and g.alpha_avg2 le 3)
+              w1=where(g.t90 gt 2. and g.alpha_final le 3)
               w2=-1
 ;              leg=['Long, steep decay corrected']
               leg='Final: '
@@ -2440,7 +2466,7 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
         xticks=xrange[1]-xrange[0]
         xrange=10d^xrange
         print,leg
-        test_correlation,lum,-alpha,lumerr,alphaerr,g.z,w1=w1,w2=w2,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L'+add+',X,>200s!N',add=leg,yrange=[-4,2],xrange=[1d24,1d32],out=out,xticks=xticks,/xlog
+        test_correlation,lum,alpha,lumerr,alphaerr,g.z,w1=w1,w2=w2,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!L'+add+',X,>200s!N',add=leg,yrange=[-2,4],xrange=[1d24,1d32],out=out,xticks=xticks,/xlog
 ;if k eq 6 then stop
         mwrfits,out,'~/Swift/decay_lum_corr/'+outname+'_corr_out.fits',/create
   
