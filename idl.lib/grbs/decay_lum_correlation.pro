@@ -356,9 +356,9 @@ pro test_correlation,x,y,xerr0,yerr0,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=
      out[j].partial_null_hyp=pr[1]
      out[j].partial_signif=prsig
      out[j].slope=b0
-     out[j].slope_err=a_err
+     out[j].slope_err=b_err
      out[j].const=a0
-     out[j].const_err=b_err
+     out[j].const_err=a_err
      out[j].num=n_elements(w)
 
      
