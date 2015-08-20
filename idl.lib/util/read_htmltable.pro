@@ -7,7 +7,8 @@ pro read_htmltable,htmlfile,c,csvfile=csvfile
 
   readcol,htmlfile,lines,format='(a)',delim='|'
 
-  w=where(strpos(lines,'<th class=sortable-text>') ne -1)
+  w=where(strpos(lines,'<th class=sortable-text>') ne -1,nw)
+;  if nw eq 0 then w=where(strpos(lines,'<td><A TARGET=_blank') ne -1)
   columns=strsplit(lines[w],'<>',/ext)
   ncol=n_elements(columns)
   col=strarr(ncol)
@@ -16,7 +17,7 @@ pro read_htmltable,htmlfile,c,csvfile=csvfile
   rows=''
   for i=0,ncol-2 do rows=rows+"'col"+ntostr(i+1)+"','',"
   rows=rows+"'col"+ntostr(i+1)+"',''"
-
+;stop
   tmp=execute('c=create_struct('+rows+')')
   
   w=where(lines eq '<tr>',nentries)
