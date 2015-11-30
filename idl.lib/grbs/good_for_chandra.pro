@@ -176,11 +176,11 @@ pro plot_130427a
   begplot,name='GRB130427A_chandra_predict.ps',/color,/land,font='helvetica'
 
 ;  lc=lcout2fits(/phil,pcfile='PCCURVE_mod.qdp')
-  lc=lcout2fits('lc_newout_phil2.txt') ;; with first chandra point
+  lc=lcout2fits(/chandra) ;; with first chandra point
   spec=mrdfits('UL_specfits.fits',1)
-  xrange=[1e4,1e8]
-  read_lcfit,'lc_fit_out_idl_int8_bknpow.dat',pname,p1,p1err
-  read_lcfit,'lc_fit_out_idl_int8_bkn2pow.dat',pname,p2,p2err
+  xrange=[1e4,2e8]
+  read_lcfit,'lc_fit_out_idl_int8_bkn2pow.dat',pname,p1,p1err
+  read_lcfit,'lc_fit_out_idl_int8_bkn3pow.dat',pname,p2,p2err
   p3=[p2,lc[n_elements(lc)-1].time,2.2]
 
   tc=2000.*86400.
@@ -194,62 +194,63 @@ pro plot_130427a
   t2=(ymd2dn(2013,10,18)-db)*86400d
   t3=(ymd2dn(2014,1,1)+365-db)*86400d
   t4=(ymd2dn(2014,2,15)+365-db)*86400d
-  t5=(ymd2dn(2014,7,1)+365-db)*86400d
-  t6=(ymd2dn(2014,10,1)+365-db)*86400d
-  t7=(ymd2dn(2015,1,1)+2*365-db)*86400d
-  t8=(ymd2dn(2016,1,1)+3*365-db)*86400d
-  ts=[t1,t2,t3,t4,t5,t6,t7,t8]
-  mon=['July 22','Oct 18','Jan 1 2014','Feb 15','Jul 1','Oct 1','Jan 1 2015','Jan 1 2016']
+  t5=(ymd2dn(2015,1,1)+2*365-db)*86400d
+  t6=(ymd2dn(2015,10,1)+3*365-db)*86400d
+  t7=(ymd2dn(2016,3,1)+4*365-db)*86400d
+
+  ts=[t1,t2,t3,t4,t5,t6,t7]
+  mon=['July 22','Oct 18','Jan 1 2014','Feb 15','Jan 1 2015','Oct 1','Mar 1 2016']
   polyfill,[t1,t2,t2,t1,t1],[yrange[0]*1.02,yrange[0]*1.02,yrange[1]*0.98,yrange[1]*0.98,yrange[0]*1.02],color=!yellow
   plot_types,lc.time,lc.tstart,lc.tstop,lc.src_rate*fact,lc.src_rate_err*fact,lc.type,/over
 
   xyouts,1.2e7,2e-12,'Swift Sun Constrained',/data,orient=90,charsize=1.0
   for i=0,n_elements(mon)-1 do begin 
      oplot,[ts[i],ts[i]],[1e-20,1e-8],line=1
-     xyouts,ts[i]*0.95,1e-13,mon[i],/data,orient=90,charsize=0.9
+     xyouts,ts[i]*0.97,1e-13,mon[i],/data,orient=90,charsize=0.9
   endfor
 
-  t=[lc.time,p2[2],p2[4],tc]
+  t=[lc.time,p2[2],p2[4],p2[6],tc]
   t=t[sort(t)]
-  oplot,t,bknpow(t,p1)*fact,color=!cyan,line=2
-  oplot,t,bkn2pow(t,p2)*fact,color=!magenta,line=2
+  oplot,t,bkn2pow(t,p1)*fact,color=!cyan,line=2
+  oplot,t,bkn3pow(t,p2)*fact,color=!magenta,line=2
   w=where(t ge lc[n_elements(lc)-1].time)
-  oplot,t[w],bkn3pow(t[w],p3)*fact,color=!orange,line=2
+  oplot,t[w],bkn4pow(t[w],p3)*fact,color=!orange,line=2
 
 ;  oplot,xrange,[4e-14,4e-14],line=2
 
-  legend,['bknpow: '+!tsym.alpha+'!L2!N='+numdec(p1[3],2)+!tsym.plusminus+numdec(p1err[1,3],3),$
-          'bkn2pow: '+!tsym.alpha+'!L2!N='+numdec(p2[3],2)+!tsym.plusminus+numdec(p2err[1,3],2)+', '+!tsym.alpha+'!L3!N='+numdec(p2[5],2)+!tsym.plusminus+numdec(p2err[1,5],2)],/left,/bottom,box=0,textcolor=[!cyan,!magenta],charsize=1.5
+  legend,['bknpow: '+!tsym.alpha+'!L2!N='+numdec(p1[3],2),$;+!tsym.plusminus+numdec(p1err[1,3],3),$
+;          'bkn2pow:
+;          '+!tsym.alpha+'!L2!N='+numdec(p2[5],2)+!tsym.plusminus+numdec(p2err[1,5],2)+', '+!tsym.alpha+'!L3!N='+numdec(p2[7],2)+!tsym.plusminus+numdec(p2err[1,7],2)],/left,/bottom,box=0,textcolor=[!cyan,!magenta],charsize=1.5
+          'bkn2pow: '+!tsym.alpha+'!L2!N='+numdec(p2[5],2)+', '+!tsym.alpha+'!L3!N='+numdec(p2[7],2)],/left,/bottom,box=0,textcolor=[!cyan,!magenta],charsize=1.5
 
   endplot
   spawn,'ps2pdf GRB130427A_chandra_predict.ps'
 
-
 ;  t1=(ymd2dn(2014,1,1)+365-db)*86400d
-  t2=(ymd2dn(2014,2,15)+365-db)*86400d
-  t3=(ymd2dn(2014,7,1)+365-db)*86400d
-  t4=(ymd2dn(2014,10,1)+365-db)*86400d
-  t5=(ymd2dn(2015,1,1)+2*365-db)*86400d
-  t6=(ymd2dn(2015,6,1)+2*365-db)*86400d
-  t7=(ymd2dn(2016,1,1)+3*365-db)*86400d
-  ts=[t2,t3,t4,t5,t6,t7]
+;  t2=(ymd2dn(2014,2,15)+365-db)*86400d
+;  t3=(ymd2dn(2014,7,1)+365-db)*86400d
+;  t4=(ymd2dn(2014,10,1)+365-db)*86400d
+;  t5=(ymd2dn(2015,1,1)+2*365-db)*86400d
+;  t6=(ymd2dn(2015,6,1)+2*365-db)*86400d
+;  t7=(ymd2dn(2016,1,1)+3*365-db)*86400d
+;  ts=[t2,t3,t4,t5,t6,t7]
 
-  mon=['Feb 15 2014','Jul 1 2014','Oct 1 2014','Jan 1 2015','Jun 1 2015','Jan 1 2016']
+;  mon=['Feb 15 2014','Jul 1 2014','Oct 1 2014','Jan 1 2015','Jun 1 2015','Jan 1 2016']
 
   cfact=1.1e-11;1/1.06e11 ;; chandra flux->cts/s
-  f=bknpow(ts,p1)
-  print,'Date        Flux (erg/cm2/s)  Chandra (cts/s)  Cts (20 ks)  Cts (30 ks)    Cts (40 ks)  Cts (60 ks)'
-  print,'BKNPOW'
-  colprint,mon+'        '+numdec(f*fact,2,/sci)+'        '+numdec(f*fact/cfact,2,/sci)+'        '+numdec(f*fact/cfact*20e3,2)+'        '+numdec(f*fact/cfact*30e3,2)+'        '+numdec(f*fact/cfact*40e3,2)+'        '+numdec(f*fact/cfact*60e3,2)
-  print
-  f=bkn2pow(ts,p2)
-;  print,'Date        Flux (erg/cm2/s)  Chandra (cts/s)  Cts (20 ks)  Cts (40 ks)  Cts (60 ks)'
+  f=bkn2pow(ts,p1)
+  print,'Date        Flux (erg/cm2/s)  Chandra (cts/s)  Cts (20 ks)  Cts (40 ks)    Cts (60 ks)  Cts (120 ks)'
   print,'BKN2POW'
-  colprint,mon+'        '+numdec(f*fact,2,/sci)+'        '+numdec(f*fact/cfact,2,/sci)+'        '+numdec(f*fact/cfact*20e3,2)+'        '+numdec(f*fact/cfact*30e3,2)+'        '+numdec(f*fact/cfact*40e3,2)+'        '+numdec(f*fact/cfact*60e3,2)
+  colprint,mon+'        '+numdec(f*fact,2,/sci)+'        '+numdec(f*fact/cfact,2,/sci)+'        '+numdec(f*fact/cfact*20e3,2)+'        '+numdec(f*fact/cfact*40e3,2)+'        '+numdec(f*fact/cfact*60e3,2)+'        '+numdec(f*fact/cfact*120e3,2)
   print
-  print,'BKN3POW - Jet break ~last observation'
-  f=bkn3pow(ts,p3)
-  colprint,mon+'        '+numdec(f*fact,2,/sci)+'        '+numdec(f*fact/cfact,2,/sci)+'        '+numdec(f*fact/cfact*20e3,2)+'        '+numdec(f*fact/cfact*30e3,2)+'        '+numdec(f*fact/cfact*40e3,2)+'        '+numdec(f*fact/cfact*60e3,2)
+  f=bkn3pow(ts,p2)
+;  print,'Date        Flux (erg/cm2/s)  Chandra (cts/s)  Cts (20 ks)  Cts (40 ks)  Cts (60 ks)'
+  print,'BKN3POW'
+  colprint,mon+'        '+numdec(f*fact,2,/sci)+'        '+numdec(f*fact/cfact,2,/sci)+'        '+numdec(f*fact/cfact*20e3,2)+'        '+numdec(f*fact/cfact*40e3,2)+'        '+numdec(f*fact/cfact*60e3,2)+'        '+numdec(f*fact/cfact*120e3,2)
+  print
+  print,'BKN4POW - Jet break ~last observation'
+  f=bkn4pow(ts,p3)
+  colprint,mon+'        '+numdec(f*fact,2,/sci)+'        '+numdec(f*fact/cfact,2,/sci)+'        '+numdec(f*fact/cfact*20e3,2)+'        '+numdec(f*fact/cfact*40e3,2)+'        '+numdec(f*fact/cfact*60e3,2)+'        '+numdec(f*fact/cfact*120e3,2)
 
 
 

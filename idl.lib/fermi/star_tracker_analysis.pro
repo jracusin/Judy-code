@@ -46,12 +46,12 @@ pro plot_st_results
      ;;; plot histogram of pixel values for suspect pixels
      plot,[0,50],[0,30],/nodata,xtitle='Counts above bkg',title='ST #'+ntostr(st),ytitle='# pixels > bkg'
      for i=0,ni-1 do begin 
-        plothist2,pixf.comp[i],xhist,yhist,/over,color=color[i]
+        plothist2,pixf.comp[i],xhist,yhist,/over,color=color[i],bin=1
         w8=where(pixf.comp[i] ge 8,nw8)
         n8[i]=nw8
      endfor 
      oplot,[8,8],[0,100],line=2
-     legend,strmid(pixf[0].wim,9,15),textcolor=color[0:ni-1],box=0,/top,/right,charsize=0.9
+     legend,strmid(pixf[0].wim,9,15),textcolor=color[0:ni-1],box=0,/top,/right,charsize=0.7
 
      ;;; plot # of pixels >8+bkg with im
      if st eq 1 then xrange3=[2013,round(max(pixf.date)+0.5)]

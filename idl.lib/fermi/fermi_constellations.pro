@@ -1,3 +1,141 @@
+pro aitoff_maps,redo=redo,gal=gal
+
+  cd,'~/Fermi/constellations/'
+
+  add=['c0_0','c0_180']
+  if keyword_set(gal) then add='gal_'+add
+  imfile='~/Fermi/constellations/'+add+'_aitoff_map.png'
+
+  if not exist(imfile[0]) or keyword_set(redo) then begin 
+     read_fits_map,'~/Fermi/constellations/healpix_diffuse_bin28.fits',hmap,hdr,nside=nside
+     ;; coords for each healpix pixel
+     pix2ang_ring,nside,lindgen(n_elements(hmap)),theta,phi
+     naxis=512.
+     
+     crval1=[0,180]
+     crval2=[0,0]
+     cdelt=[0.67,0.67]
+     ctype=['AIT','AIT']
+     rev=[1,1]
+
+     for j=0,1 do begin 
+        gmap=fltarr(naxis,naxis)
+        ghdr=headfits('~/Fermi/constellations/empty_map.fits')
+        sxaddpar,ghdr,'CRPIX1',0.5*(naxis-1.)
+        sxaddpar,ghdr,'CRPIX2',0.5*(naxis-1.)
+        sxaddpar,ghdr,'CDELT1',cdelt[j]
+        sxaddpar,ghdr,'CDELT2',cdelt[j]
+        if keyword_set(gal) then begin
+           sxaddpar,ghdr,'CTYPE1','GLON-'+ctype[j]
+           sxaddpar,ghdr,'CTYPE2','GLAT-'+ctype[j]
+        endif else begin
+           sxaddpar,ghdr,'CTYPE1','RA---'+ctype[j]
+           sxaddpar,ghdr,'CTYPE2','DEC--'+ctype[j]
+        endelse 
+        sxaddpar,ghdr,'CRVAL1',crval1[j]
+        sxaddpar,ghdr,'CRVAL2',crval2[j]
+        
+        x=fltarr(naxis,naxis)
+        y=fltarr(naxis,naxis)
+        for i=0,naxis-1 do begin
+           x[i,*]=findgen(naxis)
+           y[*,i]=findgen(naxis)
+        endfor 
+        
+        extast,ghdr,astr
+        xy2ad,x,y,astr,ra,dec
+        
+        w=where(dec le 0 or dec ge 0)
+;     if j eq 0 then w=where(dec le 0)
+;     if j eq 1 then w=where(dec ge 0)
+;     if j eq 2 then w=where(abs(dec) le 30)
+;     if j eq 3 then w=where(abs(dec) le 30)
+
+        if not keyword_set(gal) then euler,ra,dec,glon,glat,1 else begin
+           glon=ra
+           glat=dec
+        endelse 
+
+        print,minmax(glon),minmax(glat)
+        phi=glon*!dtor          ;(360.-gra)/!radeg
+        theta=0.5*!pi-glat*!dtor
+        w0=where(theta lt 0)
+        theta[w0]=0.
+
+        ang2pix_ring, nside, theta[w], phi[w], ipring
+        gmap[w]=hmap[ipring]
+        
+        w=where(gmap eq 0)
+        gmap[w]=1e-17
+        
+        if j ge 2 then land=1 else land=0
+        mwrfits,gmap,add[j]+'_aitoff_map.fits',/create
+        begplot,name=add[j]+'_aitoff_map.ps',land=land
+        rdis,rotate(gmap,rev[j]),/log,low=-15.5,high=-11.0,/nolabels,/noframe
+        endplot
+        spawn,'ps2pdf '+add[j]+'_aitoff_map.ps '+add[j]+'_aitoff_map.pdf'
+        spawn,'convert '+add[j]+'_aitoff_map.pdf '+add[j]+'_aitoff_map.png'
+     endfor      
+  endif 
+
+if keyword_set(gal) then stop
+
+  cat=mrdfits('~/Fermi/gll_psc_v14.fit',1)
+  ra=cat.raj2000
+  dec=cat.dej2000
+  flux=cat.flux1000
+  flux=alog10(flux)
+  bin=0.2
+  plothist,flux,x,y,bin=bin,/noplot
+  cra=[0,180]
+  cdec=[0,0]
+  color=[replicate('gainsboro',2),replicate('light gray',3),$
+         replicate('silver',3),replicate('dark gray',3),$
+         replicate('gray',3),replicate('dim gray',3),$
+         replicate('dim gray',3),replicate('black',3),$
+         replicate('black',3),$
+         replicate('black',2)]
+
+
+;  limit=[[-30,0,30,360],[-30,-180,30,180]]
+  cl=[0,180]
+  position=[[0.05,0.05,0.95,0.95],[0.05,0.05,0.95,0.95]]
+;  off=[[-0.01,-0.04,0,0.01],
+  off=[[0.0,-0.04,0.02,0.02],[0.0,-0.04,0.01,0.02]]
+  xrange=[[125,480],[130,480]]
+  for j=0,1 do begin 
+     im=image(imfile[j],/clip,xrange=xrange[*,j],yrange=[300,500],$
+              position=position[*,j])
+     pos=position[*,j]+off[*,j]
+     m=map('hammer',label_show=0,/current,linestyle=1,$
+           thick=2,center_longitude=cl[j],$
+           color='grey',position=pos,/hide)
+    
+     p=plot(replicate(179,181)-cl[j],findgen(181)-90,thick=2,/current,/overplot)
+     p=plot(replicate(181,181)-cl[j],findgen(181)-90,thick=2,/current,/overplot)
+     for i=0,n_elements(x)-1 do begin 
+        dist=separation(ra,dec,cra[j],cdec[j])/3600.
+        q=where(flux gt x[i]-bin/2. and flux le x[i]+bin/2.,nq)
+        if nq gt 0 then begin 
+           s=sort(flux[q])
+           q=q[s]
+           sym=0              
+           size=0.02+0.02*i
+           if i ge 20 then sym=3
+           p=plot(-ra[q],dec[q],symbol='o',sym_size=size,/current,/overplot,sym_color='white',color[i],/sym_filled,sym_fill_color=color[i],line='none',sym_thick=0.3)
+
+        endif 
+     endfor
+     
+     im.save,'~/Fermi/constellations/fermi_constellations_'+add[j]+'.ps'
+     im.save,'~/Fermi/constellations/fermi_constellations_'+add[j]+'.png',resolution=8192
+     im.close
+  endfor 
+
+stop
+  return
+end
+
 pro diffuse
 
   read_fits_map,'~/Fermi/constellations/healpix_diffuse_bin28.fits',hmap,hdr,nside=nside

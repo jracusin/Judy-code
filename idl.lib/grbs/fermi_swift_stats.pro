@@ -1,6 +1,6 @@
 pro fermi_swift_stats
 
-  readcol,'~/Swift/grb_table_1382922859.txt',grb,trigtime,trignum,batra,batdec,batt90,batfluence,xrtra,xrtdec,xrttime,xrtflux,uvotra,uvotdec,uvottime,uvotmag,format='(a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a)',delim='  ',skip=1
+  readcol,'~/Swift/grb_table_1441830567.txt',grb,trigtime,trignum,batra,batdec,batt90,batfluence,xrtra,xrtdec,xrttime,xrtflux,uvotra,uvotdec,uvottime,uvotmag,format='(a,a,a,a,a,a,a,a,a,a,a,a,a,a,a,a)',delim='  ',skip=1
   
   ns=n_elements(grb)
   swift=create_struct('grb','','trigtime','','met',0d,'t90',0.,'xrtdet',0,'uvotdet',0,'redshift',0.,'gbmname','')
@@ -22,11 +22,13 @@ pro fermi_swift_stats
   swift[w].uvotdet=1
 ;  w=where(strtrim(redshift,2) ne 'n/a')
 ;  swift[w].redshift=float(redshift[w])
-  ns=485
-  swift=swift[1:ns-1] ;;; cutting only overlap with fermi
-  ns=ns-1
-  s=ns-indgen(ns)
-  swift=swift[s]
+;  ns=485
+;  swift=swift[1:ns-1] ;;; cutting only overlap with fermi
+  ns=736
+  swift=swift[0:ns]
+;  ns=ns-1
+;  s=ns-indgen(ns)
+;  swift=swift[s]
 
   ;;; cross correlated Davide's file to get redshifts through 2012
   dd=mrdfits('~/Swift/swiftgrb2.fits',1)

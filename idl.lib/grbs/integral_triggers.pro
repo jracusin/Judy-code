@@ -1,3 +1,30 @@
+pro grab_eph
+
+  l=mrdfits('~/GRBs/Integral_SPI/combined_triglist.fits',1)
+  n=n_elements(l)
+
+  for i=0,n-1 do begin 
+     d=strsplit(l[i].trigdate,'- :',/ex)
+     url='http://www.isdc.unige.ch/integral/ibas/results/triggers/spiacs/'+d[0]+'-'+d[1]+'/'+strtrim(l[i].trigid,2)+'.eph'
+     outfile='~/GRBs/Integral_SPI/'+strtrim(l[i].trigid,2)+'.eph'
+     if not exist(outfile) then spawn,'wget '+url+' -O '+outfile
+  endfor 
+
+  for i=0,n-1 do begin
+     outfile='~/GRBs/Integral_SPI/'+strtrim(l[i].trigid,2)+'.eph'
+     readcol,outfile,ra,dec,dist,format='(f,f,f)'
+     l[i].integral_ra=ra[0]
+     l[i].integral_ra_err=ra[1]
+     l[i].integral_dec=dec[0]
+     l[i].integral_dec_err=dec[1]
+     l[i].integral_dist=dist[0]
+     l[i].integral_dist_err=dist[1]
+  endfor 
+
+  mwrfits,l,'~/GRBs/Integral_SPI/combined_triglist.fits',/create
+  return
+end 
+
 pro combine_triglists
 
   triglist=file_search('~/GRBs/Integral_SPI/trig*fits')
@@ -23,13 +50,22 @@ pro html2fits
   triglist=file_search('~/GRBs/Integral_SPI/trig*html')
 
   n=n_elements(triglist)
-  c0=create_struct('trigdate','','trigtime',0d,'type','','sigma',0.,$
-                  'duration',0.,'max_count',0,'comment','')
+  c0=create_struct('trigid','','trigdate','','trigtime',0d,'type','',$
+                   'sigma',0.,'duration',0.,'max_count',0,'comment','',$
+                  'integral_ra',0.,'integral_ra_err',0.,$
+                   'integral_dec',0.,'integral_dec_err',0.,$
+                   'integral_dist',0.,'integral_dist_err',0.)
 
   for i=0,n-1 do begin
      readcol,triglist[i],lines,format='(a)',delim='|'
-     w=where(strpos(lines,'tstart=') ne -1,nw)
+     w=where(strpos(lines,'ibas_acs_web.cgi/?trigger=') ne -1,nw)
      c=replicate(c0,nw)
+     for j=0,nw-1 do begin 
+        s=strsplit(lines[w[j]],'="',/ex)
+        c[j].trigid=s[4]
+;        print,c[j].trigid
+     endfor 
+     w=where(strpos(lines,'tstart=') ne -1,nw)
      for j=0,nw-1 do begin 
         if j lt nw-1 then lines0=lines[w[j]:w[j+1]-1] else lines0=lines[w[j]:*]
         w1=where(strpos(lines0,'<td') ne -1)
