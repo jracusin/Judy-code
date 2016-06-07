@@ -62,7 +62,7 @@ pro plot_st_results
      for i=0,ni-1 do plots,pixf.date[i],n8[i],psym=5,color=color[i]
      oplot,pixf.date,n8,line=2
      print,n8
-     print,'Pixels currently warm (x,y,val above background,# times warm)'
+     print,'Pixels currently warm (x,y,val above background,# times warm): '+ntostr(n_elements(w8))
      ncomp=n_elements(pixf[w8[0]].comp)
      for i=0,n_elements(w8)-1 do print,pixf[w8[i]].x,pixf[w8[i]].y,pixf[w8[i]].comp[ncomp-1],n_elements(where(pixf[w8[i]].comp gt 8))
   endfor 

@@ -306,6 +306,7 @@ pro grb150314a
   mo=fit_models(pnames,p0,basemo=basemo)
   intmo='int_con_gauss2_bknpow'
   mo='con_gauss2_bknpow'
+  pnames=['con','norm','pow1','break1','pow2','gnorm1','gcenter1','gwidth1','gnorm2','gcenter2','gwidth2']
   p=[2e-4,p0]
   tt=dblarr(2,n_elements(lc))
   tt[0,*]=lc.tstart
@@ -318,15 +319,18 @@ pro grb150314a
                 ftol=1e-25,xtol=1e-25,gtol=1e-25,quiet=quiet)
   chisq=total(((yfit-lc.src_rate)/lc.src_rate_err[0])^2)
 
+;  lc_monte,lc.time,tt,lc.exptime,lc.src_rate,lc.src_rate_err,lc.pu_corr,lc.src_counts,lc.tot_back_cts,newp,mo,pnames,outperr,noplot=noplot,ps=ps,nsim=nsim,nsig=nsig,parinfo=parinfo,noint=noint
+
   print,newp
+;  print,outperr
 
   xrt=mrdfits('~/Chandra/GRB150314A/UL_specfits.fits',1)
 
-  r=xrt[2].unabs_cfratio
+  r=xrt[1].unabs_cfratio
   begplot,name='~/Chandra/GRB150314A/GRB150314A_combined_lc_wcons.ps',/land,/color
-  plot_like_qdp,lc=lc,/nohard,yrange=[1e-15,1e-7],/ysty,flux=r,/useflux
+  plot_like_qdp,lc=lc,/nohard,yrange=[1e-15,1e-7],xrange=[10,5e7],/ysty,flux=r,/useflux,xminor=9,ytickvalues=10^(dindgen(9)-15),yminor=9,yticks=8
 
-  t=logarr(lc[0].tstart,1e7,bin=0.1)
+  t=logarr(lc[0].tstart,5e7,bin=0.1)
   oplot,t,call_function(mo,t,newp)*r
   oplot,t,call_function(basemo,t,newp[1:*])*r,line=2,color=!green
   oplot,t,gauss(t,newp[5:7])*r,color=!green,line=2

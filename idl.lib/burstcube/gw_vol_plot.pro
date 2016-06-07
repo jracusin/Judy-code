@@ -19,8 +19,8 @@ pro gw_vol_plot
   yrerr=[0.25,0.5,0.75,1.]
   ligo=[60,100,145,200];,200.]
   ligoerr=[20,20,25,0];,0.]
-  virgo=[20,40,72.5,95.5];,130.]
-  virgoerr=[5,20,12.5,32.5]
+  virgo=[0,40,72.5,95.5,130.]
+  virgoerr=[0,20,12.5,32.5,0]
 
   ligo=ligo+ligoerr
   virgo=virgo+virgoerr

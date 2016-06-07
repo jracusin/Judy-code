@@ -13,12 +13,12 @@ end
 
 pro grb130831a
 
-  cd,'~/Desktop/GRB130831A/Boris'
+  cd,'~/Desktop/GRBs/GRB130831A/Boris'
   file='lightcurve_detailed.qdp'
   lc1=lcout2fits(pcfile=file,/phil)
   lc2=lcout2fits('../lc_newout_chandra.txt')
   concat_structs,lc1,lc2,lc
-
+stop
   begplot,name='grb130831a_fit.ps',/land,/color,font='helvetica'
   !x.margin=[1,2]
   read_lcfit,'../lc_fit_out_idl_int8.dat',pnames0,p0

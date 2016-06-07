@@ -24,6 +24,7 @@ function numdec,num0,ndec,sci=sci,tex=tex,idlplot=idlplot
   if nw gt 0 then nlog[w]=0
   nfig=ndec+2+nlog
   
+  if ndec eq 0 then nfig=nfig-1
   numstr=strarr(n)
   for i=0,n-1 do numstr[i]=ntostr(numround[i]/nummult,nfig[i])
   if n eq 1 then numstr=numstr[0]

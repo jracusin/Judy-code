@@ -154,8 +154,11 @@ pro lat_other,lum=lum,flux=flux,rate=rate
      z=[4.35,3.57,0.73,0.903,1.822,2.1062,0.8969,1.0633,1.368,1.567,2.83,1.405,0.34,2.49,0.145,1.2,2.4,0.642,2.33,1.758,2.06]
      plot_all_xrt_lcs,/lum,overgrb=lat,z=z,add='lat_',/overdata
   endif else begin 
-     lat=['GRB080916C','GRB090323','GRB090328A','GRB090510','GRB090531B','GRB090902B','GRB090926A','GRB091003','GRB091208B','GRB100414A','GRB100728A','GRB110625A','GRB110709A','GRB110731A','GRB120624B','GRB120711A','GRB121011A','GRB130305A','GRB130427A','GRB130502B','GRB130504C','GRB130518A','GRB130606B','GRB130702A','GRB130907A','GRB131014A','GRB131108A','GRB131231A','GRB140102A','GRB140323A','GRB140928A','GRB141028A']
+     lat=['GRB080916C','GRB090323','GRB090328A','GRB090510','GRB090531B','GRB090902B','GRB090926A','GRB091003','GRB091208B','GRB100414A','GRB100728A','GRB110625A','GRB110709A','GRB110731A','GRB120624B','GRB120711A','GRB121011A','GRB130305A','GRB130427A','GRB130502B','GRB130504C','GRB130518A','GRB130606B','GRB130702A','GRB130907A','GRB131014A','GRB131108A','GRB131231A','GRB140102A','GRB140323A','GRB140928A','GRB141028A','GRB150202B','GRB150314A','GRB150403A','GRB150514A','GRB150523A','GRB150627A','GRB150724B','GRB150902A','GRB151006A','GRB160325A','GRB160422A','GRB160509A']
      overgcom='print,p'
+     overcolor='[!blue'
+     for i=1,n_elements(lat)-2 do overcolor=overcolor+',!blue'
+     overcolor=overcolor+',!red]'
 
   tstart=fltarr(n_elements(lat))
   for i=0,n_elements(lat)-1 do begin
@@ -163,10 +166,7 @@ pro lat_other,lum=lum,flux=flux,rate=rate
      tstart[i]=lc[0].tstart
   endfor 
 
-stop
-
-
-     plot_all_xrt_lcs,flux=flux,rate=rate,overgrb=lat,add='lat_',/overdata,xrange=[40,4e7],overgcom=overgcom
+     plot_all_xrt_lcs,flux=flux,rate=rate,overgrb=lat,add='lat_',/overdata,xrange=[40,4e7],overgcom=overgcom,overcolor=overcolor
   endelse
 
   ;; LUM with z
@@ -330,14 +330,14 @@ pro plot_all_xrt_lcs,t,val,rate=rate,flux=flux,lum=lum,data=data,overgrb=overgrb
      zlist=fltarr(novergrb)
      if novergrb ne 0 then begin 
         if n_elements(overcolor) eq 0 then begin 
-           color=[!blue,!sienna,!green,!orange,!cyan,!magenta,!salmon,!darkgreen,!violet,!navyblue,!red,!royalblue,!turquoise,!forestgreen,!sienna,!seagreen,!deeppink,!purple,!violet,!pink,!hotpink,!firebrick,!darkgreen,!darkblue]
+           color=[!LightSteelBlue,!SkyBlue,!blue,!sienna,!green,!orange,!cyan,!magenta,!salmon,!darkgreen,!violet,!navyblue,!red,!royalblue,!turquoise,!forestgreen,!sienna,!seagreen,!deeppink,!purple,!violet,!pink,!hotpink,!firebrick,!darkblue,!navyblue,!orangered,!darkred,!midnightblue]
            color=[color,color,color]
         endif else begin
            tmp=execute('ocolor='+overcolor)
            if n_elements(ocolor) eq 1 then color=replicate(ocolor,novergrb) else color=ocolor
         endelse 
         for i=0,novergrb-1 do begin 
-           print,overgrb[i]
+           print,overgrb[i],color[i],i
            lc=mrdfits('~/GRBs/'+overgrb[i]+'/UL_lc.fits',1)
 
            nwdet=where(lc.src_rate_err eq 0,nnwdet)
@@ -400,8 +400,14 @@ pro plot_all_xrt_lcs,t,val,rate=rate,flux=flux,lum=lum,data=data,overgrb=overgrb
 ;        oplot,lc.time*z1,lc.src_rate*f,color=color[i],thick=2
         endfor
         if not keyword_set(noleg) then begin
-           if keyword_set(lum) or keyword_set(ldens) then legend,['All GRBs',overgrb+' (z='+numdec(zlist,2)+')'],textcolor=[!grey50,color[0:novergrb-1]],box=0,/top,/right,charsize=1.0 else $
-              legend,['All GRBs',overgrb],textcolor=[!grey50,color[0:novergrb-1]],box=0,/top,/right,charsize=1.0
+           if keyword_set(lum) or keyword_set(ldens) then legend,['All GRBs',overgrb+' (z='+numdec(zlist,2)+')'],textcolor=[!grey50,color[0:novergrb-1]],box=0,/top,/right,charsize=1.0 else begin
+              if n_elements(overgrb) lt 30 then begin 
+                 legend,['All GRBs',overgrb],textcolor=[!grey50,color[0:novergrb-1]],box=0,/top,/right,charsize=1.0
+              endif else begin 
+                 legend,['All GRBs',overgrb[0:19]],textcolor=[!grey50,color[0:19]],box=0,/top,/right,charsize=1.0,position=[0.83,0.95],/normal
+                 legend,[overgrb[20:*]],textcolor=[color[20:novergrb-1]],box=0,/top,/right,charsize=1.0
+              endelse 
+           endelse 
         endif 
      endif 
   endif 

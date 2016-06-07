@@ -1,3 +1,27 @@
+pro sgrb_gw_rates
+
+  horizon=200 ;; Mpc
+  vol=4./3.*!pi*(horizon*1e-3)^3 ;; Gpc^3
+  rate=10 ;; Gpc^-3 yr^-1
+  beam_fact=1.5 ;;; account for GW beaming towards us
+  subt_fact=1.5 ;;; account for lower thresholds
+
+  detrate=rate*vol*beam_fact^3 * subt_fact^3
+  
+  print,detrate
+
+  ;; NS-BH adds horizon factor of 1.6
+  ;; BH-BH horizon factor of 2-5 larger (Abbott et al. 2016, LRR, 19, 1)
+
+  nbrate=detrate*1.6^3
+  print,nbrate
+  bbrate=detrate*5.^3
+  print,bbrate
+
+stop
+  return
+end 
+
 pro plot_dist,r
 
   !p.multi=[0,1,2]
@@ -39,14 +63,14 @@ pro grb_rates
   rad=[12.7,9.4,4.]
   area=[!pi*(rad[0]/2.)^2,rad[1]^2,rad[2]^2]
   eff=[0.452,0.488,0.488] ;; from John K
-  inst=['GBM','BurstCube','HOPE']
+  inst=['GBM','BurstCube'];,'HOPE']
   back=400. ;; cts/s
 
   t=[1.024,0.256,0.064]
   sig=[4.5,4.5,5]
 
-  !p.multi=[0,1,3]
-  for j=0,2 do begin ;; GBM + BurstCube
+  !p.multi=[0,1,2]
+  for j=0,1 do begin ;; GBM + BurstCube
      print,inst[j]
      id=intarr(n_elements(g)) & id2=intarr(n_elements(g))
      for i=0,n_elements(t)-1 do begin ;; timescales

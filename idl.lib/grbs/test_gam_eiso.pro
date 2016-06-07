@@ -1,6 +1,6 @@
 pro test_gam_eiso
 
-  ;;; for refereeing of Lei et al. for ApJ
+  ;;; for refereeing of Yi et al. for ApJ
 
   z=[1.61,2.615,2.198,3.91,1.49,1.314,0.84,2.95,0.98,0.947,2.692,1.688,1.408,1.727,2.22,1.728,2.876,3.97,0.703,1.262,0.97,4.394,1.95,1.51,0.845,3.35,2.1,3.375,0.544,2.452,1.092,2.752,0.542,2.106,1.46,2.358]
 
@@ -16,14 +16,15 @@ pro test_gam_eiso
   eiso=eiso[w]
   eta=eta[w]
   eta=0.1
-
+;stop
   vslope=0.21
   vrank=0.59
 
   nsim=1e4
   sim=create_struct('ind',0,'norm',0.,'pow',0.,'rank',0.,'p',0.)
   sim=replicate(sim,nsim)
-
+  pfrac=fltarr(3) & rfrac=fltarr(3)
+  
   for j=0,2 do begin 
      for i=0,nsim-1 do begin
         r1=indgen(n) & r2=indgen(n) & r3=indgen(n)
@@ -32,9 +33,12 @@ pro test_gam_eiso
         if j eq 1 then r2=round(randomu(seed,n)*n)
         if j eq 0 then r3=round(randomu(seed,n)*n)
         if j eq 2 then begin
+ ;          r2=round(randomu(seed,n)*n)
+           reiso=10^(randomu(seed,n)*4.+50d)
            rz=randomu(seed,n)*6.
            rtp=randomu(seed,n)*1990.+10.
         endif else begin
+           reiso=eiso[r2]
            rz=z[r1]
            rtp=tp[r3]
         endelse 
@@ -71,23 +75,45 @@ pro test_gam_eiso
      endif 
         w=where(sim.pow ge vslope,nw)
         print,'sim '+ntostr(j+1)+', pow: ',nw*1./1e4
+        pfrac[j]=nw*1./nsim
         w=where(sim.rank ge vrank,nw)
         print,'sim '+ntostr(j+1)+', rank: ',nw*1./1e4
-
+        rfrac[j]=nw*1./nsim
   endfor 
 
-  !p.multi=[0,2,3]
-  plothist,sim1.pow,bin=0.01,xtitle='slope',title='Rand z, Tp'
-  plothist,sim1.rank,bin=0.01,xtitle='rank',title='Rand z, Tp'
-  plothist,sim2.pow,bin=0.01,xtitle='slope',title='Rand Eiso'
-  plothist,sim2.rank,bin=0.01,xtitle='rank',title='Rand Eiso'
-  plothist,sim3.pow,bin=0.01,xtitle='slope',title='Rand uniform z, Tp'
-  plothist,sim3.rank,bin=0.01,xtitle='rank',title='Rand uniform z, Tp'
+  begplot,name='~/referee/Yi_etal_simulation.ps',/color,/land
+  !p.multi=[0,3,3]
+  !p.charsize=2
+  plothist,sim1.pow,bin=0.01,xtitle='Correlation Slope',title='Sim 1: Random z, Tp',ytitle='N'
+  oplot,[vslope,vslope],[0,1e4],color=!red,line=2
+  legend,['>'+numdec(vslope,2),numdec(pfrac[0]*100.,1)+'%'],box=0,/top,/left,charsize=1
+  plothist,sim1.rank,bin=0.01,xtitle='Pearson Rank',title='Sim 1: Random z, Tp',ytitle='N'
+  oplot,[vrank,vrank],[0,1e4],color=!red,line=2 
+  legend,['>'+numdec(vrank,2),numdec(rfrac[0]*100.,1)+'%'],box=0,/top,/left,charsize=1
+  plot,sim1.pow,sim1.rank,psym=3,xtitle='Correlation Slope',ytitle='Pearson Rank',title='Sim 1: Random z, Tp'
+  plots,vslope,vrank,psym=2,color=!red
+
+  plothist,sim2.pow,bin=0.01,xtitle='Correlation Slope',title='Sim 2: Random Eiso',ytitle='N'
+  oplot,[vslope,vslope],[0,1e4],color=!red,line=2
+  legend,['>'+numdec(vslope,2),numdec(pfrac[1]*100.,1)+'%'],box=0,/top,/left,charsize=1
+  plothist,sim2.rank,bin=0.01,xtitle='Pearson Rank',title='Sim 2: Random Eiso',ytitle='N'
+  oplot,[vrank,vrank],[0,1e4],color=!red,line=2 
+  legend,['>'+numdec(vrank,2),numdec(rfrac[1]*100.,1)+'%'],box=0,/top,/left,charsize=1
+  plot,sim2.pow,sim2.rank,psym=3,xtitle='Correlation Slope',ytitle='Pearson Rank',title='Sim 2: Random Eiso'
+  plots,vslope,vrank,psym=2,color=!red
+
+  plothist,sim3.pow,bin=0.01,xtitle='Correlation Slope',title='Sim 3: Random uniform Eiso, z, Tp',ytitle='N'
+  oplot,[vslope,vslope],[0,1e4],color=!red,line=2
+  legend,['>'+numdec(vslope,2),numdec(pfrac[2]*100.,1)+'%'],box=0,/top,/left,charsize=1
+  plothist,sim3.rank,bin=0.01,xtitle='Pearson Rank',title='Sim 3: Random uniform Eiso, z, Tp',ytitle='N'
+  oplot,[vrank,vrank],[0,1e4],color=!red,line=2 
+  legend,['>'+numdec(vrank,2),numdec(rfrac[2]*100.,1)+'%'],box=0,/top,/left,charsize=1
+  plot,sim3.pow,sim3.rank,psym=3,xtitle='Correlation Slope',ytitle='Pearson Rank',title='Sim 3: Random uniform Eiso, z, Tp'
+  plots,vslope,vrank,psym=2,color=!red
+
   !p.multi=0
-
-
-
-
+  endplot
+  ps2pdf,'~/referee/Yi_etal_simulation.ps'
 
   stop
   return

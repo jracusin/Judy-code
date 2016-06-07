@@ -28,7 +28,7 @@ pro hardness_ratio,grb,rad
         for j=0,1 do begin ;;; each energy range
            
            com='punlearn dmcopy'
-           com=[com,'/Users/jracusin/CIAO/ciao-4.7/bin/dmcopy "acis_evt2.fits[energy='+eng[j]+']" acis_evt2_clean_'+engout[j]+'.fits opt=all clobber=yes']
+           com=[com,'/Users/jracusin/CIAO/ciao-4.8/bin/dmcopy "acis_evt2.fits[energy='+eng[j]+']" acis_evt2_clean_'+engout[j]+'.fits opt=all clobber=yes']
            run_com,com
            
            mfile='acis_evt2_clean_'+engout[j]+'.fits'
@@ -39,11 +39,11 @@ pro hardness_ratio,grb,rad
            com=[com,'pset dmextract infile="'+mfile+'[bin sky=region(src_'+ntostr(rad)+'.reg)]"'] ;circle('+ra+','+dec+',10)]"']
            com=[com,'pset dmextract outfile='+mfile1]
            com=[com,'pset dmextract bkg="'+mfile+'[bin sky=region(bg.reg)]"'] ;annulus('+ra+','+dec+',5,20)]"']
-           com=[com,'/Users/jracusin/CIAO/ciao-4.7/bin/dmextract clobber=yes']
+           com=[com,'/Users/jracusin/CIAO/ciao-4.8/bin/dmextract clobber=yes']
            run_com,com
 
            out=mrdfits(mfile1,1)
-           com='/Users/jracusin/CIAO/ciao-4.7/bin/dmlist "'+mfile1+'[cols counts,area,bg_counts,bg_area,net_counts,net_err,exposure]" data > results'+ntostr(rad)+'_'+engout[j]+'.dat'
+           com='/Users/jracusin/CIAO/ciao-4.8/bin/dmlist "'+mfile1+'[cols counts,area,bg_counts,bg_area,net_counts,net_err,exposure]" data > results'+ntostr(rad)+'_'+engout[j]+'.dat'
            print,com
            spawn,com
 
@@ -209,7 +209,7 @@ pro sky_region,evfile,asolfiles,ra,dec,skyx,skyy,outfile,com=com,readsky=readsky
 ;  spawn,'ciao'
 ;  setenv,'ASCDS_INSTALL=/Users/CIAO/ciao-4.1'
 ;  setenv,'CALDB=/Users/CALDB'
-;  com='/Users/CIAO/ciao-4.7/bin/dmcoords '+evfile+'  asolfile='+asolfiles+' opt=cel ra="'+ra+'" dec="'+dec+'" verbose=1  > sky_reg.txt'
+;  com='/Users/CIAO/ciao-4.8/bin/dmcoords '+evfile+'  asolfile='+asolfiles+' opt=cel ra="'+ra+'" dec="'+dec+'" verbose=1  > sky_reg.txt'
   com='dmcoords '+evfile+' asolfile='+asolfiles+' opt=cel ra="'+ra+'" dec="'+dec+'" verbose=1 > '+outfile
 
   print,com
@@ -787,7 +787,7 @@ pro psf_mkarf,grb,rad=rad
      
      outfile='coords.txt'
      ;;; dmcoords
-     com1='/Users/jracusin/CIAO/ciao-4.7/bin/dmcoords '+afile[i]+' asolfile='+asolfiles[i]+' opt=cel ra="'+ra+'" dec="'+dec+'" verbose=1 > '+outfile
+     com1='/Users/jracusin/CIAO/ciao-4.8/bin/dmcoords '+afile[i]+' asolfile='+asolfiles[i]+' opt=cel ra="'+ra+'" dec="'+dec+'" verbose=1 > '+outfile
      print,com1
      spawn,com1
  
@@ -796,10 +796,10 @@ pro psf_mkarf,grb,rad=rad
      x=x[w]
      y=y[w]
      
-;     com3='/Users/jracusin/CIAO/ciao-4.7/bin/dmcopy
+;     com3='/Users/jracusin/CIAO/ciao-4.8/bin/dmcopy
 ;     "'+afile[i]+'[(x,y)=circle('+ntostr(x)+','+ntostr(y)+',50)]"
 ;     outfile='+newafile[i]+' clobber=yes'
-     com3='/Users/jracusin/CIAO/ciao-4.7/contrib/bin/src_psffrac '+afile[i]+' "circle('+ntostr(x)+','+ntostr(y)+',3)" psffrac_'+ntostr(i+1)+'_'+ntostr(rad)+'.fits clobber=yes'
+     com3='/Users/jracusin/CIAO/ciao-4.8/contrib/bin/src_psffrac '+afile[i]+' "circle('+ntostr(x)+','+ntostr(y)+',3)" psffrac_'+ntostr(i+1)+'_'+ntostr(rad)+'.fits clobber=yes'
      print
      print,'RUN AT COMMAND LINE'
      print,com3
@@ -817,7 +817,7 @@ pro psf_mkarf,grb,rad=rad
      mwrfits,arf,arfname2,hdr,/create
 
     
-;     com4='/Users/jracusin/CIAO/ciao-4.7/bin/arfcorr infile='+newafile[i]+' arf='+arfname+' outfile='+arfcorrname+' region="circle('+ntostr(x)+','+ntostr(y)+',3)" x='+ntostr(x)+' y='+ntostr(y)+' energy=0.0 clobber=yes verbose=2'
+;     com4='/Users/jracusin/CIAO/ciao-4.8/bin/arfcorr infile='+newafile[i]+' arf='+arfname+' outfile='+arfcorrname+' region="circle('+ntostr(x)+','+ntostr(y)+',3)" x='+ntostr(x)+' y='+ntostr(y)+' energy=0.0 clobber=yes verbose=2'
 ;     print,com4
 ;     spawn,com4
   endfor 
@@ -847,11 +847,11 @@ pro psf_mkarf_old,grb,rad=rad
      
      outfile='coords.txt'
      ;;; dmcoords
-     com1='/Users/jracusin/CIAO/ciao-4.7/bin/dmcoords '+afile[i]+' asolfile='+asolfiles[i]+' opt=cel ra="'+ra+'" dec="'+dec+'" verbose=1 > '+outfile
+     com1='/Users/jracusin/CIAO/ciao-4.8/bin/dmcoords '+afile[i]+' asolfile='+asolfiles[i]+' opt=cel ra="'+ra+'" dec="'+dec+'" verbose=1 > '+outfile
 ;     print,com1
 ;     spawn,com1
 
-     com2='/Users/jracusin/CIAO/ciao-4.7/bin/pget ~/pfiles/dmcoords.par theta phi > theta_phi.dat'
+     com2='/Users/jracusin/CIAO/ciao-4.8/bin/pget ~/pfiles/dmcoords.par theta phi > theta_phi.dat'
 ;     print,com2
 ;     spawn,com2
 
@@ -889,7 +889,7 @@ pro psf_mkarf_old,grb,rad=rad
         arffile='arf_corr'+ntostr(rad)+'.dat'
 ;        if exist(arffile) then spawn,'rm '+arffile
         openw,lun,'slsh_script.sl',/get_lun
-        printf,lun,'#!/usr/bin/env /Users/jracusin/CIAO/ciao-4.7/bin/slsh'
+        printf,lun,'#!/usr/bin/env /Users/jracusin/CIAO/ciao-4.8/bin/slsh'
         printf,lun
         printf,lun,'require("psf");' 
         printf,lun,'variable psf=psfInit("/Users/jracusin/CALDB/data/chandra/default/reef/hrmaD1996-12-20reefN0001.fits");'
@@ -1015,11 +1015,11 @@ pro psf_corr_cxo,grb,rad=rad
      com=[com,'pset specextract dafile=CALDB']
 ;     com=[com,'pset specextract gtype="NUM_CTS"']
 ;     com=[com,'pset specextract gspec=20']
-     com=[com,'/Users/jracusin/CIAO/ciao-4.7/contrib/bin/specextract clobber=yes']
+     com=[com,'/Users/jracusin/CIAO/ciao-4.8/contrib/bin/specextract clobber=yes']
 ;;; not doing this anymore
 
 ;; using this, but binning doesn't work
-     com='/Users/jracusin/CIAO/ciao-4.7/contrib/bin/specextract "'+mfile+'" bkgfile="'+bgfile+'" outroot='+grb+'_'+ntostr(i+1)+'_'+ntostr(rad)+' asp='+asolfiles[i]+' mskfile='+mskfiles[i]+' grouptype=NUM_BINS binspec=1 dafile=CALDB clobber=yes'
+     com='/Users/jracusin/CIAO/ciao-4.8/contrib/bin/specextract "'+mfile+'" bkgfile="'+bgfile+'" outroot='+grb+'_'+ntostr(i+1)+'_'+ntostr(rad)+' asp='+asolfiles[i]+' mskfile='+mskfiles[i]+' grouptype=NUM_BINS binspec=1 dafile=CALDB clobber=yes'
      print,'RUN THIS AT THE COMMAND LINE'
      print,com
 ;     spawn,com
@@ -1032,7 +1032,7 @@ pro psf_corr_cxo,grb,rad=rad
 ;  writecol,'psscript_'+ntostr(rad)+'.txt','specextract'+ntostr(indgen(n)+1)+'_'+ntostr(rad)+'.txt'
 ;  spawn,'chmod u+x psscript_'+ntostr(rad)+'.txt'
 
-;  com='/Users/jracusin/CIAO/ciao-4.7/contrib/bin/specextract "'+mfile[i]+'[time=1000:2000][sky=circle('+ra+','+dec+',1)]" bgevents="'+mfile[i]+'[time=1000:2000][sky=annulus('+ra+','+dec+',5,20)]" root='+grb+' asol="'+ntostrarr(asolfiles[i],',')+'" bgasol="" gtype="BIN" gspec="1:1024:20" pbkfile="'+ntostrarr(pbkfiles[i],',')+'" dafile=CALDB'
+;  com='/Users/jracusin/CIAO/ciao-4.8/contrib/bin/specextract "'+mfile[i]+'[time=1000:2000][sky=circle('+ra+','+dec+',1)]" bgevents="'+mfile[i]+'[time=1000:2000][sky=annulus('+ra+','+dec+',5,20)]" root='+grb+' asol="'+ntostrarr(asolfiles[i],',')+'" bgasol="" gtype="BIN" gspec="1:1024:20" pbkfile="'+ntostrarr(pbkfiles[i],',')+'" dafile=CALDB'
 ;  print,com
 ;  spawn,com
 ;endfor
@@ -1166,6 +1166,8 @@ pro read_chandra_results,grb,str,rad=rad,add=add
      str[i].time=(str[i].tstop-str[i].tstart)/2.+str[i].tstart
 
   endfor 
+
+stop
   return
 end 
 
@@ -1202,7 +1204,7 @@ pro chandra_merge,grb
   com=[com,'pset merge_all asol="'+ntostrarr(asolfiles,',')+'"']
   mfile='events_merged_'+grb+'.fits'
   com=[com,'pset merge_all merged='+mfile]
-  com=[com,'/Users/jracusin/CIAO/ciao-4.7/contrib/bin/merge_all clobber=yes']
+  com=[com,'/Users/jracusin/CIAO/ciao-4.8/contrib/bin/merge_all clobber=yes']
 ;  for j=0,n_elements(com)-1 do begin
 ;     print,com[j]
 ;     spawn,com[j]
@@ -1261,7 +1263,7 @@ pro chandra_analysis,grb,ra,dec,skipextract=skipextract,skipprocess=skipprocess,
         com=[com,'pset acis_process_events eventdef=")stdlev1"']
 ;        com=[com,'pset acis_process_events check_vf_pha=yes']
         com=[com,'pset acis_process_events trail=0.027']
-        com=[com,'/Users/jracusin/CIAO/ciao-4.7/bin/acis_process_events clobber=yes']
+        com=[com,'/Users/jracusin/CIAO/ciao-4.8/bin/acis_process_events clobber=yes']
         for j=0,n_elements(com)-1 do begin
            print,com[j]
            spawn,com[j]
@@ -1269,7 +1271,7 @@ pro chandra_analysis,grb,ra,dec,skipextract=skipextract,skipprocess=skipprocess,
 
      ;;; FILTER GRADES
         com='punlearn dmcopy'
-        com=[com,'/Users/jracusin/CIAO/ciao-4.7/bin/dmcopy "acis_new_evt1.fits[EVENTS][grade=0,2,3,4,6,status=0]" acis_flt_evt1.fits clobber=yes']
+        com=[com,'/Users/jracusin/CIAO/ciao-4.8/bin/dmcopy "acis_new_evt1.fits[EVENTS][grade=0,2,3,4,6,status=0]" acis_flt_evt1.fits clobber=yes']
         for j=0,n_elements(com)-1 do begin
            print,com[j]
            spawn,com[j]
@@ -1278,7 +1280,7 @@ pro chandra_analysis,grb,ra,dec,skipextract=skipextract,skipprocess=skipprocess,
      ;;; LEVEL 2 EVTS
         com='punlearn dmcopy'
         fltfile=file_search('secondary/acisf*'+dir[i]+'*_flt1.fits*')
-        com=[com,'/Users/jracusin/CIAO/ciao-4.7/bin/dmcopy "acis_flt_evt1.fits[EVENTS][@'+fltfile+'][cols -phas]" acis_evt2.fits clobber=yes']
+        com=[com,'/Users/jracusin/CIAO/ciao-4.8/bin/dmcopy "acis_flt_evt1.fits[EVENTS][@'+fltfile+'][cols -phas]" acis_evt2.fits clobber=yes']
         for j=0,n_elements(com)-1 do begin
            print,com[j]
            spawn,com[j]
@@ -1286,7 +1288,7 @@ pro chandra_analysis,grb,ra,dec,skipextract=skipextract,skipprocess=skipprocess,
         
      ;;; FILTER ENERGY
         com='punlearn dmcopy'
-        com=[com,'/Users/jracusin/CIAO/ciao-4.7/bin/dmcopy "acis_evt2.fits[energy=500:8000]" acis_evt2_clean.fits opt=all clobber=yes']
+        com=[com,'/Users/jracusin/CIAO/ciao-4.8/bin/dmcopy "acis_evt2.fits[energy=500:8000]" acis_evt2_clean.fits opt=all clobber=yes']
         for j=0,n_elements(com)-1 do begin
            print,com[j]
            spawn,com[j]
@@ -1314,16 +1316,16 @@ pro chandra_analysis,grb,ra,dec,skipextract=skipextract,skipprocess=skipprocess,
         com=[com,'pset dmextract infile="'+mfile+'[bin sky=region(src_'+ntostr(rad)+'.reg)]"'];circle('+ra+','+dec+',10)]"']
         com=[com,'pset dmextract outfile=src_'+mfile1]
         com=[com,'pset dmextract bkg="'+mfile+'[bin sky=region(bg.reg)]"'];annulus('+ra+','+dec+',5,20)]"']
-        com=[com,'/Users/jracusin/CIAO/ciao-4.7/bin/dmextract clobber=yes']
+        com=[com,'/Users/jracusin/CIAO/ciao-4.8/bin/dmextract clobber=yes']
         for j=0,n_elements(com)-1 do begin
            print,com[j]
            spawn,com[j]
         endfor
         
-;  com='/Users/jracusin/CIAO/ciao-4.7/bin/dmlist "src_'+mfile+'[HISTOGRAM][cols counts]" data'
+;  com='/Users/jracusin/CIAO/ciao-4.8/bin/dmlist "src_'+mfile+'[HISTOGRAM][cols counts]" data'
 ;  spawn,com
         
-        com='/Users/jracusin/CIAO/ciao-4.7/bin/dmlist "src_'+mfile1+'[cols counts,area,bg_counts,bg_area,net_counts,net_err,exposure]" data > results'+ntostr(rad)+'.dat'
+        com='/Users/jracusin/CIAO/ciao-4.8/bin/dmlist "src_'+mfile1+'[cols counts,area,bg_counts,bg_area,net_counts,net_err,exposure]" data > results'+ntostr(rad)+'.dat'
         print,com
         spawn,com
      endif 

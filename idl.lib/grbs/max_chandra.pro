@@ -135,10 +135,10 @@ pro max_chandra
 
   com=['plotsym,0,1,/fill',$       
 ;       'oplot,lc[n_elements(lc)-2:*].time*z1,lc[n_elements(lc)-2:*].src_rate*f,color=!orange,psym=8',$
-       'oplot,[9.*86400.,9.*86400],[1e-15,1e-5],line=2',$
-       'oplot,[16.*86400.,16.*86400],[1e-15,1e-5],line=2',$
-       "xyouts,1.8e5,1e-10,'9 days',/data",$
-       "xyouts,1.5e6,1e-10,'16 days',/data"]
+       'oplot,[8.*86400.,8.*86400],[1e-15,1e-5],line=2',$
+       'oplot,[15.*86400.,15.*86400],[1e-15,1e-5],line=2',$
+       "xyouts,1.8e5,1e-10,'8 days',/data",$
+       "xyouts,1.5e6,1e-10,'15 days',/data"]
 
   com2=['addmo=fit_models(pnames,p,np2,/addbreak,basemo=basemo2)',$
         'xw=[2,3,3,3,3,2,3,3,3,3,3]',$
@@ -146,16 +146,15 @@ pro max_chandra
         'oplot,lc[n_elements(lc)-3:*].time*z1,yfit2*f,color=color[i],line=2']
 
 
-  plot_all_xrt_lcs,overgrb=type1,/flux,add='max_t1_swift_grb_',overcom=com[0:4],dir='~/proposals/Chandra_cycle17/Max/',/overdata,/lastthick;,/nounder
+  plot_all_xrt_lcs,overgrb=type1,/flux,add='max_t1_swift_grb_',overcom=com[0:4],dir='~/proposals/Chandra_cycle18/Max/',/overdata,/lastthick;,/nounder
   lc=mrdfits('~/GRBs/GRB130831A/UL_lc_chandra.fits',1)
   spec=mrdfits('~/GRBs/GRB130831A/UL_specfits.fits',1)
   plots,lc.time,lc.src_rate*spec[n_elements(spec)-1].unabs_cfratio,color=!green,psym=8
   oplot,[lc.tstart,lc.tstop],[lc.src_rate,lc.src_rate]*spec[n_elements(spec)-1].unabs_cfratio,color=!green
 
-  plot_all_xrt_lcs,overgrb=type2,/flux,add='max_t2_swift_grb_',overcom=com[1:*],dir='~/proposals/Chandra_cycle17/Max/',/overdata;,/nounder;,overgcom=com2
+  plot_all_xrt_lcs,overgrb=type2,/flux,add='max_t2_swift_grb_',overcom=com[1:*],dir='~/proposals/Chandra_cycle18/Max/',/overdata;,/nounder;,overgcom=com2
 
 
-  stop
   maxgrbs=[type1,type2]
   maxgrbs=maxgrbs[sort(maxgrbs)]
   nm=n_elements(maxgrbs)
@@ -184,13 +183,13 @@ pro max_chandra
 
 
 stop
-  begplot,name='~/proposals/Chandra_cycle17/Max/max_swift_grb_lc_compare_flux.ps',/color,/land,font='helvetica',/encap
+  begplot,name='~/proposals/Chandra_cycle18/Max/max_swift_grb_lc_compare_flux.ps',/color,/land,font='helvetica',/encap
   colors=[!blue,!cyan,!green,!red,!orange,!sienna,!salmon,!magenta,!forestgreen,!purple,!dodgerblue]
 
   plot,[10,1e8],[1e-15,1e6],/nodata,/xlog,/ylog,xtitle='Time Since Trigger (s)',ytitle='Flux (0.3-10 keV) (erg cm!U-1!N s!U-1!N)',charsize=2,yrange=[1e-15,1e-6],/ysty,yminor=9,yticks=9,xrange=[10,1e8],/xsty,xminor=9
 
   match,latgrbs,grbs,m1,m2
-  dont_match,latgrbs,grbs,dm1,dm2
+;  dont_match,latgrbs,grbs,dm1,dm2
 
   lat=grbs[m2]
   nlat=n_elements(lat)
@@ -248,8 +247,8 @@ stop
      cd,'..'
   endfor 
 
-  oplot,[5.*86400.,5.*86400],[1e-15,1e-5],line=2
-  oplot,[10.*86400.,10.*86400],[1e-15,1e-5],line=2
+  oplot,[8.*86400.,8.*86400],[1e-15,1e-5],line=2
+  oplot,[15.*86400.,15.*86400],[1e-15,1e-5],line=2
   xyouts,7e4,2e-15,'8 days',/data
   xyouts,1e6,2e-15,'15 days',/data
 
@@ -258,8 +257,8 @@ stop
 
   endplot
 
-  cd,'~/proposals/Chandra_cycle17/Max/'
-  spawn,'ps2pdf max_swift_grb_lc_compare_flux.ps'
+  cd,'~/proposals/Chandra_cycle18/Max/'
+  ps2pdf,'max_swift_grb_lc_compare_flux.ps'
 
 
 return

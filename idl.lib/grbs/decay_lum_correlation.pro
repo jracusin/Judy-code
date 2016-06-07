@@ -2,6 +2,59 @@
 @fit_lc
 @/Users/jracusin/idl.lib/util/colorbar
 @swift_lat_pop_studies
+pro test_lum_seg
+  g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
+  w=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3,nw)
+  g=g[w]
+  
+  w2=0 & w3=0
+  for i=0,nw-1 do begin
+     segs=strsplit(g[i].type,'-',/ex)
+     w=where(strtrim(segs,2) eq 'II',nw)
+     if nw gt 0 then w2=[w2,i]
+     w=where(strtrim(segs,2) eq 'III',nw)
+     if nw gt 0 then w3=[w3,i]
+  endfor 
+  w2=w2[1:*]
+  w3=w3[1:*]
+  nw2=n_elements(w2)
+  nw3=n_elements(w3)
+
+  alpha2=fltarr(nw2) & alpha2err=fltarr(2,nw2)
+  alpha3=fltarr(nw3) & alpha3err=fltarr(2,nw3)
+  for i=0,nw2-1 do begin
+     segs=strsplit(g[w2[i]].type,'-',/ex)
+     w=where(strtrim(segs,2) eq 'II')
+     alpha2[i]=g[w2[i]].p[w*2+1]
+     alpha2err[*,i]=g[w2[i]].perr[*,w*2+1]
+  endfor 
+  
+  for i=0,nw3-1 do begin
+     segs=strsplit(g[w3[i]].type,'-',/ex)
+     w=where(strtrim(segs,2) eq 'III')
+     alpha3[i]=g[w3[i]].p[w*2+1]
+     alpha3err[*,i]=g[w3[i]].perr[*,w*2+1]
+  endfor 
+
+  help,w2,w3
+
+  match,w2,w3,m1,m2
+
+;  test_correlation,alpha2[m1],alpha3[m2],alpha2err[*,m1],alpha3err[*,m2],g[w2[m1]].z,xtitle=!tsym.alpha+'!LII!N',ytitle=!tsym.alpha+'!LIII!N'
+
+;stop
+  test_correlation,g[w2].lumdens_final,alpha2,g[w2].lumdens_final_err,alpha2err,g[w2].z,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!LX,fit,II!N',/xlog,out=out2,add='Only II: '
+;  mwrfits,out2,'~/Swift/decay_lum_corr/only_plateau_corr_out.fits',/create
+;stop
+  test_correlation,g[w3].lumdens_final,alpha3,g[w3].lumdens_final_err,alpha3err,g[w3].z,xtitle='L!LX,200s!N (erg s!U-1!N Hz!U-1!N)',ytitle=!tsym.alpha+'!LX,fit,III!N',/xlog,out=out3,add='Only III: '
+  concat_structs,out2,out3,out
+  mwrfits,out,'~/Swift/decay_lum_corr/only_plateau_normal_corr_out.fits',/create
+
+
+stop
+return
+end 
+
 pro test_flare_removal,doplot=doplot,redo=redo,ind=ind
 
   g=mrdfits('~/Swift/decay_lum_corr/lum_decay_corr.fits',1)
@@ -372,13 +425,19 @@ pro test_correlation,x,y,xerr0,yerr0,z,_extra=_extra,w1=w1,w2=w2,w3=w3,w4=w4,w5=
      plus=b0*xw+a0+am*cos(b0)*2.  ;;; 2 sigma error
      minus=b0*xw+a0-am*cos(b0)*2.
      s=sort(x[w])
-     q=where(plus[s] le yrange[1]-(2-leglimit[nsamp-1]))
-     oplot, x[w[s[q]]],plus[s[q]], line=2,color=color[j]
+     q=where(plus[s] le yrange[1]-(2-leglimit[nsamp-1]),nq)
+     if nq gt 1 then oplot, x[w[s[q]]],plus[s[q]], line=2,color=color[j]
      oplot, x[w[s]],minus[s],line=2,color=color[j]
 ;     leg=[leg,'slope='+numdec(b0,2)+'!S!D-'+numdec(b_err[0],2)+'!R!U+'+numdec(b_err[1],2)+'!N  const='+numdec(a0,2)+'!S!D-'+numdec(a_err[0],2)+'!R!U+'+numdec(a_err[1],2)+'!N  R!Dsp!N='+numdec(c[0],2)+'  signif='+numdec(mpnormlim(c[1],/SLEVEL),1)+!tsym.sigma]
-     if a0 gt 0 then pm='+' else pm=''
-     if c[1] lt 0.01 then nullprob=numdec(c[1],2,/sci,/idlplot) else nullprob=numdec(c[1],2)
-     leg=[leg,add[j]+!tsym.alpha+'!N = ('+numdec(b0,2)+'!S!D-'+numdec(b_err[0],2)+'!R!U+'+numdec(b_err[1],2)+'!N) '+!tsym.times+' log L'+pm+'('+numdec(a0,2)+'!S!D-'+numdec(a_err[0],2)+'!R!U+'+numdec(a_err[1],2)+'!N)    R!Dsp!N='+numdec(c[0],2)+'   p='+nullprob];' ('+numdec(mpnormlim(c[1],/SLEVEL),1)+!tsym.sigma+'!N)']
+     if a0 gt 0 then pm='+' else pm='-'
+;     if c[1] lt 0.01 then nullprob=numdec(c[1],2,/sci,/idlplot) else
+;     nullprob=numdec(c[1],2)
+     if c[1] ge 0.1 then nullprob='>0.10'
+     if c[1] lt 0.1 then nullprob='='+numdec(c[1],2)
+     if c[1] lt 1e-2 then nullprob='='+numdec(c[1],0,/sci,/idlplot)
+     if c[1] le 1e-6 then nullprob='<<10!U-6!N'
+
+     leg=[leg,add[j]+!tsym.alpha+'!N = ('+numdec(b0,2)+'!S!D-'+numdec(b_err[0],2)+'!R!U+'+numdec(b_err[1],2)+'!N) '+!tsym.times+' log L'+pm+'('+numdec(abs(a0),2)+'!S!D-'+numdec(a_err[0],2)+'!R!U+'+numdec(a_err[1],2)+'!N)    R!Dsp!N='+numdec(c[0],2)+'   p'+nullprob];' ('+numdec(mpnormlim(c[1],/SLEVEL),1)+!tsym.sigma+'!N)']
   endfor      
 
   legend,leg[1:*],/top,left=left,right=right,box=0,spacing=2.5,margin=-0.5,textcolor=color[0:nsamp-1]
@@ -950,7 +1009,7 @@ pro gendre,doplot=doplot,reallyredo=reallyredo
   plot,t,sigfa,/xlog,/ylog,xtitle='Time (s)',ytitle=!tsym.sigma+'!LL(t)!N/ L!Lmedian!N(t)',thick=10,charsize=2.,line=1
   oplot,t,sigff,color=!red,thick=10,line=2
   oplot,t,n/100.
-  legend,['Broken Power Law Fits','Average Fits','Number of GRBs/100'],textcolor=[!red,!p.color,!p.color],box=0,/top,/right,charsize=2,line=[2,1,0],color=[!red,!p.color,!p.color]
+  legend,['Best-fit Power Law','Average Power Law','Number of GRBs/100'],textcolor=[!red,!p.color,!p.color],box=0,/top,/right,charsize=2,line=[2,1,0],color=[!red,!p.color,!p.color]
   endplot
   spawn,'ps2pdf ~/Swift/decay_lum_corr/lum_spread_w_time.ps ~/Swift/decay_lum_corr/lum_spread_w_time.pdf'
 
@@ -1048,7 +1107,7 @@ help,m2
         lum='('+numdec(g[i].lumdens_final/10d^al[i],2)+'^{+'+numdec(g[i].lumdens_final_err[1]/10d^al[i],2)+'}_{-'+numdec(g[i].lumdens_final_err[0]/10d^al[i],2)+'}) \times 10^{'+ntostr(al[i])+'}' else $
            lum='('+numdec(g[i].lumdens_final/10d^al[i],2)+' \pm '+numdec(max(g[i].lumdens_final_err)/10d^al[i],2)+') \times 10^{'+ntostr(al[i])+'}'
 
-     stuff[i]=g[i].grb+a+numdec(g[i].z,2)+a+ref[i]+a+numdec(g[i].t90,2)+as+numdec(g[i].alpha_final,2)+aerr+sas+lum+sa+sdc[i]+a+ptu[i]+a+flares[i]+' \\'
+     stuff[i]=g[i].grb+a+numdec(g[i].z,2)+a+ref[i]+a+numdec(g[i].t90,1)+as+numdec(g[i].alpha_final,2)+aerr+sas+lum+sa+sdc[i]+a+ptu[i]+a+flares[i]+' \\'
   endfor 
 
   writecol,'~/papers/decay_lum_corr/grb_table.tex',stuff
@@ -1069,7 +1128,7 @@ pro results_table
   colprint,indgen(n_elements(outfiles)),outfiles
 
   openw,lun,'~/papers/decay_lum_corr/results_table.tex',/get_lun
-  ind=[0,8,2,4,7,3,6,9,5]
+  ind=[0,9,2,4,8,3,6,7,10,5]
   for k=0,n_elements(ind)-1 do begin
      i=ind[k]
      out=mrdfits(outfiles[i],1,/silent)
@@ -1089,8 +1148,20 @@ pro results_table
         y=str_replace(y,'!9a!X','\alpha')
         y=str_replace(y,'t!Iplateau','t_{plat}')
 
-        if out[j].null_hyp lt 0.01 then n=numdec(out[j].null_hyp,2,/sci,/tex) else n=numdec(out[j].null_hyp,2)
-        if out[j].partial_null_hyp lt 0.01 then pn=numdec(out[j].partial_null_hyp,2,/sci,/tex) else pn=numdec(out[j].partial_null_hyp,2)
+;        if out[j].null_hyp lt 0.01 then
+;        n=numdec(out[j].null_hyp,2,/sci,/tex) else
+;        n=numdec(out[j].null_hyp,2)
+        if out[j].null_hyp ge 0.1 then n='> 0.10'
+        if out[j].null_hyp lt 0.1 then n=numdec(out[j].null_hyp,2)
+        if out[j].null_hyp lt 1e-2 then n=numdec(out[j].null_hyp,0,/sci,/tex)
+        if out[j].null_hyp le 1e-6 then n='\ll 10^{-6}'
+
+        if out[j].partial_null_hyp ge 0.1 then pn='> 0.10'
+        if out[j].partial_null_hyp lt 0.1 then pn=numdec(out[j].partial_null_hyp,2)
+        if out[j].partial_null_hyp lt 1e-2 then pn=numdec(out[j].partial_null_hyp,0,/sci,/tex)
+        if out[j].partial_null_hyp le 1e-6 then pn='\ll 10^{-6}'
+
+;        if out[j].partial_null_hyp lt 0.01 then pn=numdec(out[j].partial_null_hyp,2,/sci,/tex) else pn=numdec(out[j].partial_null_hyp,2)
         if out[j].partial_spearman gt -1 then $
            ps=numdec(out[j].partial_spearman,2) else begin 
            ps='-'
@@ -1171,6 +1242,8 @@ pro paper_plots
 ;  !x.margin=[4,0]
 
   begplot,name='~/Swift/decay_lum_corr/parrot_avg_plot.ps',/color
+  !x.margin=[4,1]
+  !y.margin=[2,2]
   loadct,39
   w=where(g.t90 gt 2 and g.tstart lt g.t200*2. and g.alpha_avg lt 3,nw)
   g=g[w]
@@ -1183,11 +1256,11 @@ pro paper_plots
      if j eq 0 then begin
         xtitle=''
         ytitle='L!LX,avg!N(t) (erg s!U-1!N Hz!U-1!N)' 
-        leg='Average Fits'
+        leg='Average Power Law'
      endif else begin 
         ytitle='L!LX,fit!N(t) (erg s!U-1!N Hz!U-1!N)'
         xtitle='Time (s)/(1+z)'
-        leg='Broken Power Law Fits'
+        leg='Best-fit Power Law'
      endelse 
      plot,[10,1e7],[1d24,1d34],/nodata,/xlog,/ylog,xtitle=xtitle,ytitle=ytitle,charsize=2
      h=fltarr(nw)
@@ -1214,7 +1287,7 @@ pro paper_plots
 
   ;;;; simulation p plot
 ;  !x.margin=[2,0]
-
+stop
   begplot,name='~/Swift/decay_lum_corr/sim_prob_plot.ps',/land,/color
   g=mrdfits('~/Swift/decay_lum_corr/sim_decay_slope_nosteepcorr.fits',1)
   w=where(g.p gt 0,nw)
@@ -1730,13 +1803,13 @@ pro plot_avg_lc,g
 ;     print,p
 ;     if exist('~/GRBs/'+strtrim(grb,2)+'/lc_fit_out_idl_int4.dat')
 ;     then begin
-     leg=['Broken PL fits','average power law fit t > t!L200!N ('+!tsym.alpha+'='+ntostr(g[i].alpha_avg,4)+')']
+     leg=['Best-fit Power Law','Average Power Law t > t!L200!N ('+!tsym.alpha+'='+ntostr(g[i].alpha_avg,4)+')']
      colors=[!green,!magenta]
 
      if g[i].alpha_avg2 gt 0 and exist('~/GRBs/'+strtrim(grb,2)+'/lc_fit_out_idl_int4.dat') then begin 
         read_lcfit,'~/GRBs/'+strtrim(grb,2)+'/lc_fit_out_idl_int4.dat',pnames,p
         oplot,lc.time,pow(lc.time,p)*lfact,color=!blue
-        leg=[leg,'average PL fit t > t!Lplateau!N ('+!tsym.alpha+'='+ntostr(g[i].alpha_avg2,4)+')']
+        leg=[leg,'Average Power Law fit t > t!Lplateau!N ('+!tsym.alpha+'='+ntostr(g[i].alpha_avg2,4)+')']
         colors=[colors,!blue]
      endif 
 
@@ -2621,6 +2694,7 @@ pro decay_lum_correlation,noplot=noplot,redo=redo,reallyredo=reallyredo,noerror=
 
   endplot
   spawn,'ps2pdf ~/Swift/decay_lum_corr/flux_decay.eps ~/Swift/decay_lum_corr/flux_decay.pdf'
+  for i=1,7 do spawn,'gs -o ~/Swift/decay_lum_corr/flux_decay_p'+ntostr(i)+'.pdf -dNOPAUSE -dBATCH -q -sDEVICE=pdfwrite -dFirstPage='+ntostr(i)+' -dLastPage='+ntostr(i)+' ~/Swift/decay_lum_corr/flux_decay.pdf'
 
   ;;; need to remake this distance into a line
 

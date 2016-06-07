@@ -48,7 +48,7 @@ pro read_phil,time,tposerr,tnegerr,cts,err,fracexp,bgrate,bgerr,corr_fact,cts_in
      if not new then readcol,wtfile,wttime,wttposerr,wttnegerr,wtcts,wterr,wtfracexp,wtbgrate,wtbgerr,wtcorr_fact,wtcts_in_src,wtbg_in_src,wtexposure,wtsigma,format='(d,d,d,d,d,d,d,d,d,d,d,d,d)',/silent else $
         readcol,wtfile,wttime,wttposerr,wttnegerr,wtcts,wterr,wtnegerr,wtfracexp,wtbgrate,wtbgerr,wtcorr_fact,wtcts_in_src,wtbg_in_src,wtexposure,wtsigma,wtsnr,format='(d,d,d,d,d,d,d,d,d,d,d,d,d,d,d)',/silent
      nwt=n_elements(wttime)
-     wttype=replicate(0.,nwt)
+     if nwt gt 0 then wttype=replicate(0.,nwt)
   endif 
   if exist(pcfile) then begin 
      if not new then readcol,pcfile,time,tposerr,tnegerr,cts,err,fracexp,bgrate,bgerr,corr_fact,cts_in_src,bg_in_src,exposure,sigma,format='(d,d,d,d,d,d,d,d,d,d,d,d,d)',/silent else $

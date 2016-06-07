@@ -1,3 +1,32 @@
+pro max_1e5s
+  
+  g=mrdfits('~/Swift/swift_grb_properties.fits',1)
+
+  w=where(g.tstart lt 1e5 and g.tlastdet gt 1e5,nw)
+  g=g[w]
+  
+  f=dblarr(nw)
+  for i=0,nw-1 do begin
+     f[i]=call_function(strtrim(g[i].basemodel,2),1e5,g[i].p)*g[i].cfratio[n_elements(g[i].cfratio)-1]
+
+  endfor 
+  w=where(f ne 0 and f lt 1e8)
+  f=f[w]
+  g=g[w]
+
+  begplot,name='~/stuff_for_people/Max/grb_flux_1e5s.ps',/landscape,/color
+  plotloghist,f,xtitle='0.3-10 keV Flux (erg cm!U-2!Ns!U-1!N)',ytitle='N',xrange=[1e-15,1e-10],bin=0.1,charsize=2.
+  print,median(f)
+  oplot,[median(f),median(f)],[0,50],color=!red,line=2
+  legend,['Median Flux = '+numdec(median(f),1,/idl,/sci)],box=0,/top,/left,textcolor=!red
+
+  endplot
+  ps2pdf,'~/stuff_for_people/Max/grb_flux_1e5s.ps'
+
+stop
+  return
+end 
+
 pro collect_grb_properties,grb
 
   cd,'~/GRBs'
@@ -145,6 +174,21 @@ pro collect_grb_properties,grb
   grb[m2].fluence=bat[m1].sbat_15_150
   grb[m2].trigtime=bat[m1].trigtime
 
+  bat=mrdfits('~/jetbreaks/batcat.fits',1)
+  match,strtrim(bat.grb,2)+'A',strtrim(grb.grb,2),m1,m2
+  if m2[0] ne -1 then begin 
+     grb[m2].t90=bat[m1].t90
+     grb[m2].fluence=bat[m1].sbat_15_150
+     grb[m2].trigtime=bat[m1].trigtime
+  endif 
+
+  bat=mrdfits('~/jetbreaks/batcat.fits',1)
+  match,strtrim(bat.grb,2),strtrim(grb.grb,2)+'A',m1,m2
+  if m2[0] ne -1 then begin 
+     grb[m2].t90=bat[m1].t90
+     grb[m2].fluence=bat[m1].sbat_15_150
+     grb[m2].trigtime=bat[m1].trigtime
+  endif 
   ;;; need to catch GBM bursts that Swift caught later (not
   ;;; co-triggered) = LAT bursts, iPTF bursts.  collect manually?
 

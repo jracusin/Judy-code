@@ -12,7 +12,7 @@ function kband,x,p
   return,y
 end
 
-function kcorr,z,param,pow=pow,band=band
+function kcorr,z,param,pow=pow,band=band,emin=emin,emax=emax
 
   if n_params() eq 0 then begin
      print,'syntax:  k=kcorr(z,params,pow=pow,band=band)'
@@ -20,8 +20,8 @@ function kcorr,z,param,pow=pow,band=band
      print,'          if band then params=[alpha,epeak,beta]'
      return,0
   end 
-  emin=1.
-  emax=10000.
+  if n_elements(emin) eq 0 then emin=1.
+  if n_elements(emax) eq 0 then emax=10000.
 ;  s0=fluence/qpint1d('x*x^(-p[0])',/expression,emin,emax,gamma)
 
   if keyword_set(pow) then begin 

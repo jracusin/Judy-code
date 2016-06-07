@@ -1,4 +1,41 @@
 ;; fselect racusin-AstroServer-00002-ft2-1s.fits 2008-ft2-1s.fits "START <252460800"
+pro lat_movie,ra,dec,trigtime,ft2=ft2
+
+  if n_elements(ft2) eq 0 then get_ft2,trigtime,ft2
+
+  w1=where(ft2.stop le trigtime+1d4 and ft2.start ge trigtime-100 and ft2.in_saa eq 'F',nw1)
+
+;  plotsym,0,1,/fill
+  for i=0,nw1-1,10 do begin 
+     map_set,0,180,/aitoff,grid=15
+     ;; Burst
+     plots,ra,dec,psym=2,color=!red,symsize=2
+     ;; LAT FoV
+     skycircle,ft2[w1[i]].ra_scz,ft2[w1[i]].dec_scz,70.,x,y
+     oplot,x,y,color=!green,thick=3
+     plots,ft2[w1[i]].ra_scz,ft2[w1[i]].dec_scz,color=!green,psym=1,symsize=3
+     ;; Earth
+     era=ft2[w1[i]].ra_zenith-180.
+     if era lt 0. then era=era+360.
+     edec=-ft2[w1[i]].dec_zenith
+     if edec lt -90 then edec=edec+180.
+     skycircle,era,edec,66,x,y
+     oplot,x,y,color=!blue,thick=3
+     plots,era,edec,color=!blue,psym=1,symsize=3
+
+     legend,'Time = T0 + '+ntostr(round(ft2[w1[i]].start-trigtime)),/bottom,/left,box=0
+     legend,['Burst','LAT FoV','Earth'],textcolor=[!red,!green,!blue],/top,/right,box=0,charsize=1.5
+
+;     polyfill,[x,x[0:10]],[y,y[0:10]],color=!green,/data
+     k=get_kbrd(10)
+     if k eq 's' then stop
+ ;    oplot,x,y,color=!green
+  endfor 
+
+
+  return
+end 
+
 pro get_lat_angle,ra,dec,trigtime,dist1
 
   get_ft2,trigtime,ft2

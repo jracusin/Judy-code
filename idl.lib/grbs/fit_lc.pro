@@ -405,14 +405,16 @@ pro plot_lcfit_results,lc,newp,perror,chisq,dof,breaks,leg,pnames,charsize=chars
 
 ;        y=bknpow(t,newp)
         pnames=['Pow1','Breaktime','Pow2']
+        if break1 gt 1e3 then sci1=1
+ 
         leg=['Pow1'+' = '+numdec(pow1,3), $
-             'Breaktime = '+numdec(break1,5),$
+             'Breaktime = '+numdec(break1,1,sci=sci1),$
              'Pow2'+' = '+numdec(pow2,3)]
-        
         if not noerr then $
            leg=leg+[' !S!E+'+numdec(pow1err[1],3)+' !R!I-'+numdec(pow1err[0],3),$
-                    ' !S!E+'+numdec(break1err[1],5)+' !R!I-'+numdec(break1err[0],5),$
+                    ' !S!E+'+numdec(break1err[1],1,sci=sci1)+' !R!I-'+numdec(break1err[0],1,sci=sci1),$
                     ' !S!E+'+numdec(pow2err[1],3)+' !R!I-'+numdec(pow2err[0],3)]
+
         if not keyword_set(nolines) then oplot,[break1,break1],[1e-20,1e5],color=orange,line=2
      end
      2: begin 
@@ -437,17 +439,21 @@ pro plot_lcfit_results,lc,newp,perror,chisq,dof,breaks,leg,pnames,charsize=chars
 ;        t[1,*]=[tstop[w1],break1,tstop[w2],break2,tstop[w3]]
 ;        y=bkn2pow(t,newp)
         pnames=['Pow1','Breaktime1','Pow2','Breaktime2','Pow3']
+        if break1 gt 1e3 then sci1=1
+        if break2 gt 1e3 then sci2=1
+ 
         leg=['Pow1'+' = '+numdec(pow1,3), $
-             'Breaktime = '+numdec(break1,5),$
+             'Breaktime = '+numdec(break1,1,sci=sci1),$
              'Pow2'+' = '+numdec(pow2,3),$
-             'Breaktime2 = '+numdec(break2,5),$
+             'Breaktime2 = '+numdec(break2,1,sci=sci2),$
              'Pow3'+' = '+numdec(pow3,3)]
         if not noerr then $
            leg=leg+[' !S!E+'+numdec(pow1err[1],3)+' !R!I-'+numdec(pow1err[0],3),$
-                    ' !S!E+'+numdec(break1err[1],5)+' !R!I-'+numdec(break1err[0],5),$
+                    ' !S!E+'+numdec(break1err[1],1,sci=sci1)+' !R!I-'+numdec(break1err[0],1,sci=sci1),$
                     ' !S!E+'+numdec(pow2err[1],3)+' !R!I-'+numdec(pow2err[0],3),$
-                    ' !S!E+'+numdec(break2err[1],5)+' !R!I-'+numdec(break2err[0],5),$
-                    ' !S!E+'+numdec(pow3err[1],3)+' !R!I-'+numdec(pow3err[0],3) ]
+                    ' !S!E+'+numdec(break2err[1],1,sci=sci2)+' !R!I-'+numdec(break2err[0],1,sci=sci2),$
+                    ' !S!E+'+numdec(pow3err[1],3)+' !R!I-'+numdec(pow3err[0],3)]
+
         if not keyword_set(nolines) then begin 
            oplot,[break1,break1],[1e-20,1e5],color=orange,line=2
            oplot,[break2,break2],[1e-20,1e5],color=orange,line=2
@@ -480,20 +486,24 @@ pro plot_lcfit_results,lc,newp,perror,chisq,dof,breaks,leg,pnames,charsize=chars
 ;        t[1,*]=[tstop[w1],break1,tstop[w2],break2,tstop[w3],break3,tstop[w4]]
 ;        y=bkn3pow(t,newp)
         pnames=['Pow1','Breaktime1','Pow2','Breaktime2','Pow3','Breaktime3','Pow4']
+        if break1 gt 1e3 then sci1=1
+        if break2 gt 1e3 then sci2=1
+        if break3 gt 1e3 then sci3=1
+
         leg=['Pow1'+' = '+numdec(pow1,3), $
-             'Breaktime = '+numdec(break1,5),$
+             'Breaktime = '+numdec(break1,1,sci=sci1),$
              'Pow2'+' = '+numdec(pow2,3),$
-             'Breaktime2 = '+numdec(break2,5),$
+             'Breaktime2 = '+numdec(break2,1,sci=sci2),$
              'Pow3'+' = '+numdec(pow3,3),$
-             'Breaktime3 = '+numdec(break3,5),$
+             'Breaktime3 = '+numdec(break3,1,sci=sci3),$
              'Pow4'+' = '+numdec(pow4,3)]
         if not noerr then $
            leg=leg+[' !S!E+'+numdec(pow1err[1],3)+' !R!I-'+numdec(pow1err[0],3),$
-                    ' !S!E+'+numdec(break1err[1],5)+' !R!I-'+numdec(break1err[0],5),$
+                    ' !S!E+'+numdec(break1err[1],1,sci=sci1)+' !R!I-'+numdec(break1err[0],1,sci=sci1),$
                     ' !S!E+'+numdec(pow2err[1],3)+' !R!I-'+numdec(pow2err[0],3),$
-                    ' !S!E+'+numdec(break2err[1],5)+' !R!I-'+numdec(break2err[0],5),$
+                    ' !S!E+'+numdec(break2err[1],1,sci=sci2)+' !R!I-'+numdec(break2err[0],1,sci=sci2),$
                     ' !S!E+'+numdec(pow3err[1],3)+' !R!I-'+numdec(pow3err[0],3),$
-                    ' !S!E+'+numdec(break3err[1],5)+' !R!I-'+numdec(break3err[0],5),$
+                    ' !S!E+'+numdec(break3err[1],1,sci=sci3)+' !R!I-'+numdec(break3err[0],1,sci=sci3),$
                     ' !S!E+'+numdec(pow4err[1],3)+' !R!I-'+numdec(pow4err[0],3)]
         if not keyword_set(nolines) then begin 
            oplot,[break1,break1],[1e-20,1e5],color=orange,line=2
@@ -534,24 +544,29 @@ pro plot_lcfit_results,lc,newp,perror,chisq,dof,breaks,leg,pnames,charsize=chars
 ;        y=bkn4pow(t,newp)
         pnames=['Pow1','Breaktime1','Pow2','Breaktime2','Pow3','Breaktime3','Pow4','Breaktime4','Pow5']
 
+        if break1 gt 1e3 then sci1=1
+        if break2 gt 1e3 then sci2=1
+        if break3 gt 1e3 then sci3=1
+        if break4 gt 1e3 then sci4=1
+
         leg=['Pow1'+' = '+numdec(pow1,3), $
-             'Breaktime = '+numdec(break1,5),$
+             'Breaktime = '+numdec(break1,1,sci=sci1),$
              'Pow2'+' = '+numdec(pow2,3),$
-             'Breaktime2 = '+numdec(break2,5),$
+             'Breaktime2 = '+numdec(break2,1,sci=sci2),$
              'Pow3'+' = '+numdec(pow3,3),$
-             'Breaktime3 = '+numdec(break3,5),$
+             'Breaktime3 = '+numdec(break3,1,sci=sci3),$
              'Pow4'+' = '+numdec(pow4,3),$
-             'Breaktime4 = '+numdec(break4,5),$
+             'Breaktime4 = '+numdec(break4,1,sci=sci4),$
              'Pow5'+' = '+numdec(pow5,3)]
         if not noerr then $
            leg=leg+[' !S!E+'+numdec(pow1err[1],3)+' !R!I-'+numdec(pow1err[0],3),$
-                    ' !S!E+'+numdec(break1err[1],5)+' !R!I-'+numdec(break1err[0],5),$
+                    ' !S!E+'+numdec(break1err[1],1,sci=sci1)+' !R!I-'+numdec(break1err[0],1,sci=sci1),$
                     ' !S!E+'+numdec(pow2err[1],3)+' !R!I-'+numdec(pow2err[0],3),$
-                    ' !S!E+'+numdec(break2err[1],5)+' !R!I-'+numdec(break2err[0],5),$
+                    ' !S!E+'+numdec(break2err[1],1,sci=sci2)+' !R!I-'+numdec(break2err[0],1,sci=sci2),$
                     ' !S!E+'+numdec(pow3err[1],3)+' !R!I-'+numdec(pow3err[0],3),$
-                    ' !S!E+'+numdec(break3err[1],5)+' !R!I-'+numdec(break3err[0],5),$
+                    ' !S!E+'+numdec(break3err[1],1,sci=sci3)+' !R!I-'+numdec(break3err[0],1,sci=sci3),$
                     ' !S!E+'+numdec(pow4err[1],3)+' !R!I-'+numdec(pow4err[0],3),$
-                    ' !S!E+'+numdec(break4err[1],5)+' !R!I-'+numdec(break4err[0],5),$
+                    ' !S!E+'+numdec(break4err[1],1,sci=sci4)+' !R!I-'+numdec(break4err[0],1,sci=sci4),$
                     ' !S!E+'+numdec(pow5err[1],3)+' !R!I-'+numdec(pow5err[0],3)]
         if not keyword_set(nolines) then begin 
            oplot,[break1,break1],[1e-20,1e5],color=orange,line=2
