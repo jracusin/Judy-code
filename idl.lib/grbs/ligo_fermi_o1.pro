@@ -58,12 +58,17 @@ pro ligo_fermi_o1
 ;  plotsym,1,4,thick=t
 
   ;;; GW150914
-  flim=[1e-9,3.7e-09]
+;  flim=[1e-9,3.7e-09]
+  flim=[1e-9,6.2e-9]
   xr=[4442,4867]
   xmen=mean(xr)
-  xx=[xr[0],xr[1],xr[1],xr[0],xr[0]]
-  yy=[flim[0],flim[0],flim[1],flim[1],flim[0]]
-  p4=polygon(xx,yy,fill_color=gwcolor[0],transparency=50,/overplot,/data,color=gwcolor[0],thick=2)
+  p2=plot(xr,[flim[1],flim[1]],/overplot,thick=2,color=gwcolor[0])
+  a=arrow([xmen,xmen],[flim[1],flim[0]],/data,head_size=1,color=gwcolor[0],/current,thick=2)
+
+;  xx=[xr[0],xr[1],xr[1],xr[0],xr[0]]
+;  yy=[flim[0],flim[0],flim[1],flim[1],flim[0]]
+;  p4=polygon(xx,yy,fill_color=gwcolor[0],transparency=50,/overplot,/data,color=gwcolor[0],thick=2)
+
 ;  polyfill,xx,yy,color=gwcolor[0]
 ;  plots,xmen,flim,psym=8,color=gwcolor[0]
 ;  oplot,xr,[flim,flim],color=gwcolor[0],thick=t
@@ -77,11 +82,15 @@ pro ligo_fermi_o1
 ;  for i=0,n-1 do xmen[i]=mean([xmin[i],xmax[i]])
   flim0=2.0e-10
   flim1=6.1e-10
+  flim=[1e-10,5e-10]
   xr=[xrange[0],8000]
   xmen=mean(xr)
   xx=[xr[0],xr[1],xr[1],xr[0],xr[0]]
   yy=[flim0,flim0,flim1,flim1,flim0]
-  p4=polygon(xx,yy,fill_color=gwcolor[1],transparency=30,/overplot,/data,color=gwcolor[1],thick=2)
+;  p4=polygon(xx,yy,fill_color=gwcolor[1],transparency=30,/overplot,/data,color=gwcolor[1],thick=2)
+  p2=plot(xr,[flim[1],flim[1]],/overplot,thick=2,color=gwcolor[1])
+  a=arrow([xmen,xmen]*0.5,[flim[1],flim[0]],/data,head_size=1,color=gwcolor[1],/current,thick=2)
+ 
 
 ;  plots,xmen,flim,psym=8,color=gwcolor[1]
 ;  oplot,xr,[flim,flim],color=gwcolor[1],thick=t
@@ -92,18 +101,24 @@ pro ligo_fermi_o1
   flim1=[2.2e-9,4.9e-10]
   xmin=[xrange[0],xrange[0]]
   xmax=[1200,10000.]
+
+  flim=[8e-11,3e-10]
+  xr=[xrange[0],xmax[1]]
+  p2=plot(xr,[flim[1],flim[1]],/overplot,thick=2,color=gwcolor[2])
+  a=arrow([xmen,xmen],[flim[1],flim[0]],/data,head_size=1,color=gwcolor[2],/current,thick=2)
+
 ;  xr=[xrange[0],1200]
 ;  xmen=mean(xr)
 ;   xmin=[xrange[0],3000,8300]
 ;   xmax=[3300,4000,11000]
    n=n_elements(xmin)
    xmen=fltarr(n)
-   for i=0,1 do begin
-      xr=[xmin[i],xmax[i]]
-      xx=[xr[0],xr[1],xr[1],xr[0],xr[0]]
-      yy=[flim0[i],flim0[i],flim1[i],flim1[i],flim0[i]]
-      p4=polygon(xx,yy,fill_color=gwcolor[2],transparency=50,/overplot,/data,color=gwcolor[2],thick=2)
-   endfor 
+;   for i=0,1 do begin
+;      xr=[xmin[i],xmax[i]]
+;      xx=[xr[0],xr[1],xr[1],xr[0],xr[0]]
+;      yy=[flim0[i],flim0[i],flim1[i],flim1[i],flim0[i]]
+;      p4=polygon(xx,yy,fill_color=gwcolor[2],transparency=50,/overplot,/data,color=gwcolor[2],thick=2)
+;   endfor 
 
   ;; flim=[1.5e-9,1.1e-8,9.3e-10]
 ;   for i=0,n-1 do xmen[i]=mean([xmin[i],xmax[i]])
