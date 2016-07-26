@@ -593,11 +593,11 @@ pro plot_lcfit_results,lc,newp,perror,chisq,dof,breaks,leg,pnames,charsize=chars
      for i=0,nflare-1 do begin
         j=indgen(3)+i*3.+plus
 ;        print,newp[j]
-        oplot,t,gauss(t,newp[j]),line=1,color=!yellow
+        oplot,t,gauss(t,newp[j]),line=1,color=!orange
      endfor 
      print,newp[nflare*3:*]
      tmp=execute('y0='+mo0+'(t,newp)');[0:np-nflare*3])')
-     oplot,t,y,line=1,color=!yellow
+     oplot,t,y,line=1,color=!orange
      oplot,t,y0,color=!green,line=2
   endif else oplot,t,y,color=!green,line=2
 

@@ -7,16 +7,6 @@ pro plot_like_qdp,t,yfit,name=name,sigma,ps=ps,file=file,siglim=siglim,_extra=_e
   
   if n_elements(pname) eq 0 then pname='lc_fit_like_qdp.ps'
   if n_elements(name) eq 0 then name=''
-  red=!p.color & blue=red & green=red & cyan=red & magenta=red & purple=red
-  if not keyword_set(nocolor) then begin
-     red=!red
-     blue=!blue
-     green=!green
-     magenta=!magenta
-     purple=!purple
-     cyan=!cyan
-     salmon=!salmon
-  endif 
 ;  if n_elements(file) eq 0 then file='lc_newout.txt'
 ;  readcol,file,time,tstarted,tstoped,cts,err,hard,harderr,expt,src,bg,sig,exp,junk1,curr_ftype,rate1,rate2,rate2,rate1err,rate2err,rate3err,hard1,hard2,hard1err,hard2err,/silent
   if n_elements(lc) eq 0 then lc=lcout2fits(phil=phil,qdp=qdp,uvot=uvot,withbat=withbat,chandra=chandra)
@@ -87,13 +77,24 @@ pro plot_like_qdp,t,yfit,name=name,sigma,ps=ps,file=file,siglim=siglim,_extra=_e
   xorder=round(alog10(xrange[1])-alog10(xrange[0]));+0.5)
   yorder=round(alog10(yrange[1])-alog10(yrange[0]));+0.5)
 ;  if yrange[1] gt 1 then yorder=yorder+1 else yorder=yorder-1
-  print,xrange,yrange,yorder  
+;  print,xrange,yrange,yorder  
 ;stop
   if yorder eq 1 then yorder=yorder+1
   if xorder eq 1 then xorder=xorder+1
   if n_elements(pmulti) gt 0 then !p.multi=pmulti
   
   if keyword_set(ps) then begplot,name=pname,/color,/land,font='helvetica'
+  red=!p.color & blue=red & green=red & cyan=red & magenta=red & purple=red
+  if not keyword_set(nocolor) then begin
+     red=!red
+     blue=!blue
+     green=!green
+     magenta=!magenta
+     purple=!purple
+     cyan=!cyan
+     salmon=!salmon
+  endif 
+
   if n_elements(xtitle) eq 0 then xtitle='Time since BAT trigger (s)' 
 
   plot,xrange,yrange,/nodata,/xlog,/ylog,yrange=yrange,xrange=xrange,_extra=_extra,xmargin=[15,2],charsize=charsize,xtitle=xtitle,ytitle=ytitle,/xsty;,yminor=9,yticks=yorder,xminor=9;,xtickf='loglabels',ytickf='loglabels'

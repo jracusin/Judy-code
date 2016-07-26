@@ -1,4 +1,288 @@
 @fit_functions
+@chandra_analysis
+@fit_lc
+pro plot_160625B
+
+  cd,'~/Chandra/GRB160625B/'
+  begplot,name='GRB160625B_chandra_predict.ps',/color,/land,font='helvetica'
+
+  lc=lcout2fits()
+  spec=mrdfits('UL_specfits.fits',1)
+
+  fact=spec[0].unabs_cfratio
+  xrange=[1e3,1e8]
+  !x.margin=[4,3]
+  yrange=[1e-15,1e-8]
+  plot_types,lc.time,lc.tstart,lc.tstop,lc.src_rate*fact,lc.src_rate_err*fact,lc.type,xrange=xrange,/xlog,/ylog,ytitle='Flux (0.3-10 keV; erg cm!U-2!N s!U-1!N)',/xsty,yrange=yrange,xtitle='Time since trigger (s)',charsize=1.5,/ysty,yminor=0,ytickv=yrange,yticks=1
+;  ploterror,lc.time,lc.src_rate*fact,lc.src_rate_err*fact,/nohat,/xlog,/ylog,xrange=xrange,yrange=yrange,ytitle='Flux (erg cm!U-2!N s!U-1!N)',xtitle='Time since trigger (s)',charsize=1.5,psym=3,/xsty,/ysty,yminor=0,ytickv=yrange,yticks=1
+;  for i=0,n_elements(lc)-1 do oplot,[lc[i].tstart,lc[i].tstop],[lc[i].src_rate,lc[i].src_rate]*fact
+  axis,xrange[0],1e-15,yminor=9,yaxis=0,/ylog,yrange=yrange,/ysty
+
+  read_lcfit,'lc_fit_out_idl_int9.dat',pnames,p
+  mo=fit_models(pnames,p,basemo=basemo)
+  t=[lc.time,p,1000,1200,1400,1600,1800,2000,3000,5000,7000,1e5,1.5e5,2e5,4e5,7e5,1e6,2e6,3e6]
+  t=t[sort(t)]
+  tmp=execute('yfit='+mo+'(t,p)')
+  oplot,t,yfit*fact,color=!green,line=2
+  
+  trigtime=date2met('2016-06-25-22:40:16.28',/fermi)
+  oct1=date2met('2016-10-01-00:00:00',/fermi)-trigtime
+  oplot,[oct1,oct1],yrange,line=1,color=!orange
+  xyouts,oct1*0.9,1e-12,'October 1 2016',orient=90,color=!orange,charsize=1.
+  dec1=date2met('2016-12-01-00:00:00',/fermi)-trigtime
+  oplot,[dec1,dec1],yrange,line=1,color=!orange
+  xyouts,dec1*0.9,1e-12,'December 1 2016',orient=90,color=!orange,charsize=1.
+  mar14=date2met('2017-03-14-00:00:00',/fermi)-trigtime
+  oplot,[mar14,mar14],yrange,line=1,color=!orange
+  xyouts,mar14*0.9,1e-12,'March 14 2017',orient=90,color=!orange,charsize=1.
+
+
+  fjy=flux2jy(1.,spec[0].phind)*1e6
+  ytickv=[1e-4,1e-3,1e-2,1e-1,1,10,100,1000,1e4]/fjy
+  axis,xrange[1],1e-15,yminor=9,yaxis=1,/ylog,yrange=yrange,/ysty,yticks=8,ytickv=ytickv,ytickname=['10!U-4!N','10!U-3!N','10!U-2!N','10!U-1!N','1','10','10!U2!N','10!U3!N'],ytitle='Flux ('+!tsym.mu+'Jy)'
+
+  readcol,'160625B.txt',time,flux,err,format='(f,f,f)'
+  time=time*86400.
+  plotsym,0,1,/fill
+  oplot,time,flux/fjy,color=!purple,psym=8
+;  oplot,xrange,[1e-14,1e-14],line=1,color=!red
+  legend,['XRT','Optical'],box=0,/top,/right,textcolor=[!p.color,!purple]
+
+;oplot,xrange,[1e-11,1e-11],color=!red
+  endplot
+  ps2pdf,'GRB160625B_chandra_predict.ps'
+
+  print,good_for_chandra('GRB160625B',1.4,dir='~/Chandra/GRB160625B',/lat,/plotanyway,/ps)
+
+
+stop
+  return
+end 
+
+pro plot_160509a
+
+  cd,'~/Chandra/GRB160509A'
+  lc=lcout2fits(/chandra)
+  spec=mrdfits('UL_specfits.fits',1)
+  f=flux2jy(spec.cfratio,spec.phind)*1e6
+  trigtime=date2met('2016-05-09-20:47:00.89')
+
+  begplot,name='GRB160509A_Xray_radio_lc.ps',/land,/color
+;  ploterror,lc.time,lc.src_rate*f,lc.src_rate_err*f
+  plot_like_qdp,lc=lc,flux=f,ytitle='Flux ('+!tsym.mu+'Jy)',yrange=[1e-3,1e4],yformat='(loglabels)',/ysty,yminor=9
+  read_lcfit,'lc_fit_comb.dat',pnames,p
+  t=[lc.time,p[2],p[4]]
+  t=t[sort(t)]
+  oplot,t,bkn2pow(t,p)*f,color=!green
+
+  may1=date2met('2016-05-01-00:00:00')-trigtime
+  t6=may1+[9.72,11.42,14.5,20.5]*86400.
+  r6=[80,530,520,130] ;; uJy
+
+  t9=may1+[11.42,14.5,20.5]*86400.
+  r9=[720,390,160] ;;uJy
+
+  june1=date2met('2016-06-01-00:00:00')-trigtime
+  tx=june1+[2,15]*86400.
+  rx=[71,51]
+  rxerr=[7,8]
+  
+  tc=june1+[2,15]*86400.
+  rc=[80,40]
+  rcerr=[4,4]
+
+  plotsym,0,1,/fill
+  oplot,t6,r6,psym=8,color=!blue
+  oplot,t9,r9,psym=8,color=!cyan
+  oplot,tx,rx,psym=8,color=!dodgerblue;,/nohat,errcolor=!dodgerblue
+  oplot,tc,rc,psym=8,color=!royalblue;,/nohat,errcolor=!royalblue
+
+  legend,['XRT','Chandra','6 GHz','9GHz','X-band','C-band'],box=0,/top,/right,textcolor=[!red,!purple,!blue,!cyan,!dodgerblue,!royalblue]
+  endplot
+  ps2pdf,'GRB160509A_Xray_radio_lc.ps'
+
+  return
+end 
+
+pro sim_160509a,plot_results=plot_results,plot_sims=plot_sims,snum=snum
+
+  ;; add fake data point at specific time (x2 of last data point)
+  ;; randomize data point and error bar within poisson errors N times
+  ;; refit the light curve and calc errors (?) for each realization
+  ;; save output
+  ;; look at distribution of fit params and errors on fits
+  ;; try with different exposure times
+
+  cd,'~/Chandra/GRB160509A'
+  lc=lcout2fits(/chandra)
+  newt=lc[208].time*2.
+  read_lcfit,'lc_fit_comb.dat',pnames,p,perr
+  read_psffits,'GRB160509A',psfspec,rad=3
+  xspec=mrdfits('UL_specfits.fits',1)
+  exposure=[20e3,40e3,60e3,80e3,100e3]
+  simdir=['sim20','sim40','sim60','sim80','sim100']
+  if not keyword_set(plot_results) and not keyword_set(plot_sims) then begin 
+     if n_elements(snum) eq 0 then snum=0
+     i=snum
+     exposure=exposure[i]
+     print,simdir[i]
+     
+     sim_chandra,lc,newt,pnames,p,xspec.cfratio,psfspec.fluxfact,exposure,sdir=simdir[i]+'/'
+  endif 
+
+  if keyword_set(plot_results) then begin 
+     begplot,name='add_chandra_obs_sim.ps',/color
+     !p.multi=[0,1,4]
+     color=[!red,!blue,!green,!orange,!magenta]
+     !p.charsize=2.
+
+     xrange=[0,50]
+     yrange=[0,20]
+     bin=1
+     plot,xrange,yrange,/nodata,xrange=xrange,yrange=yrange,xtitle='Chandra Counts'
+     med=fltarr(n_elements(simdir))
+     for i=0,n_elements(simdir)-1 do begin
+        sim=mrdfits(simdir[i]+'/lc_sim_fit.fits',1)
+        plothist,sim.rxcts,bin=bin,xrange=xrange,yrange=yrange,color=color[i],/overplot
+        med[i]=median(sim.rxcts)
+     endfor 
+     legend,simdir+' median='+ntostr(fix(med)),textcolor=color,box=0,/top,/right,charsize=1.
+
+     xrange=[1.7,2.1]
+     yrange=[0,20]
+     bin=0.01
+     plot,xrange,yrange,/nodata,xrange=xrange,yrange=yrange,xtitle='PL'
+     med=fltarr(n_elements(simdir))
+     for i=0,n_elements(simdir)-1 do begin
+        sim=mrdfits(simdir[i]+'/lc_sim_fit.fits',1)
+        plothist,sim.p[5],bin=bin,xrange=xrange,yrange=yrange,color=color[i],/overplot
+        med[i]=median(sim.p[5])
+     endfor 
+     legend,simdir+' median='+numdec(med,3),textcolor=color,box=0,/top,/left,charsize=1.
+
+     pm=['-','+']
+     for j=0,1 do begin 
+        xrange=[0.1,0.3]
+        yrange=[0,50]
+        bin=0.002
+        plot,xrange,yrange,/nodata,xrange=xrange,yrange=yrange,xtitle='PL '+pm[j]+' err'
+     
+        med=fltarr(n_elements(simdir))
+        for i=0,n_elements(simdir)-1 do begin
+           sim=mrdfits(simdir[i]+'/lc_sim_fit.fits',1)
+           plothist,sim.perr[j,5],bin=bin,xrange=xrange,yrange=yrange,color=color[i],/overplot
+           med[i]=median(sim.perr[j,5])
+        endfor 
+        legend,simdir+' median='+numdec(med,3),textcolor=color,box=0,/top,/right,charsize=1.
+     endfor 
+     !p.multi=0
+
+     endplot
+     ps2pdf,'add_chandra_obs_sim.ps'
+  endif 
+
+  if keyword_set(plot_sims) then begin
+     i=snum
+     sim=mrdfits(simdir[i]+'/lc_sim_fit.fits',1)
+     ex=exposure[i]
+     for i=0,99 do begin 
+        plot_like_qdp,lc=lc,xrange=[1e3,1e7],yrange=[1e-5,10]
+        plotsym,0,1,/fill
+        plots,newt,sim[i].crate,psym=8
+        oplot,[newt,newt],sim[i].crate+sim[i].crateerr*[-1,1.]
+;psfspec.fluxfact/xspec.cfratio+sqrt(sim[i].rxcts)/ex*[-1,1.]*psfspec.fluxfact/xspec.cfratio
+        t=[lc.time,newt,sim[i].p[[2,4]]]
+        t=t[sort(t)]
+        oplot,t,bkn2pow(t,sim[i].p),color=!green
+        oplot,[sim[i].p[2],sim[i].p[2]],[1e-5,1e2],color=!green,line=2
+        oplot,[sim[i].p[4],sim[i].p[4]],[1e-5,1e2],color=!green,line=2
+        oplot,t,bkn2pow(t,p),color=!cyan
+        oplot,[p[2],p[2]],[1e-5,1e2],color=!cyan,line=2
+        oplot,[p[4],p[4]],[1e-5,1e2],color=!cyan,line=2
+        numd=[2,3,2,3,2,3]
+        sci=[1,0,1,0,1,0]
+        leg=''
+        for j=0,n_elements(p)-1 do leg=[leg,pnames[j]+' = '+numdec(sim[i].p[j],numd[j],sci=sci[j])+' {-'+numdec(sim[i].perr[0,j],numd[j],sci=sci[j])+',+'+numdec(sim[i].perr[1,j],numd[j],sci=sci[j])+'}']
+        legend,leg[1:*],box=0,/top,/right
+        k=get_kbrd(10)
+        if k eq 's' then stop
+     endfor 
+  endif 
+  stop
+
+  return
+end 
+
+pro sim_chandra,lc,newt,pnames,p,xfact,cfact,exposure,sdir=sdir
+
+  if n_elements(sdir) eq 0 then sdir=''
+  nsim=100.
+  model=fit_models(pnames,p,breaks=breaks)
+  nbreaks=n_elements(breaks)
+
+  wdet=where(lc.src_rate_err ne 0,nwdet)
+  time=[lc[wdet].time,newt]
+  timeerr=dblarr(2,nwdet+1)
+  timeerr[0,*]=[lc[wdet].time-lc[wdet].tstart,exposure/2.]
+  timeerr[1,*]=[lc[wdet].tstop-lc[wdet].time,exposure/2.]
+
+  xrate=call_function(model,newt,p)  ;;; extrapolated rate in xrt
+  crate=xrate*xfact/cfact ;; converted to chandra
+  rxcts=randomu(seed,nsim,poi=round(crate*exposure),/double) ;; randomized counts
+  intmo='int'+model
+
+  pfin=dblarr(nsim)
+  outp=create_struct('sim',0,'rxcts',0,'crate',0d,'crateerr',0d,'pnames',strarr(30),'p',dblarr(30),'perr',dblarr(2,30))
+  
+  if exist(sdir+'lc_sim_fit.fits') then outp=mrdfits(sdir+'lc_sim_fit.fits',1) else $
+     outp=replicate(outp,nsim)
+  s=where(outp.p[0] eq 0)
+  s=s[0]
+
+  for i=s,nsim-1 do begin 
+
+     crate2=rxcts[i]/exposure*cfact/xfact ;; randomized rate
+     crate2err=sqrt(rxcts[i])/exposure*cfact/xfact
+     frate=[lc[wdet].src_rate,crate2]
+     fraterr=[lc[wdet].src_rate_err,crate2err]
+     
+     ;;; properly fill out sim chandra obs
+     clc=lcout2fits(/empty)
+     clc.time=newt
+     clc.tstart=newt-exposure/2.
+     clc.tstop=newt+exposure/2.
+     clc.src_rate=crate2
+     clc.src_rate_err=crate2err
+     clc.src_counts=rxcts[i]
+     clc.tot_back_cts=0.009*rxcts[i]
+     clc.pu_corr=1.
+     clc.exptime=exposure
+     clc.type=2
+     concat_structs,lc,clc,lc2
+
+     fit_pow_model,time,frate,timeerr,fraterr,p,intmo,pnames,yfit,newp,perror,chisq2,dof2,weights,status=status,/silent,breaks=nbreaks,noint=noint,uvot=uvot
+;     print,rxcts
+     pfin[i]=newp[n_elements(newp)-1]
+     
+     lc_monte_pow,lc2,newp,pnames,chisq,dof,perror,ps=ps,/nowrite,nsim=1000,int=int,file=file,uvot=uvot,fflux=fflux,flux=flux,nsig=nsig,breaks=nbreaks,/noplot,add=ntostr(i),outdir=sdir
+     outp[i].sim=i
+     outp[i].rxcts=rxcts[i]
+     outp[i].crate=crate2
+     outp[i].crateerr=crate2err;sqrt(crate2*exposure)/exposure
+     outp[i].pnames[0:n_elements(pnames)-1]=pnames
+     outp[i].p[0:n_elements(newp)-1]=newp
+     outp[i].perr[0,0:n_elements(newp)-1]=perror[0,*]
+     outp[i].perr[1,0:n_elements(newp)-1]=perror[1,*]
+
+     mwrfits,outp,sdir+'lc_sim_fit.fits',/create
+
+  endfor 
+
+stop
+
+  return
+end 
+
 pro plot_131108a
 
   cd,'~/Desktop/GRB131108A'
@@ -447,7 +731,7 @@ function good_for_chandra,grb,z,cfratio=cfratio,ps=ps,dir=dir,lat=lat,lcfile=lcf
   
   if keyword_set(ps) then begplot,name=grb+'_Good_for_chandra.ps',/land,/color
   good=0
-  if n_elements(lcfile) eq 0 then lcfile='lc_fit_out_idl_int7.dat'
+  if n_elements(lcfile) eq 0 then lcfile='lc_fit_out_idl_int9.dat'
   if not exist(lcfile) or not exist('UL_specfits.fits') then begin
      print,'missing UL_specfits.fits'
      return,good
@@ -594,7 +878,10 @@ function good_for_chandra,grb,z,cfratio=cfratio,ps=ps,dir=dir,lat=lat,lcfile=lcf
      print,'Good for Chandra @ 21 days!  z='+ntostr(z) $
   else print,'Not good for Chandra follow-up'
   if n_elements(dir) eq 0 then cd,'..'
-  if keyword_set(ps) then endplot
+  if keyword_set(ps) then begin
+     endplot
+     ps2pdf,grb+'_Good_for_chandra.ps'
+  endif 
 
   return,good
 end 

@@ -168,7 +168,7 @@ pro chandra_cr_fits,ps=ps
   
   ;;; SPEC FITS (COMMON FOR ALL SEGMENTS - hmm?)
   read_specfits,spec
-  n=12 ;; N GRBs
+  n=13 ;; N GRBs
 
   for i=0,n-1 do begin 
    ;;; READ COMBINED XRT-CXO LC FITS
@@ -486,7 +486,7 @@ pro make_comb_flux_lcs,grb,rad=rad,unabs=unabs,ps=ps,pfile=pfile,withfit=withfit
 ;  write_lc,lc,'lc_newout_chandra'+un+'.txt'
   mwrfits,clc,'UL_lc_chandra.fits',/create
 ;  k=get_kbrd(10)
-
+stop
   clc.src_rate=clc.src_rate*xratio
   clc.src_rate_err=clc.src_rate_err*xratio
   concat_structs,xlc,clc,lc
@@ -545,7 +545,7 @@ pro read_specfits,spec
   readcol,'~/Chandra/spectral_fits.txt',pars,format=('a'),delim='%'
   spec=create_struct('grb','','nhgal',0.,'nh',0.,'nherr',fltarr(2),'z',0.,'phind',0.,$
                      'pherr',fltarr(2))
-  spec=replicate(spec,19)
+  spec=replicate(spec,30)
 
   np=n_elements(pars)
   name1=strarr(np) & name2=name1 & par=name1 & e1=par & e2=par
@@ -564,14 +564,17 @@ pro read_specfits,spec
         j=j+1
      endif 
   endfor 
+
+  w=where(strtrim(spec.grb,2) ne '')
+  spec=spec[w]
     
   w=where(name2 eq '(Galactic)')
   spec.nhgal=par[w]*1.
   w=where(name2 eq '(intrinsic)',nw)
   spec.nh=par[w]*1.;*1.e21
   for i=0,nw-1 do begin 
-     spec[i].nherr[1]=strsplit(e1[w[i]],'(+,',/ex)*1.e21
-     spec[i].nherr[0]=strsplit(e2[w[i]],'-)',/ex)*1.e21
+     spec[i].nherr[1]=strsplit(e1[w[i]],'(+,',/ex)*10d^round(alog10(spec[i].nh)-0.5)
+     spec[i].nherr[0]=strsplit(e2[w[i]],'-)',/ex)*10d^round(alog10(spec[i].nh)-0.5)
   endfor 
   w=where(name1 eq 'z')
   spec.z=e1[w]*1.
@@ -1167,7 +1170,6 @@ pro read_chandra_results,grb,str,rad=rad,add=add
 
   endfor 
 
-stop
   return
 end 
 

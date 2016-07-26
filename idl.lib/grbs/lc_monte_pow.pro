@@ -33,7 +33,7 @@ pro lc_monte_wrap,dir,nsim=nsim,int=int,nsig=nsig
   return
 end 
 
-pro lc_monte_pow,lc0,p0,pnames,chisq,dof,outperr,noplot=noplot,ps=ps,nsim=nsim,nowrite=nowrite,int=int,nsig=nsig,file=file,uvot=uvot,fflux=fflux,flux=flux,breaks=breaks,mcfit=mcfit,mo=mo
+pro lc_monte_pow,lc0,p0,pnames,chisq,dof,outperr,noplot=noplot,ps=ps,nsim=nsim,nowrite=nowrite,int=int,nsig=nsig,file=file,uvot=uvot,fflux=fflux,flux=flux,breaks=breaks,mcfit=mcfit,mo=mo,add=add,outdir=outdir
   
   pt=systime(1)
   if n_elements(int) eq 0 then begin 
@@ -48,7 +48,9 @@ pro lc_monte_pow,lc0,p0,pnames,chisq,dof,outperr,noplot=noplot,ps=ps,nsim=nsim,n
   endif 
   print,'n = ',nsim
   print,'Using int',int
-  
+  if n_elements(add) eq 0 then add=''
+  if n_elements(outdir) eq 0 then outdir=''
+
   ;;; 2 sigma confidence level
   if n_elements(nsig) ne 0 then begin 
      if nsig eq 1 then conf=0.68
@@ -237,9 +239,12 @@ fa=0
 
      if not finite(newp[0]) then newp=p
      if not keyword_set(noplot) then begin 
-        !p.multi=[0,1,2]
-        ploterror,time[wdet],lc[wdet].src_rate,timerr[0,wdet],lc[wdet].src_rate_err,/xlog,/ylog,psym=3,/nohat,xtitle='time',ytitle='counts/s',yrange=yrange
-        oplot,t,fp,color=!green
+;        !p.multi=[0,1,2]
+;        !x.omargin=[4,2]
+;        !x.margin=[8,2]
+;        !y.margin=[4,4]
+;        ploterror,time[wdet],lc[wdet].src_rate,timerr[0,wdet],lc[wdet].src_rate_err,/xlog,/ylog,psym=3,/nohat,xtitle='time',ytitle='counts/s',yrange=yrange
+;        oplot,t,fp,color=!green
 
      endif 
 
@@ -280,7 +285,7 @@ fa=0
            if nw3 gt 0 then t2=[t2,time[w3]]
            t2=[t2,newp[fa+6]]
            if nw4 gt 0 then t2=[t2,time[w4]]
-;           t2=[time[w1],newp[fa+2],time[w2],newp[fa+4],time[w3],newp[fa+6],time[w4]]
+;          t2=[time[w1],newp[fa+2],time[w2],newp[fa+4],time[w3],newp[fa+6],time[w4]]
         end 
         4: begin 
            w1=where(time gt 0 and time le newp[fa+2],nw1)
@@ -308,9 +313,14 @@ fa=0
         fnewp=fnewp+newp[np-1]
      endif 
      if not keyword_set(noplot) then begin 
-        ploterror,time[wdet],frate[wdet],timerr[0,wdet],fraterr[wdet],/xlog,/ylog,psym=3,/nohat,xtitle='time',ytitle='counts/s',yrange=[1e-4,1e4];yrange
-        oplot,t2,fnewp,color=!green
-        !p.multi=0
+;        !x.omargin=[10,2]
+;        !x.margin=[12,2]
+;        !y.margin=[6,6]
+        if i mod 10 eq 0 then begin 
+           ploterror,time[wdet],frate[wdet],timerr[0,wdet],fraterr[wdet],/xlog,/ylog,psym=3,/nohat,xtitle='time',ytitle='counts/s',yrange=[1e-4,1e4] ;yrange
+           oplot,t2,fnewp,color=!green
+           !p.multi=0
+        endif 
 ;k=get_kbrd(10)
      endif 
      pp[*,i]=newp
@@ -320,12 +330,15 @@ fa=0
 ;     if k eq 's' then stop
   endfor 
 
-  if keyword_set(ps) then begplot,name='lc_monte_err_plots_int'+int+'.eps',/encap,/land
+  if keyword_set(ps) then begplot,name='lc_monte_err_plots_int'+int+'.eps',/encap;,/land
+;  !x.omargin=[12,2]
+;  !y.margin=[2,3]
+;  !x.margin=[4,4]
 ;  nnp=fix(np/2)+1
   nnp=sqrt(np)+1
-  !p.multi=[0,nnp,nnp]
-  !x.omargin=[10,0]
-  !x.margin=[8,1]
+  !p.multi=[0,nnp-1,nnp]
+ ; !x.omargin=[10,0]
+ ; !x.margin=[8,1]
   outp=fltarr(np)
   outperr=fltarr(2,np)
   alpha=!tsym.alpha
@@ -361,8 +374,10 @@ fa=0
      w0=where((ppp gt 0 or ppp le 0) and finite(ppp),nw0)
      if max(ppp)-min(ppp) gt 0 then begin 
         plothist,ppp[w0],bin=bin,xtitle=pnames2[i],charsize=2,ytitle='N',noplot=noplot
-        oplot,[sp[n5],sp[n5]],[0,n],line=1
-        oplot,[sp[n95],sp[n95]],[0,n],line=1
+        if not keyword_set(noplot) then begin 
+           oplot,[sp[n5],sp[n5]],[0,n],line=1
+           oplot,[sp[n95],sp[n95]],[0,n],line=1
+        endif 
 ;           if i eq 2 then stop
      endif
      for j=0,nsim-1 do begin
@@ -371,7 +386,10 @@ fa=0
 ;     endif 
   endfor 
   !p.multi=0
-  if keyword_set(ps) then endplot
+  if keyword_set(ps) then begin
+     endplot
+     ps2pdf,'lc_monte_err_plots_int'+int+'.eps'
+  endif 
   print
   print,'p = ',p
   print,transpose(perror[0,*])
@@ -402,14 +420,14 @@ fa=0
         printf,lun,pnames[i]+' '+ntostr(p[j])+' '+ntostr(outperr[0,j])+' '+ntostr(outperr[1,j])
      endfor
 ;     printf,lun,'Norm '+ntostr(norm)+' '+ntostr(normerr[0])+' '+ntostr(normerr[1])
-     printf,lun,'Chisq '+ntostr(chisq)
+     printf,lun,'Chisq '+ntostr(chisq2)
      printf,lun,'dof '+ntostr(fix(dof))
      close,lun
      free_lun,lun
 
   endif
      ;;; write out monte carlo fit parameters
-  fname='lc_fit_out_idl_int'+ntostr(int)+'_mc.fits'
+  fname=outdir+'lc_fit_out_idl_int'+ntostr(int)+'_mc'+add+'.fits'
   print,'writing out '+fname
   mwrfits,mcfit,fname,/create
 
