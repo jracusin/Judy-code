@@ -2,13 +2,23 @@
 @fit_functions_flares
 pro grbz_plot
 
-  readcol,'~/iLobster/2014_proposal/redshift_accum_data_all.txt',z,t0s,t500s,t1000s,t1500s,t2000s,t2500s,t3000s,t3500s,t4000s,t4500s,t5000s,All_detected_withoutGTM,intrinsic,GTM,All_detected_withGTM,comment='#',delim=' '
+  readcol,'~/Lobster/2014_proposal/redshift_accum_data_all.txt',z,t0s,t500s,t1000s,t1500s,t2000s,t2500s,t3000s,t3500s,t4000s,t4500s,t5000s,All_detected_withoutGTM,intrinsic,GTM,All_detected_withGTM,comment='#',delim=' '
 
   wfi2014=All_detected_withGTM
 
-  readcol,'~/iLobster/ETA_2016/redshift_accum_data_all_eta2.txt',z,t0s,t500s,t1000s,t1500s,t2000s,t2500s,t3000s,t3500s,t4000s,t4500s,t5000s,All_detected_withoutGTM,intrinsic,GTM,All_detected_withGTM,comment='#',delim=' '
+;  readcol,'~/Lobster/TAO_2016/redshift_accum_data_all_eta2.txt',z,t0s,t500s,t1000s,t1500s,t2000s,t2500s,t3000s,t3500s,t4000s,t4500s,t5000s,All_detected_withoutGTM,intrinsic,GTM,All_detected_withGTM,comment='#',delim=' '
 
-  wfi60cm=All_detected_withGTM
+;  wfi60cm=All_detected_withGTM
+;  wfi60cm_prompt=t0s
+;  wfi60cm_afterglow=All_detected_withoutGTM-t0s
+;  wfi60cm_gtm=GTM
+
+  readcol,'~/Lobster/TAO_2016/redshift_accum_data_all_tao_max_expo_1000s.txt',z,t0s,t1030s,t2060s,t3090s,t4120s,t5150s,All_detected_withoutGTM,intrinsic,GTM,All_detected_withGTM,comment='#',delim=' '
+
+  wfi45cm=All_detected_withGTM
+  wfi45cm_prompt=t0s
+  wfi45cm_afterglow=All_detected_withoutGTM-t0s
+  wfi45cm_gtm=GTM
 
   g=mrdfits('~/Swift/swift_grb_properties.fits',1)
   w=where(g.z gt 0,n)
@@ -34,29 +44,45 @@ pro grbz_plot
   p=plot(xrange,yrange,/nodata,xrange=xrange,yrange=yrange,/histogram,ytitle='Cumulative (> z) GRB rate [yr !U-1!N]',/ylog,ytickformat='loglabels',xtitle='Redshift z',font_size=14)
   p1=polygon([5,xrange[1],xrange[1],5,5],yrange[[0,0,1,1,0]],fill_color='light cyan',transparency=80,/data)
   p2=plot(x,y/swiftlen,xrange=xrange,yrange=yrange,/histogram,/overplot)
-  p3=plot(z,wfi2014*lobzeff,xrange=xrange,yrange=yrange,symbol='.',/overplot,color='blue',linestyle='none',sym_size=5,sym_filled=1)
-  p3=plot(z,wfi2014*lobzeff*3.,xrange=xrange,yrange=yrange,symbol='.',/overplot,color='red',linestyle='none',sym_size=5,sym_filled=1)
-  p3=plot(z,wfi2014*lobzeff*2.,xrange=xrange,yrange=yrange,symbol='.',/overplot,color='green',linestyle='none',sym_size=5,sym_filled=1)
-  p3=plot(z,wfi60cm*lobzeff,xrange=xrange,yrange=yrange,symbol='.',/overplot,color='magenta',linestyle='none',sym_size=5,sym_filled=1)
+;  p3=plot(z,wfi2014*lobzeff,xrange=xrange,yrange=yrange,symbol='.',/overplot,color='blue',linestyle='none',sym_size=5,sym_filled=1)
+;  p3=plot(z,wfi2014*lobzeff*3.,xrange=xrange,yrange=yrange,symbol='.',/overplot,color='red',linestyle='none',sym_size=5,sym_filled=1)
+;  p3=plot(z,wfi2014*lobzeff*2.,xrange=xrange,yrange=yrange,symbol='.',/overplot,color='green',linestyle='none',sym_size=5,sym_filled=1)
+  p3=plot(z,wfi45cm*lobzeff,xrange=xrange,yrange=yrange,symbol='.',/overplot,color='magenta',linestyle='none',sym_size=5,sym_filled=1)
+  p3=plot(z,wfi45cm*0.33,xrange=xrange,yrange=yrange,/overplot,color='magenta',linestyle='--')
+
+  p3=plot(z,wfi45cm_prompt*lobzeff,xrange=xrange,yrange=yrange,symbol='.',/overplot,color='blue',linestyle='none',sym_size=5,sym_filled=1)
+  p3=plot(z,wfi45cm_afterglow*lobzeff,xrange=xrange,yrange=yrange,symbol='.',/overplot,color='red',linestyle='none',sym_size=5,sym_filled=1)
+  p3=plot(z,wfi45cm_gtm*lobzeff,xrange=xrange,yrange=yrange,symbol='.',/overplot,color='green',linestyle='none',sym_size=5,sym_filled=1)
+  p3=plot(z,intrinsic,xrange=xrange,yrange=yrange,symbol='.',/overplot,color='black',linestyle='--',sym_size=5,sym_filled=1)
+
 
   t1=text(5.3,100,'Targets for JWST',/data,font_size=12)
   a1=arrow([5,7],[80,80],/data,thick=2)
-  t2=text(1.9,6,'Swift GRBs with Measured Redshift',orientation=-39,/data,font_size=14)
+  t2=text(1.8,7,'Swift GRBs with Measured Redshift',orientation=-39,/data,font_size=14)
 ;  t3=text(3,25,'Predicted Redshifts for ISS-Lobster
 ;  GRBs',/data,color='blue',orientation=-35,font_size=14)
   wficonfig=['    $30\circ\times30\circ$','$3\times30\circ\times30\circ$','$3\times30\circ\times20\circ$','$3\times15\circ\times10\circ$']
-  t3=text(7.5,30,wficonfig[0],/data,color='blue',font_size=14)
-  t3=text(7.5,20,wficonfig[1],/data,color='red',font_size=14)
-  t3=text(7.5,14,wficonfig[2],/data,color='green',font_size=14)
-  t3=text(7.5,10,wficonfig[3],/data,color='magenta',font_size=14)
+;  t3=text(7.5,30,wficonfig[0],/data,color='blue',font_size=14)
+;  t3=text(7.5,20,wficonfig[1],/data,color='red',font_size=14)
+;  t3=text(7.5,14,wficonfig[2],/data,color='green',font_size=14)
+;  t3=text(7.5,10,wficonfig[3],/data,color='magenta',font_size=14)
 ;  t3=text(5.1,20,'Predicted Redshifts for 30 cm WFI',/data,color='red',orientation=-35,font_size=14)
 
-  p.save,'~/iLobster/ETA_2016/grbz_plot.pdf',/transparent,/landscape
+  t3=text(7,40,'WFI Total',/data,color='magenta',font_size=14)
+  t3=text(7,20,'Prompt',/data,color='blue',font_size=14)
+  t3=text(7,10,'Afterglow',/data,color='red',font_size=14)
+  t3=text(7,5,'WFI via GTM',/data,color='green',font_size=14)
+
+
+
+  p.save,'~/Lobster/TAO_2016/grbz_plot.pdf',/transparent,/landscape
   p.close
   print
-  colprint,z,wfi2014,wfi2014*3,wfi2014*2,wfi60cm
+  print,'          z           2014          45cm          4*45cm'
+  colprint,z,wfi2014,wfi45cm,4.*wfi45cm
   print
-  colprint,z,wfi2014*0.3,wfi2014*3*0.9,wfi2014*2*0.9,wfi60cm*0.9
+  print,'applying z efficiency'
+  colprint,z,wfi2014*0.3,wfi45cm*0.3,wfi45cm*4.*0.9
 
   stop
   return
@@ -69,7 +95,7 @@ function loginterpol,x,y,ix
   return,iy
 end 
 
-pro gw_counterparts,fovs,wficonfig,time,grbflux,grbflux2,wfisens
+pro gw_counterparts,fovs,wficonfig,time,grbflux,grbflux2,grbflux3,flux4,wfisens
 
   mpc2cm=3.08568025d24
 
@@ -99,7 +125,7 @@ pro gw_counterparts,fovs,wficonfig,time,grbflux,grbflux2,wfisens
   volrate=10/1e3^3 ;; Mpc-3 yr-1
   h=[200,400]
   obj=['NS-NS','NS-BH']
-  wficonfig=['30x30','3x30x30','3x30x20','3x15x10']
+;  wficonfig=['30x30','3x30x30','3x30x20','3x15x10','20x20']
   xrteff=0.87 ;; fraction of sGRBs w afterglow (from JD's table)
   gweff=0.95  ;;; x # pointings gets gweff
 ;  eff=0.85 ;; excluding SAA and other overheads
@@ -116,12 +142,16 @@ pro gw_counterparts,fovs,wficonfig,time,grbflux,grbflux2,wfisens
   f3=f3/f
   
   ;;; for 1,2,3 GW det case
-  npointings=[4,2,2,3]
-  for p=0,3 do begin 
+;  npointings=[4,2,2,3,6]
+;  npointings=[4,6,2]
+  npointings=[2,3,1,100]
+  for p=0,n_elements(npointings)-1 do begin 
      print,wficonfig[p]
      npoint=npointings[p]*2.
      if p eq 0 then gf=grbflux
-     if p eq 3 then gf=grbflux2
+     if p eq 1 then gf=grbflux2
+     if p eq 2 then gf=grbflux3
+     if p eq 3 then gf=flux4
      orbit=90.*60.
      slew=30.
      start=180. ;;; when we get LIGO positions
@@ -152,7 +182,7 @@ pro gw_counterparts,fovs,wficonfig,time,grbflux,grbflux2,wfisens
 ;     plot,[0,0],[0,0],/nodata,/xlog,/ylog,xrange=[10,1e6],yrange=[1e-13,1e-7]
      for k=0,1 do begin  ;;; loop over NS-NS & NS-BH
         print,obj[k]
-        gwhorizon=h[k]*1.5*1.5  ;*1e-3
+        gwhorizon=h[k]*1.5*1.5*1.5  ;*1e-3
         gwallskyrate=volrate*gwhorizon^3*4./3.*!pi
         
         distfull=gwhorizon*mpc2cm
@@ -204,9 +234,10 @@ pro gw_counterparts,fovs,wficonfig,time,grbflux,grbflux2,wfisens
         n2=nw2/ngrb*f2/npoint
         n3=nw3/ngrb*f3/2.
         tot=n2+n3
+;print,tot
         print,'Frac detectable = ',tot*xrteff*gweff
         print,'# detectable = ',tot*gwallskyrate*xrteff*gweff
-
+;stop
      ;;; on either side of earth for either gw2 or gw3
 ;     wdet_either=where(detuntil[0,*] gt 45.*60. or detuntil[1,*] gt 45.*60.,nyes)
 ;     wdet_good_gw2_1=where(detuntil[0,*] gt tobs[0] and detuntil[0,*] le tobs[1],ngw2a) ;;; those that we'll only catch if on right side of earth in 2 pointings
@@ -223,7 +254,7 @@ pro gw_counterparts,fovs,wficonfig,time,grbflux,grbflux2,wfisens
 
      endfor 
   endfor 
-;  stop
+  stop
 
 ;;      nsim=1000
 ;;      d=randomu(seed,nsim)*4./3.*!pi*distfull^3
@@ -318,10 +349,10 @@ pro gw_counterparts,fovs,wficonfig,time,grbflux,grbflux2,wfisens
 end 
 pro wfi_rates
 
-  cd,'~/iLobster/ETA_2016/'
-  readcol,'~/iLobster/2014_proposal/lobster_sensitivity_0.3_5_Ptak.dat',time,bcount,mcount,grbflux
-  fovs=[30*30.,3*30*30.,3*20.*30,3*15.*10.]
-  wficonfig=['30x30','3x30x30','3x30x20','3x15x10']
+  cd,'~/Lobster/TAO_2016/'
+  readcol,'~/Lobster/2014_proposal/lobster_sensitivity_0.3_5_Ptak.dat',time,bcount,mcount,grbflux
+  fovs=[30*30.,19.1*19.1,4.*19.1*19.1,1.]
+  wficonfig=['30x30','20x20','4x20x20','XRI 1x1']
   t1=[0.1,0.15,0.2,0.3,0.4,0.5,0.7,1.]
 ;  t2=[4e5,1e6,2e6,1e7]
   t2=[2e4,4e4,7e4,9e4,1e5,1.3e5,1.7e5,2e5,2.5e5,3e5,3.5e5,4e5,5e5,8e5,1e6]
@@ -331,37 +362,51 @@ pro wfi_rates
 ;  w=where(time2 ge 3e5)
   w=where(flux le 1d-12)
   flux[w]=1d-12
-  flux2=flux/4.
-  w=where(flux2 le 1d-12)
-  flux2[w]=1d-12
+;  flux2=flux/4.  ;;; scaling the old sensitivity
+;  w=where(flux2 le 1d-12)
+;  flux2[w]=1d-12
+  flux3=flux/1.5^2.  ;;; scaling the old sensitivity
+  w=where(flux3 le 1d-12)
+  flux3[w]=1d-12
+  flux2=flux3
+
+  ;;; XRI rates
+  readcol,'~/Lobster/TAP/XRI_sensitivity_15arcmin.dat',xri_time,xri_flux,skip=1
+  flux4=loginterpol(xri_flux,xri_time,time2) ;;; daily
+
   begplot,name='sensitivity_trade.ps',/land,/color
   !x.margin=[4,1]
   plot,time2,flux,/xlog,/ylog,yrange=[1e-13,1e-7],charsize=2.,/xsty,/ysty,xtitle='Exposure Time (s)',ytitle='WFI Sensitivity (erg cm!U-2!N s!U-1!N)',xrange=[0.1,1e6],xticks=7,xtickformat='loglabels',xminor=9,yticks=6,yminor=9;,psym=1
-  oplot,time2,flux2,color=!red,line=2
-  xyouts,20,1e-9,'30 cm focal length',/data,charsize=2.
-  xyouts,1.5,9e-12,'60 cm focal length',/data,color=!red,charsize=2.
+  oplot,time2,flux3,color=!red,line=2
+;  xyouts,20,1e-9,'30 cm focal length',/data,charsize=2.
+  xyouts,1.5,9e-12,'45 cm focal length',/data,charsize=2.;,color=!red
   xyouts,2e4,5e-13,'Confusion Limit',/data,charsize=1.5
   endplot
   ps2pdf,'sensitivity_trade.ps'
   time=time2
   grbflux=flux
   grbflux2=flux2
-  allsky=41253.
-  pointings=allsky/fovs
+  grbflux3=flux3
+  constraints=0.83
+  allsky=4.*!pi*(180d/!pi)^2.;41253.
+  pointings=allsky/fovs*constraints
   exptimes=86400*0.85/pointings-30 ;;; 0.85 for SAA, 30 s for slewing
   wfisens=loginterpol(flux,time,exptimes) ;;; daily
-  wfisens[3]=loginterpol(flux2,time,exptimes[3])
+  wfisens[1]=loginterpol(flux2,time,exptimes[1])
+  wfisens[2]=loginterpol(flux3,time,exptimes[2])
+  wfisens[3]=loginterpol(flux4,time,exptimes[3])
 
   weekly_exptimes=exptimes*7d ;; min to sec exposures over 1 week
   weekly_wfisens=loginterpol(grbflux,time,weekly_exptimes) ;;; interpolating old sensitivity curve
-  weekly_wfisens[3]=loginterpol(grbflux2,time,weekly_exptimes[3])
+  weekly_wfisens[1]=loginterpol(grbflux2,time,weekly_exptimes[1])
+  weekly_wfisens[2]=loginterpol(grbflux3,time,weekly_exptimes[2])
+  weekly_wfisens[3]=loginterpol(flux4,time,weekly_exptimes[3])
 
   mpc2cm=3.08568025d24
   z0=findgen(100)/100.
   ld=lumdist(z0,h0=71,lambda=0.73,omega_m=0.27,/silent)
 
-  gw_counterparts,fovs,wficonfig,time,grbflux,grbflux2,gwwfisens
-  ;; is a mess!
+  gw_counterparts,fovs,wficonfig,time,grbflux,grbflux2,grbflux3,flux4,gwwfisens
 
   ;;; ccSNE
   fov=fovs/allsky  ;; old 30x30 WFI
@@ -373,6 +418,7 @@ pro wfi_rates
   lum=6d43 ;; erg s-1
   exp=400.
   print
+  print,wficonfig
 ;  print,'XRT Distance = ',round(dist),' Mpc'
   ;;; 300 s exposure, 2008D was ~1 cts/s in XRT
   wfisens400=loginterpol(grbflux,time,400) ;;; interpolating old sensitivity curve
@@ -388,15 +434,19 @@ pro wfi_rates
   wfirate=rate*vol*fov
 
   print,'WFI Distance = ',round(wfidist),' Mpc'
-  print,'ccSNe rate (30x30 WFI) = ',wfirate[0]
-  print,'ccSNe rate (30x90 WFI) = ',wfirate[1]
-  print,'ccSNe rate (20x90 WFI) = ',wfirate[2]
+  colprint,'ccSne rate ('+wficonfig[0]+') = ',wfirate[0]
+;  print,'ccSNe rate (30x30 WFI) = ',wfirate[0]
+;  print,'ccSNe rate (30x90 WFI) = ',wfirate[1]
+;  print,'ccSNe rate (20x90 WFI) = ',wfirate[2]
 
   wfisens400=loginterpol(grbflux2,time,400) ;;; simply reducing sensitivity by x4
+  wfisens400a=loginterpol(grbflux3,time,400) ;;; simply reducing sensitivity by x4
+
 ;  fluxfact=(1.*xrt2wfi)/(wfisens300) ;;ratio between 2008D flux and WFI sensitivity
 ;  fov=(10*15*3.)/40000.              ;; old 30x30 WFI
 ;  fov=(10*15.*3.)/(23.6/60.)^2
-  fov=fovs[3]/allsky
+;  fov=fovs[3]/allsky
+
 ;  wfidist=sqrt((dist^2*fluxfact)) ;;;  f~1/(4*!pi*D^2)
   wfidist=sqrt(lum*xrt2wfi/(4.*!pi*wfisens400))/mpc2cm
   z=interpol(z0,ld,wfidist)
@@ -404,7 +454,18 @@ pro wfi_rates
   print,'WFI Distance = ',round(wfidist),' Mpc'
 ;  vol=4./3.*!pi*wfidist^3
   wfirate=rate*vol*fov
-  print,'ccSNe rate (10x45 WFI) = ',wfirate
+;  print,'ccSNe rate (10x45 WFI) = ',wfirate
+  print,'ccSne rate ('+wficonfig[1]+') = ',wfirate[1]
+
+;  fov=fovs[4]/allsky
+  wfidist=sqrt(lum*xrt2wfi/(4.*!pi*wfisens400a))/mpc2cm
+  z=interpol(z0,ld,wfidist)
+  vol=comovingvol(z)
+  print,'WFI Distance = ',round(wfidist),' Mpc'
+  wfirate=rate*vol*fov
+;  print,'ccSNe rate (20x20 WFI) = ',wfirate
+  print,'ccSne rate ('+wficonfig[2]+') = ',wfirate[2]
+
   print
 ;  stop
 
@@ -418,12 +479,13 @@ pro wfi_rates
   lum=1d44;*xrt2wfi ;; erg/s  ;;; all thermal, don't lose anything >5 keV
   dist=sqrt(lum/(4.*!pi*weekly_wfisens))/mpc2cm
   z=interpol(z0,ld,dist)
-  print,z
+;  print,z
   vol=comovingvol(z)
 ;  vol=
 ;  print,vol
 ;  print,4./3.*!pi*dist^3
   print
+  print,wficonfig
   print,dist
   print,'non-jetted'
   wfirate=rate*galdens*vol
@@ -453,6 +515,7 @@ pro wfi_rates
   ;;;;; AGN
   
   print
+  print,wficonfig
   print,'AGN'
   ; need volumetric rate
   ; need luminosities
@@ -484,9 +547,9 @@ pro wfi_rates
      endcase 
      plot,[0,2],[1,100],xrange=[0,0.5],yrange=[0,yr[j]],xtitle='z',ytitle='N',/nodata,charsize=2.,/ysty,title=title[j]
      print,title[j]
-     color=[!red,!blue,!green,!magenta]
+     color=[!red,!blue,!green,!magenta,!orange]
 ;  !p.multi=[0,2,2]
-     for i=0,3 do begin 
+     for i=0,n_elements(fovs)-1 do begin 
         d=sqrt(lum*xmm2wfi/(4.*!pi*ws[i]))/mpc2cm ;;; distance WFI can detect lums
         z0=findgen(1000)/100.
         ld=lumdist(z0,h0=71,lambda=0.73,omega_m=0.27,/silent)
@@ -507,6 +570,7 @@ pro wfi_rates
   ;;;; Blazars
   ;;; Padovani et al 2007
   print
+  print,wficonfig
   print,'Blazars'
 ;  print,weekly_exptimes,weekly_wfisens
   f1=[7.506645E-14,1.3298641E-13,2.986495E-13,6.521481E-13,1.8288595E-12,6.4100483E-12]
@@ -521,10 +585,10 @@ pro wfi_rates
 
   fconv=1.35
   
-  !p.multi=0
-  !x.margin=[8,4]
-  !y.margin=[4,2]
-  plot,[1,1],[1,1],xrange=[1e-14,1e-10],yrange=[1e-3,1e2],/xlog,/ylog
+;  !p.multi=0
+;  !x.margin=[8,4]
+;  !y.margin=[4,2]
+;  plot,[1,1],[1,1],xrange=[1e-14,1e-10],yrange=[1e-3,1e2],/xlog,/ylog
   color=[!red,!green,!magenta]
 
   for j=0,1 do begin ;;; loop over weekly and daily
@@ -554,13 +618,13 @@ pro wfi_rates
         farr=loginterpol(n,f*fconv,arr)
 ;        oplot,arr,farr,color=color[i],line=2
         cfarr=farr;total(farr,/cumulative)
-        oplot,arr,cfarr,color=color[i],line=2
+;        oplot,arr,cfarr,color=color[i],line=2
 ;        wfidens=10^interpol(alog10(n),alog10(f*fconv),alog10(ws))
         wfinum=loginterpol(cfarr,arr,ws)
 
 ;        oplot,f*fconv,n,color=color[i]
 ;        oplot,ws,wfidens,psym=2,color=color[i]
-        oplot,ws,wfinum,psym=2,color=color[i]
+;        oplot,ws,wfinum,psym=2,color=color[i]
 ;        print,wfinum
         print,wfinum*fovs
      endfor 
@@ -571,10 +635,20 @@ pro wfi_rates
 
 ;  stop
 
+  ;;; Stellar superflares
+  print
+  print, 'Stellar Superflares'
+  ;; scaling from 2010 rates which were 30-300 /yr
+  wfirate0=fovs/fovs[0]*30.
+  wfirate1=fovs/fovs[0]*300.
+  colprint,wficonfig,wfirate0,wfirate1
+
+
   ;;; classical novae 35 +/- 11 yr-1 in our Galaxy (Shafter 1997),
   ;;;                        41+/-20 yr-1 (Hatano et al. 1997)
   ;;; initial thermonuclear runaway burning phase lasts only a few x100s
   print
+  print,wficonfig
   print,'Novae'
   lpeak=1d38 ;; erg cm-2 s-1
   dist=8*1e-3*mpc2cm ;; kpc to cm
@@ -588,9 +662,9 @@ pro wfi_rates
   wfirate=35.*fovs/allsky
   colprint,'WFI rate ('+wficonfig+') = ',wfirate
 
-stop
   ;;; thermonuclear bursts
   print
+  print,wficonfig
   print,'thermonuclear bursts'
 
   ;; Keek et al. (2010)

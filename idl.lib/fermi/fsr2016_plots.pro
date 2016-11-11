@@ -853,11 +853,14 @@ pro too
 ;  dur=too[2,*]
 
   bin=3./12.
-  n=24
-  y=fltarr(n) & x=y
+  n=30
+  y=fltarr(n) & x=y & yn=y
   for i=0,n-1 do begin
      w=where(years ge 2010+i*bin and years lt 2010+(i+1)*bin,nw)
-     if nw gt 0 then y[i]=total(dur[w])
+     if nw gt 0 then begin 
+        y[i]=total(dur[w])
+        yn[i]=yn[i]+nw
+     endif 
      x[i]=2010+i*bin
 ;     if nw gt 0 then print,years[w]
 ;     print,x[i],y[i]
@@ -865,7 +868,7 @@ pro too
   endfor 
 ;  b=barplot(2008.5+x,y,ytitle='         Target of Opportunity
 ;  Observations',fill_color='blue',xrange=[2009,2014],yrange=[0,6],xmajor=0,xminor=0,aspect_ratio=0.4,yminor=0)
-  b=barplot(x,y,ytitle='Days spent on TOO Observations',fill_color='blue',xrange=[2009,2016],yrange=[0,40],xmajor=0,xminor=0,aspect_ratio=0.1,yminor=0)
+  b=barplot(x,y,ytitle='Days spent on TOO Observations',fill_color='blue',xrange=[2009,2017],yrange=[0,40],xmajor=0,xminor=0,aspect_ratio=0.1,yminor=0)
   p=plot([2009.65,2009.65],[0,40],/overplot,linestyle='--')
   xaxis=axis(0,location=[0,40],coord_transform=[-2008.5,1.],title='Mission Year',textpos=1,tickdir=1,minor=3)
   xaxis=axis(0,location=[0,0],title='Year',minor=3)
@@ -877,6 +880,20 @@ pro too
   k=get_kbrd(10)
   if k eq 's' then stop
   b.close
+
+  b=barplot(x,yn,ytitle='Number of TOOs',fill_color='blue',xrange=[2009,2017],yrange=[0,10],xmajor=0,xminor=0,yminor=0)
+  p=plot([2009.65,2009.65],[0,10],/overplot,linestyle='--')
+  xaxis=axis(0,location=[0,10],coord_transform=[-2008.5,1.],title='Mission Year',textpos=1,tickdir=1,minor=3)
+  xaxis=axis(0,location=[0,0],title='Year',minor=3)
+  t=text(2009.55,1,'TOO capability became available to community',orientation=90,/data,font_size=8)
+;  t=text(0.067,0.22,'Fermi',font_style='it',orientation=90)
+
+  b.save,'~/Fermi/Senior_Review/SR2016/too_numplot.png'
+  b.refresh
+  k=get_kbrd(10)
+  if k eq 's' then stop
+  b.close
+
   
 stop
 

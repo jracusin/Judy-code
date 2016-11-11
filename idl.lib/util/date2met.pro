@@ -51,6 +51,7 @@ function date2met,date,fermi=fermi
      if year gt 2008 then met=met+1.
      if year gt 2012.5 then met=met+1.
      if year gt 2015.5 then met=met+1.
+     if year gt 2017.0 then met=met+1.
   endif 
   return,met
 end 

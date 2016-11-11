@@ -323,7 +323,7 @@ fa=0
         endif 
 ;k=get_kbrd(10)
      endif 
-     pp[*,i]=newp
+     pp[*,i]=newp*1d
 ;     pp[*,i]=newp[fa:*]
 ;     print,newp,chisq2
 ;     k=get_kbrd(10)

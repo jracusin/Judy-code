@@ -48,7 +48,9 @@ pro ligo_fermi_o1
 
   gws=['GW150914','LVT151012','GW151226']
 ;  gwcolor=[!magenta,!salmon,!red]
-  gwcolor=['magenta','red','orange']
+;  gwcolor=['magenta','red','orange']
+  gwcolor=['red','orange','lime green']
+
 ;  legend,[grbs,gws],textcolor=[color,0,gwcolor],box=0,/top,/right
   leg=[grbs,'',gws]
   c=[color,'white',gwcolor]
@@ -104,6 +106,7 @@ pro ligo_fermi_o1
 
   flim=[8e-11,3e-10]
   xr=[xrange[0],xmax[1]]
+  xmen=mean(xr)
   p2=plot(xr,[flim[1],flim[1]],/overplot,thick=2,color=gwcolor[2])
   a=arrow([xmen,xmen],[flim[1],flim[0]],/data,head_size=1,color=gwcolor[2],/current,thick=2)
 
@@ -127,7 +130,8 @@ pro ligo_fermi_o1
 ;  for i=0,n-1 do oplot,[xmin[i],xmax[i]],[flim[i],flim[i]],color=gwcolor[2],thick=t
 ;  endplot
 ;  ps2pdf,'LAT_sgrb_LC_limits.ps'
-   p.save,'LAT_sgrb_LC_limits.png'
+   p.save,'~/papers/ligo_fermi_O1/LAT_sgrb_LC_limits.png'
+   p.save,'~/papers/ligo_fermi_O1/LAT_sgrb_LC_limits.pdf'
    p.close
 
 stop
@@ -137,6 +141,7 @@ end
 
 pro gbm_plot
 
+  cd,'~/papers/ligo_fermi_O1'
   gbmcat=mrdfits('3gbm.fits',1)
   w=where(gbmcat.t90 le 2. and gbmcat.t90 gt 0)
   gbmcat=gbmcat[w]
@@ -155,7 +160,8 @@ pro gbm_plot
      
   endfor 
 
-  gwcolor=['magenta','red','orange']
+;  gwcolor=['magenta','red','orange']
+  gwcolor=['red','orange','lime green']
 
   p=plot(x,y/max(y),/xlog,/ylog,yrange=[0.01,1.5],xrange=[1e-8,1e-4],/xsty,/ysty,xtitle='Fluence (10-1000 keV; erg cm!U-2!N)',ytitle='Fraction of sGRB',/histogram)
 
@@ -169,7 +175,7 @@ pro gbm_plot
   p2=plot([flim[0],flim[1]],[i,i],/overplot,color=gwcolor[0],thick=3)
 
   ;;lvt151012
-  flim=[0.5e-6,1.2e-6] ;; erg/cm2
+  flim=[0.55e-6,1.2e-6] ;; erg/cm2
 ;  flim=[1e-8,1.2e-6]
   xx=[flim[0],flim[1],flim[1],flim[0],flim[0]]
   yy=[2.5,2.5,3.5,3.5,2.5]
@@ -194,6 +200,7 @@ pro gbm_plot
   gws=['GW150914','LVT151012','GW151226']
 
   p.save,'~/papers/ligo_fermi_O1/gbm_sgrbs.png'
+  p.save,'~/papers/ligo_fermi_O1/gbm_sgrbs.pdf'
   p.close
 stop
   return

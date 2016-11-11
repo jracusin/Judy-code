@@ -4,6 +4,56 @@
 pro plot_160625B
 
   cd,'~/Chandra/GRB160625B/'
+
+;  begplot,name='chandra_counts_predict_160625b.ps',/land,/color
+  lc=lcout2fits(/chandra)
+  trigtime=date2met('2016-06-25-22:43:24')
+  read_lcfit,'lc_fit_comb.dat',pnames,p,perror
+  t=[lc.time,logarr(5e6,5e7,bin=0.1),p[[2,4,6]]]
+  t=t[sort(t)]
+  x2c=3.509 ;; from PIMMs
+  terr=rotate([[lc.time-lc.tstart],[lc.tstop-lc.time]],1)
+  p1=errorplot(lc.time,lc.src_rate*x2c,terr,lc.src_rate_err*x2c,errorbar_capsize=0,symbol='.',linestyle='none',/xlog,/ylog,xrange=[5e3,1e8],yrange=[1e-5,40],xtitle='Time since trigger (s)',ytitle='Chandra (0.5-8 keV) Count Rate (cts/s)',/xsty,/ysty,ytickformat='loglabels',yminor=9,title='GRB 160625B Chandra Predictions')
+  wul=where(lc.src_rate_err eq 0)
+  a=arrow([lc[wul].time,lc[wul].time],[lc[wul].src_rate*x2c,lc[wul].src_rate*x2c*0.5],/data,head_size=0.5)
+;  ploterror2,lc.time,lc.src_rate*x2c,terr,lc.src_rate_err*x2c,psym=3,/xlog,/ylog,xrange=[5e3,1e8],yrange=[1e-5,40],xtitle='Time since trigger (s)',ytitle='Chandra 0.5-8 keV cts/s',/xsty,/ysty,ytickformat='loglabels',yminor=9,charsize=2
+
+;  y=axis('Y',location=1e8,title='Counts in 100 ks exposure',coord_transform=[0,1e5],/data,tickdir=1,yrange=[1e-5,40])
+
+;  oplot,t,bkn3pow(t,p)*x2c,color=!green
+  p2=plot(t,bkn2pow(t,p)*x2c,color='green',/overplot)
+
+  sep1=date2met('2016-09-01-00:00:00')-trigtime
+  oct1=date2met('2016-10-01-00:00:00')-trigtime
+  dec1=date2met('2016-12-01-00:00:00')-trigtime
+  mar1=date2met('2017-03-01-00:00:00')-trigtime
+  jun1=date2met('2017-06-01-00:00:00')-trigtime
+
+  txt=['September 1','October 1','December 1','March 1','June 1']
+  dates=[sep1,oct1,dec1,mar1,jun1]
+  for i=0,4 do begin
+     tx=text(dates[i]*1.2,1e-2,txt[i],/data,orientation=90,color='red',font_size=8)
+     p3=plot([dates[i],dates[i]],[1e-5,100],/overplot,color='red',linestyle='--')
+  endfor 
+  
+  ;; oplot,[sep1,sep1],[1e-5,100],line=2,color=!red
+  ;; xyouts,sep1*1.2,1e-3,'September 1',color=!red,orientation=90,charsize=1.
+  ;; oplot,[oct1,oct1],[1e-5,100],line=2,color=!red
+  ;; xyouts,oct1*1.2,1e-3,'October 1',color=!red,orientation=90,charsize=1.
+  ;; oplot,[dec1,dec1],[1e-5,100],line=2,color=!red
+  ;; xyouts,dec1*1.2,1e-3,'December 1',color=!red,orientation=90,charsize=1.
+  ;; oplot,[mar1,mar1],[1e-5,100],line=2,color=!red
+  ;; xyouts,mar1*1.2,1e-3,'March 1',color=!red,orientation=90,charsize=1.
+  ;; oplot,[jun1,jun1],[1e-5,100],line=2,color=!red
+  ;; xyouts,jun1*1.2,1e-3,'June 1',color=!red,orientation=90,charsize=1.
+  
+  ;; endplot
+  ;; ps2pdf,'chandra_counts_predict_160625b.ps'
+
+  p1.save,'chandra_counts_predict_160625b.png'
+  p1.close
+
+stop
   begplot,name='GRB160625B_chandra_predict.ps',/color,/land,font='helvetica'
 
   lc=lcout2fits()
