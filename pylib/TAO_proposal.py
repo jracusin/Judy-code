@@ -826,7 +826,7 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 	for i in range(0,4):
 		print config[i],xf[0][i],xf[1][i]
 
-	twant=np.array([1000])
+	twant=np.array([2])
 	print interpol_sens(twant,time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux)
 
 

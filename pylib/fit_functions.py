@@ -3,7 +3,7 @@
 ------------------------------------------------------------------------
 
 Scripts to do power law functions
-x & xx must be np.array
+x & xx must be np.array with xx.transpose()
 
 ------------------------------------------------------------------------
 """
@@ -12,7 +12,7 @@ import numpy as np
 
 def logmean(x):
 
-	m=10**((np.log10(x[:,0])+np.log10(x[:,1]))/2)+np.min(x)
+	m=10**((np.log10(x[0,:])+np.log10(x[1,:]))/2)+np.min(x)
 
 	return m
 
@@ -30,7 +30,8 @@ def intpow(xx,p):
 	norm=p[0]
 	pow1=p[1]
 
-	f=norm/(1.-pow1)*(xx[:,1]**(1.-pow1)-xx[:,0]**(1.-pow1))
+	f=norm/(1.-pow1)*(xx[1,:]**(1.-pow1)-xx[0,:]**(1.-pow1))
+	f=f/(xx[1,:]-xx[0,:])
 
 	return f
 
@@ -57,10 +58,10 @@ def intbknpow(xx,p):
 	f=np.zeros(len(xx[0]))
 	m=logmean(xx)
 
-	f[m<break1]=norm/(1.-pow1)*(xx[m<break1,1]**(1.-pow1)-xx[m<break1,0]**(1.-pow1))
+	f[m<break1]=norm/(1.-pow1)*(xx[1,m<break1]**(1.-pow1)-xx[0,m<break1]**(1.-pow1))
 	f[m>=break1]=norm*break1**(pow2-pow1)/(1.-pow2)* \
-		(xx[m>=break1,1]**(1.-pow2)-xx[m>=break1,0]**(1.-pow2))
-	f=f/(xx[:,1]-xx[:,0])
+		(xx[1,m>=break1]**(1.-pow2)-xx[0,m>=break1]**(1.-pow2))
+	f=f/(xx[1,:]-xx[0,:])
 
 	return f
 
@@ -92,12 +93,12 @@ def intbkn2pow(xx,p):
 	f=np.zeros(len(xx[0]))
 	m=logmean(xx)
 
-	f[m<break1]=norm/(1.-pow1)*(xx[m<break1,1]**(1.-pow1)-xx[m<break1,0]**(1.-pow1))
+	f[m<break1]=norm/(1.-pow1)*(xx[1,m<break1]**(1.-pow1)-xx[0,m<break1]**(1.-pow1))
 	f[(m>=break1)&(m<break2)]=norm*break1**(pow2-pow1)/(1.-pow2)* \
-		(xx[(m>=break1)&(m<break2),1]**(1.-pow2)-xx[(m>=break1)&(m<break2),0]**(1.-pow2))
+		(xx[1,(m>=break1)&(m<break2)]**(1.-pow2)-xx[0,(m>=break1)&(m<break2)]**(1.-pow2))
 	f[m>break2]=norm*break1**(pow2-pow1)*break2**(pow3-pow2)/(1.-pow3)* \
-		(xx[m>break2,1]**(1-pow3)-xx[m>break2,0]**(1.-pow3))
-	f=f/(xx[:,1]-xx[:,0])
+		(xx[1,m>break2]**(1-pow3)-xx[0,m>break2]**(1.-pow3))
+	f=f/(xx[1,:]-xx[0,:])
 
 	return f
 
@@ -136,14 +137,14 @@ def intbkn3pow(xx,p):
 	f=np.zeros(len(xx[0]))
 	m=logmean(xx)
 
-	f[m<break1]=norm/(1.-pow1)*(xx[m<break1,1]**(1.-pow1)-xx[m<break1,0]**(1.-pow1))
-	f[(m>=break1)&(m<break2)]=norm*break1**(pow2-pow1)/(1.-pow2)* \ 
-		(xx[(m>=break1)&(m<break2),1]**(1.-pow2)-xx[(m>=break1)&(m<break2),0]**(1.-pow2))
-	f[(m>=break2)&(m<break3)]=norm*break1**(pow2-pow1)*break2**(pow3-pow2)/(1.-pow3)* \ 
-		(xx[(m>=break2)&(m<break3),1]**(1-pow3)-xx[(m>=break2)&(m<break3),0]**(1.-pow3))
-	f[m>=break3]=norm*break1**(pow2-pow1)*break2**(pow3-pow2)*break3**(pow4-pow3)/(1.-pow4)* \ 
-		(xx[m>=break3,1]**(1-pow4)-xx[m>=break3,0]**(1.-pow4))
-	f=f/(xx[:,1]-xx[:,0])
+	f[m<break1]=norm/(1.-pow1)*(xx[1,m<break1]**(1.-pow1)-xx[0,m<break1]**(1.-pow1))
+	f[(m>=break1)&(m<break2)]=norm*break1**(pow2-pow1)/(1.-pow2)* \
+		(xx[1,(m>=break1)&(m<break2)]**(1.-pow2)-xx[0,(m>=break1)&(m<break2)]**(1.-pow2))
+	f[(m>=break2)&(m<break3)]=norm*break1**(pow2-pow1)*break2**(pow3-pow2)/(1.-pow3)* \
+		(xx[1,(m>=break2)&(m<break3)]**(1-pow3)-xx[0,(m>=break2)&(m<break3)]**(1.-pow3))
+	f[m>=break3]=norm*break1**(pow2-pow1)*break2**(pow3-pow2)*break3**(pow4-pow3)/(1.-pow4)* \
+		(xx[1,m>=break3]**(1-pow4)-xx[0,m>=break3]**(1.-pow4))
+	f=f/(xx[1,:]-xx[0,:])
 
 	return f
 	
@@ -182,21 +183,53 @@ def intbkn4pow(xx,p):
 	pow3=p[5]
 	break3=p[6]
 	pow4=p[7]
+	break4=p[8]
+	pow5=p[9]
 
 	f=np.zeros(len(xx[0]))
 	m=logmean(xx)
 
-	f[m<break1]=norm/(1.-pow1)*(xx[m<break1,1]**(1.-pow1)-xx[m<break1,0]**(1.-pow1))
+	f[m<break1]=norm/(1.-pow1)*(xx[1,m<break1]**(1.-pow1)-xx[0,m<break1]**(1.-pow1))
 	f[(m>=break1)&(m<break2)]=norm*break1**(pow2-pow1)/(1.-pow2)* \
-		(xx[(m>=break1)&(m<break2),1]**(1.-pow2)-xx[(m>=break1)&(m<break2),0]**(1.-pow2))
+		(xx[1,(m>=break1)&(m<break2)]**(1.-pow2)-xx[0,(m>=break1)&(m<break2)]**(1.-pow2))
 	f[(m>=break2)&(m<break3)]=norm*break1**(pow2-pow1)*break2**(pow3-pow2)/(1.-pow3)* \
-		(xx[(m>=break2)&(m<break3),1]**(1-pow3)-xx[(m>=break2)&(m<break3),0]**(1.-pow3))
+		(xx[1,(m>=break2)&(m<break3)]**(1-pow3)-xx[0,(m>=break2)&(m<break3)]**(1.-pow3))
 	f[(m>=break3)&(m<break4)]=norm*break1**(pow2-pow1)*break2**(pow3-pow2)* \
-		break3**(pow4-pow3)/(1.-pow4)*(xx[(m>=break3)&(m<break4),1]**(1-pow4)- \
-		xx[(m>=break3)&(m<break4),0]**(1.-pow4))
+		break3**(pow4-pow3)/(1.-pow4)*(xx[1,(m>=break3)&(m<break4)]**(1-pow4)- \
+		xx[0,(m>=break3)&(m<break4)]**(1.-pow4))
 	f[m>=break4]=norm*break1**(pow2-pow1)*break2**(pow3-pow2)*break3**(pow4-pow3)* \
 		break4**(pow5-pow4)/(1.-pow4)* \
-		(xx[m>=break4,1]**(1-pow4)-xx[m>=break4,0]**(1.-pow4))
-	f=f/(xx[:,1]-xx[:,0])
+		(xx[1,m>=break4]**(1-pow4)-xx[0,m>=break4]**(1.-pow4))
+	f=f/(xx[1,:]-xx[0,:])
 
 	return f
+
+def gauss(x,p):
+
+	norm=p[0]
+	center=p[1]
+	width=p[2]
+
+	f=p[0]*exp(-(t-p[1])^2/(2*p[2]^2))
+
+	return f
+
+def intgauss(xx,p):
+
+	f=sqrt(math.pi/2.)*(-p[0])*p[2]*(math.erf((p[1]-xx[1,:])/(sqrt(2)*p[2]))-math.erf((p[1]-xx[0,:])/(sqrt(2)*p[2])))
+	f=f/(xx[1,:]-xx[0,:])
+	
+	return f
+
+def gauss1_pow(x,p):
+
+	f=gauss(x,p[2:5])+pow(x,p[0:2])
+
+	return f
+
+
+
+
+
+
+
