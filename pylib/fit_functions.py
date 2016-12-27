@@ -9,6 +9,15 @@ x & xx must be np.array with xx.transpose()
 """
 
 import numpy as np
+import importlib
+
+def call_function(function,x,p):
+
+	mod=importlib.import_module('fit_functions')
+	func=getattr(mod,p.model)
+	yfit=func(x,p.par)
+
+	return yfit
 
 def logmean(x):
 
@@ -227,9 +236,71 @@ def gauss1_pow(x,p):
 
 	return f
 
+def gauss2_pow(x,p):
 
+	f=gauss(x,p[2:5])+gauss(x,p[5:8])+pow(x,p[0:2])
 
+	return f
 
+def gauss3_pow(x,p):
 
+	f=gauss(x,p[2:5])+gauss(x,p[5:8])+gauss(x,p[8:11])+pow(x,p[0:2])
 
+	return f
 
+def gauss4_pow(x,p):
+
+	f=gauss(x,p[2:5])+gauss(x,p[5:8])+gauss(x,p[8:11])+gauss(x,p[11:14])+pow(x,p[0:2])
+
+	return f
+
+def gauss5_pow(x,p):
+
+	f=gauss(x,p[2:5])+gauss(x,p[5:8])+gauss(x,p[8:11])+gauss(x,p[11:14])+gauss(x,p[14:17])+pow(x,p[0:2])
+
+	return f
+
+def gauss6_pow(x,p):
+
+	f=gauss(x,p[2:5])+gauss(x,p[5:8])+gauss(x,p[8:11])+gauss(x,p[11:14])+gauss(x,p[14:17])\
+		+gauss(x,p[17:20])+pow(x,p[0:2])
+
+	return f
+
+def gauss1_bknpow(x,p):
+
+	f=gauss(x,p[5:8])+bknpow(x,p[0:4])
+
+	return f
+
+def gauss2_bknpow(x,p):
+
+	f=gauss(x,p[5:8])+gauss(x,p[8:11])+pow(x,p[0:2])
+
+	return f
+
+def gauss3_bknpow(x,p):
+
+	f=gauss(x,p[5:8])+gauss(x,p[8:11])+gauss(x,p[11:14])+pow(x,p[0:2])
+
+	return f
+
+def gauss4_bknpow(x,p):
+
+	f=gauss(x,p[5:8])+gauss(x,p[8:11])+gauss(x,p[11:14])+gauss(x,p[14:17])+pow(x,p[0:2])
+
+	return f
+
+def gauss5_bknpow(x,p):
+
+	f=gauss(x,p[5:8])+gauss(x,p[8:11])+gauss(x,p[11:14])+gauss(x,p[14:17])+gauss(x,p[17:20])\
+		+pow(x,p[0:2])
+
+	return f
+
+def gauss6_bknpow(x,p):
+
+	f=gauss(x,p[5:8])+gauss(x,p[8:11])+gauss(x,p[11:14])+gauss(x,p[14:17])+gauss(x,p[17:20])\
+		+gauss(x,p[20:23])+pow(x,p[0:2])
+
+	return f
