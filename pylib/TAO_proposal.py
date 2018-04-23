@@ -69,8 +69,12 @@ def compare_sensitivity(time,tao_wfi_flux,daily_exptimes):
 	bsens=np.array([393.8972,212.26125,39.98884,4.123951,0.51980466,0.18457437])*1e-3
 	b1day=86400.*0.11*0.85 #1.4 sr FoV, 85% not in SAA
 	bflux=loginterpol(bexp,bsens,b1day)
-	#print bflux
-	bflux=bflux*jap.crab(15,150)*jap.pimms([15,150],[0.3,5],2,5e20)
+	# print bflux
+	# bflux=5.3e-3
+	# print bflux
+	bflux=bflux*jap.crab(15,150)*jap.pimms([15,150],[0.3,5],2,0)#5e20)
+	print jap.pimms([15,150],[0.3,5],2,0)
+	print jap.pimms([15,150],[0.3,5],2,5e20)
 
 	## RXTE ASM
 	atime=[1996,2011]
@@ -103,14 +107,14 @@ def compare_sensitivity(time,tao_wfi_flux,daily_exptimes):
 	plot.plot(ltime[1],lflux,marker=r'$\blacktriangleright$',markersize=10,color='black')
 	plot.plot(mtime[0:2],np.repeat(mflux,2),lw=2,color='black')
 	plot.plot(mtime[1],mflux,marker=r'$\blacktriangleright$',markersize=10,color='black')
-	#plot.plot(btime,np.repeat(bflux,2),lw=2,color='black')
-	#plot.plot(btime[1],bflux,marker=r'$\blacktriangleright$',markersize=10,color='black')
+	plot.plot(btime,np.repeat(bflux,2),lw=2,color='black')
+	plot.plot(btime[1],bflux,marker=r'$\blacktriangleright$',markersize=10,color='black')
 	plot.plot([xrange[0],xrange[0]+4],np.repeat(aflux,2),'r--',lw=2,color='black')
 	plot.plot(astime[1],asflux,marker=r'$\blacktriangleright$',markersize=10,color='black')
 	plot.plot(astime,np.repeat(asflux,2),lw=2,color='black')
 
 	plot.annotate('TAO-ISS/WFI',xy=(ltime[0],lflux*1.2),xycoords='data',fontsize=22,color='black')
-	#plot.annotate('Swift/BAT',xy=(btime[0]+13.3,bflux*0.9),xycoords='data',fontsize=18,color='black')
+	plot.annotate('Swift/BAT',xy=(btime[0]+13.3,bflux*0.9),xycoords='data',fontsize=18,color='black')
 	plot.annotate('MAXI/SSC',xy=(mtime[0]+8.5,mflux*0.9),xycoords='data',fontsize=18,color='black')
 	plot.annotate('RXTE/ASM',xy=(xrange[0]+4.2,aflux*0.9),xycoords='data',fontsize=18,color='black')
 	plot.annotate('ASTROSAT/SSM',xy=(xrange[0]+5.2,asflux*0.9),xycoords='data',fontsize=18,color='black')
@@ -146,11 +150,11 @@ def plot_sensitivity(time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux,jordan
 		plot.plot(time,tao_wfi_flux,label='TAO WFI',lw=2)
 		plot.ylim([1e-13,1e-7])
 	else:
-		plot.plot(time,lob_flux,label='2014 ISS-Lobster')
-		plot.plot(time,tao_wfi_flux,color='red',label='TAO WFI')
+		#plot.plot(time,lob_flux,label='2014 ISS-Lobster')
+		#plot.plot(time,tao_wfi_flux,color='red',label='TAO WFI')
 		plot.plot(time,tap_wfi_flux,color='orange',label='TAP WFI')
-		plot.plot(time,tap_xri_flux,color='magenta',label='TAP XRI')
-		plot.plot(time,jordan_wfi_flux,color='green',label=r'ISS-Lobster/$1.5^2$')
+		plot.plot(time,tap_xri_flux,color='magenta',label='TAP XRT')
+		#plot.plot(time,jordan_wfi_flux,color='green',label=r'ISS-Lobster/$1.5^2$')
 		plot.ylim([1e-17,1e-7])
 
 	plot.legend(loc='upper right')
@@ -158,7 +162,9 @@ def plot_sensitivity(time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux,jordan
 	plot.yscale('log')
 	plot.xlabel('Exposure Time (s)')
 	plot.ylabel(r'Sensitivity (erg cm$^{-2}$ s$^{-1}$)')
-	plot.savefig('Lob_TAO_XRI_sensitivities.png', bbox_inches='tight')
+	plot.yticks(np.logspace(-17,-7,11))
+#	plot.savefig('Lob_TAO_XRI_sensitivities.png', bbox_inches='tight')
+	plot.savefig('TAP_sensitivities.png', bbox_inches='tight')
 	plot.show()
 	plot.close()
 
@@ -350,6 +356,7 @@ def TDE_rates(sensitivity,sky_frac):
 	comdist=cosmo.comoving_distance(limit_z).value
 	vol=4*math.pi/3.*(comdist)**3
 	nonjet_rate=rate*galdens*vol*sky_frac
+	print limit_z
 
 	## JETTED
 
@@ -462,7 +469,7 @@ def stellar_flares_rates(fovs):
 
 	return rate
 
-def novae_rates(fovs,t400_sensitivity):
+def novae_rates(fovs,t100_sensitivity):
 
 	# classical novae 35 +/- 11 yr-1 in our Galaxy (Shafter 1997),
 	#                41+/-20 yr-1 (Hatano et al. 1997)
@@ -480,9 +487,9 @@ def novae_rates(fovs,t400_sensitivity):
 
 	wfirate=np.zeros(4)
 	for i in range(0,4):
-		if t400_sensitivity[i] < fgal:
+		if t100_sensitivity[i] < fgal:
 			wfirate[i]=wfirate[i]+galnovarate*fovs[i]/allsky
-		if t400_sensitivity[i] < fm31:
+		if t100_sensitivity[i] < fm31:
 			wfirate[i]=wfirate[i]+galnovarate*fovs[i]/allsky
 	#print 'Flux at GC = ',fgal
 	#print 'Flux at M31 = ',fm31
@@ -581,7 +588,7 @@ def gw_counterpart_rates(time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux):
 
 def grb_redshift_rates(doplot=False):
 
-	zeff=np.array([0.33,0.33,0.9,0.33])
+	zeff=np.array([0.33,0.33,0.9,0.9])
 	wfi2014=ascii.read('/Users/jracusin/Lobster/2014_proposal/redshift_accum_data_all.txt', 
 		names=['z','t0s','t500s','t1000s','t1500s','t2000s','t2500s','t3000s','t3500s','t4000s', 
 		't4500s','t5000s','All_detected_withoutGTM','intrinsic','GTM','All_detected_withGTM'])
@@ -606,8 +613,11 @@ def grb_redshift_rates(doplot=False):
 		wfi45cm['All_detected_withGTM'][0]*4.,wfi45cm_UL['All_detected_withGTM'][0]])
 
 	i=np.where(wfi2014['z']==5)
-	highz=np.array([wfi2014['All_detected_withGTM'][i],wfi45cm['All_detected_withGTM'][i],
-		wfi45cm['All_detected_withGTM'][i]*4.,wfi45cm_UL['All_detected_withGTM'][i]])
+	i45=np.where(wfi45cm['z']==5)
+	i45UL=np.where(wfi45cm_UL['z']==5)
+
+	highz=np.array([wfi2014['All_detected_withGTM'][i],wfi45cm['All_detected_withGTM'][i45],
+		wfi45cm['All_detected_withGTM'][i45]*4.,wfi45cm_UL['All_detected_withGTM'][i45UL]])
 
 	highz=np.reshape(highz,(4))*zeff
 
@@ -628,25 +638,25 @@ def grb_redshift_rates(doplot=False):
 	if doplot:
 		fig=plot.figure(figsize=(8,5))
 		plot.plot(x,y/swiftlen,drawstyle='steps-mid',color='black',lw=2)
-		plot.fill_between([5,10.],[1e2,1e2],[0.1,0.1],facecolor='lightblue',interpolate=True,\
+		plot.fill_between([5,10.],[5e2,5e2],[0.1,0.1],facecolor='lightblue',interpolate=True,\
 			color='lightblue',alpha=0.5)
 		plot.annotate('Swift GRB Redshifts',xy=(1,1.5),xycoords='data',fontsize=16,color='black')#,rotation=340)
 
 	#	plot.fill_between(wfi45cm['z'],wfi45cm['All_detected_withGTM']*zeff[1], \
 	#		(wfi45cm_UL['All_detected_withGTM']+wfi45cm['GTM'])*zeff[1],alpha=0.8)
-		plot.fill_between(wfi45cm['z'],wfi45cm['All_detected_withGTM']*zeff[1], \
-			(wfi45cm_UL['All_detected_withGTM']+wfi45cm['GTM'])*zeff[1],alpha=0.8)
+		plot.fill_between(wfi45cm['z'],wfi45cm['All_detected_withGTM']*zeff[2]*4, \
+			(wfi45cm_UL['All_detected_withGTM']*4+wfi45cm['GTM'])*zeff[2],alpha=0.8)
 
-		plot.annotate('Predicted Redshifts for TAO-ISS GRBs',xy=(1.5,30),xycoords='data', \
+		plot.annotate('Predicted Redshifts for TAP GRBs',xy=(1.5,70),xycoords='data', \
 			fontsize=20,color='blue',rotation=340)
 
-		plot.plot([5,5],[0.1,100],color='k')
-		plot.scatter(7,30,s=40,marker='>',color='k')
-		plot.plot([5,7],[30,30],color='k')
-		plot.annotate('Targets for JWST',xy=(5.2,40),xycoords='data',fontsize=14,color='k')
+		plot.plot([5,5],[0.1,500],color='k')
+#		plot.scatter(7,30,s=40,marker='>',color='k')
+#		plot.plot([5,7],[30,30],color='k')
+#		plot.annotate('Targets for JWST',xy=(5.2,40),xycoords='data',fontsize=14,color='k')
 
 		plot.xlim(0,9)
-		plot.ylim(0.1,1e2)
+		plot.ylim(0.1,5e2)
 		plot.yscale('log')
 		axis_font = {'fontname':'Arial', 'size':'16'}
 		plot.xlabel('Redshift (z)',{'fontsize': 16})
@@ -755,6 +765,10 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 	t400=[400.]
 	t400_sensitivity=interpol_sens(t400,time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux)	
 
+	t100=[100.]
+	t100_sensitivity=interpol_sens(t100,time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux)	
+	print t100_sensitivity
+
 	print 'Daily exptimes: ',daily_exptimes
 	print 'Daily sensitivity: ',daily_sensitivity
 	print
@@ -774,10 +788,10 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 	agn=AGN_rates(daily_sensitivity,weekly_sensitivity,fov_frac*pointings)
 	blazars=Blazar_rates(daily_sensitivity,weekly_sensitivity,fov_frac*pointings)
 	stellar_flares=stellar_flares_rates(fovs)
-	novae=novae_rates(fovs,t400_sensitivity)
+	novae=novae_rates(fovs,t100_sensitivity)
 	thermonuclear_burst=thermonuclear_burst_rates(fovs)
 	#gw=gw_counterpart_rates(time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux)
-	grbs=grb_redshift_rates(doplot=False)
+	grbs=grb_redshift_rates(doplot=True)
 	xf,xfflux1,xfflux2=xflare_rates(daily_sensitivity)
 
 	print 'ccSNe Rates'

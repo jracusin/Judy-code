@@ -84,14 +84,14 @@ def loginterpol(x,y,x1):
 	return y1
 
 def crab(emin,emax):
-	## I(E)9.7 * E^-1.1 in 2-10 keV
+	## I(E)9.7 * E^-1.1 in 2-10 keV from Kirsch et al.
 	norm=9.7
 	pow1=1.1
 	cemin=2.
 	cemax=10.
 	crab1=int_pow_func([norm,pow1],cemin,cemax)
 
-	nh=3.26e21
+	nh=0#3.26e21
 	crab2=integrate.quad(wabsPL,emin,emax,args=(nh,[norm,pow1]))[0]
 	#crab2=int_pow_func([norm,pow1],emin,emax)
 
