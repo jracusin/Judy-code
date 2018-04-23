@@ -38,7 +38,7 @@ pro plot_st_results
      for i=0,ni-1 do begin 
 ;        plot,pixf.x,pixf.y,psym=1,xrange=[0,511],yrange=[0,511],/xsty,/ysty,xtitle='x',ytitle='y',/iso,title='ST'+ntostr(st)
         w8=where(pixf.comp[i] ge 8,nw8)
-        oplot,pixf[w8].x,pixf[w8].y,psym=8,color=color[i]
+        if nw8 gt 1 then oplot,pixf[w8].x,pixf[w8].y,psym=8,color=color[i]
      endfor 
 
 
@@ -51,7 +51,7 @@ pro plot_st_results
         n8[i]=nw8
      endfor 
      oplot,[8,8],[0,100],line=2
-     legend,strmid(pixf[0].wim,9,15),textcolor=color[0:ni-1],box=0,/top,/right,charsize=0.7
+     legend,strmid(pixf[0].wim,9,15),textcolor=color[0:ni-1],box=0,/top,/right,charsize=0.6
 
      ;;; plot # of pixels >8+bkg with im
      if st eq 1 then xrange3=[2013,round(max(pixf.date)+0.5)]
