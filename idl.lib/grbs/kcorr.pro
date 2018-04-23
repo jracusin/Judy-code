@@ -2,12 +2,12 @@ function kband,x,p
 
   alpha=p[0]
   beta=p[2]
-  e0=p[1]/(p[0]-p[2]) ;; input Epeak, use E0
+  e0=p[1]/(alpha-beta) ;; input Epeak, use E0
   w0=where(x lt (alpha-beta)*e0)
   w1=where(x gt (alpha-beta)*e0)
   y=dblarr(n_elements(x))
-  y[w0]=x[w0]*(x[w0]/100.)^p[0]*exp(-x[w0]/p[1])
-  y[w1]=x[w1]*((p[0]-p[2])*p[1]/100.)^(p[0]-p[2])*exp(p[2]-p[0])*(x[w1]/100.)^p[2]
+  y[w0]=(x[w0]/100.)^alpha*exp(-x[w0]/e0)
+  y[w1]=((alpha-beta)*e0/100.)^(alpha-beta)*(x[w1]/100.)^beta*exp(-(alpha-beta))
 
   return,y
 end

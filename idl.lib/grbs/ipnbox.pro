@@ -1,3 +1,27 @@
+pro grb170522a
+
+  center=[159.268,-34.716]
+  c1=[158.845, -35.550]
+  c2=[158.818,-35.346]
+  c3=[159.689,-33.872]
+  c4=[159.715,-34.080]
+
+  lat1=[139.34,25.67]
+  lat1err=0.19
+
+  lat2=[139.451, 25.863]
+  lat2err=0.19
+
+  ipnbox,lat1,c1,c2,c3,c4,yrange=[24,27],xrange=[137,141],/xrt
+  tvellipse,lat1err/cos(lat1[1]*!dtor),lat1err,lat1[0],lat1[1],0,/data,color=!magenta
+  tvellipse,lat2err/cos(lat2[1]*!dtor),lat1err,lat2[0],lat2[1],0,/data,color=!pink
+  plots,lat1[0],lat1[1],psym=2,color=!magenta
+  plots,lat2[0],lat2[1],psym=2,color=!pink
+  plots,center[0],center[1],psym=1
+
+  return
+end 
+
 pro grb160509a
 
   center=[312.131,75.810]

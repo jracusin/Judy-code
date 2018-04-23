@@ -328,9 +328,9 @@ pro grb150314a
 
   r=xrt[1].unabs_cfratio
   begplot,name='~/Chandra/GRB150314A/GRB150314A_combined_lc_wcons.ps',/land,/color
-  plot_like_qdp,lc=lc,/nohard,yrange=[1e-15,1e-7],xrange=[10,5e7],/ysty,flux=r,/useflux,xminor=9,ytickvalues=10^(dindgen(9)-15),yminor=9,yticks=8
+  plot_like_qdp,lc=lc,/nohard,yrange=[1e-15,1e-7],xrange=[10,2e8],/ysty,flux=r,/useflux,xminor=9,ytickvalues=10^(dindgen(9)-15),yminor=9,yticks=8
 
-  t=logarr(lc[0].tstart,5e7,bin=0.1)
+  t=logarr(lc[0].tstart,2e8,bin=0.1)
   oplot,t,call_function(mo,t,newp)*r
   oplot,t,call_function(basemo,t,newp[1:*])*r,line=2,color=!green
   oplot,t,gauss(t,newp[5:7])*r,color=!green,line=2
