@@ -50,27 +50,28 @@ end
 
 pro grb_rates
 
-  g=mrdfits('~/Fermi/GBM_GRB_Catalog.fits',1)
+;  g=mrdfits('~/Fermi/GBM_GRB_Catalog.fits',1)
+  g=mrdfits('~/Fermi/gbm_cat.fits',1)
 ;  trig=mrdfits('~/Burstcube/gbm_trigcat.fits',1)  
   
 ;  match,g.trigger_name,trig.trigger_name,m1,m2
 ;  trig_ts=trig[m2].trigger_timescale
 
-  nyears=6.
+  nyears=(max(g.trigger_time)-min(g.trigger_time))/365.25
 
   ;;; GBM NaI 12.7/1.27 cm
   ;;; BurstCube CsI 9.4/1.27 cm
-  rad=[12.7,9.4,4.]
-  area=[!pi*(rad[0]/2.)^2,rad[1]^2,rad[2]^2]
-  eff=[0.452,0.488,0.488] ;; from John K
-  inst=['GBM','BurstCube'];,'HOPE']
+  rad=[12.7,9.4,6.,6.]
+  area=[!pi*(rad[0]/2.)^2,rad[1]^2,rad[2]^2,4.*rad[2]^2]
+  eff=[0.452,0.488,0.488,0.488] ;; from John K
+  inst=['GBM','BurstCube 4','BurstCube 9','4x BurstCube 9']
   back=400. ;; cts/s
 
   t=[1.024,0.256,0.064]
   sig=[4.5,4.5,5]
 
   !p.multi=[0,1,2]
-  for j=0,1 do begin ;; GBM + BurstCube
+  for j=0,n_elements(inst)-1 do begin ;; GBM + BurstCube
      print,inst[j]
      id=intarr(n_elements(g)) & id2=intarr(n_elements(g))
      for i=0,n_elements(t)-1 do begin ;; timescales
@@ -83,7 +84,7 @@ pro grb_rates
            2: flux=g.flux_batse_64
         endcase
         
-        w=where(flux ne 0 and g.t90 lt 2.,n) ; and trig_ts ge t[i]*1000.,n)  ;; only sGRBs
+        w=where(flux ne 0 and g.t90 le 2.,n) ; and trig_ts ge t[i]*1000.,n)  ;; only sGRBs
         print,n/nyears,' total'
         
         plothist,alog10(flux[w]),xb,yb,bin=0.1,charsize=2. ;,/noplot
@@ -103,11 +104,11 @@ pro grb_rates
         print,v2,' short grbs with 2 BurstCubes'
         print
      endfor 
-     w=where(g.t90 lt 2. and id eq 1,nw)
-     print,nw/nyears
+     w=where(g.t90 le 2. and id eq 1,nw)
+     print,inst[j]+' total (all timescales) ',nw/nyears
 
-     w=where(g.t90 lt 2. and id2 eq 1,nw)
-     print,nw/nyears
+     w=where(g.t90 le 2. and id2 eq 1,nw)
+     print,inst[j]+'x2 total  (all timescales) ',nw/nyears
 
 
   endfor 

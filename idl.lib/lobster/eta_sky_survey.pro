@@ -1,3 +1,21 @@
+pro exposure_hist
+
+  ;add=['1day','1day2','1week','1month','1year']
+  add='1week2'
+  bin=[1000,1000,1000,1e4,1e5]
+  for i=0,n_elements(add)-1 do begin 
+     
+     l=mrdfits('wfi_swift_points_expomap_'+add[i]+'.fits')
+
+     begplot,name='WFI_pointings_hist_'+add[i]+'.ps',/color,/land
+     plothist,l,bin=bin[i],/fill,xtitle='Exposure Time (s)',fcolor=!blue,ytitle='N',title=add[i]
+     endplot
+     ps2pdf,'WFI_pointings_hist_'+add[i]+'.ps'
+
+  endfor 
+
+end
+
 pro add_maps,xx,yy,map,add=add,nside=nside
 
   ;;; get set of healpix pixels with each pixel <1 deg
@@ -120,8 +138,7 @@ end
 
 pro read_swift_afst
 
-  cd,'~/iLobster/ETA_2016/'
-  readcol,'Swift_2015.txt',line,delim='$',skip=1,format='(a)'
+  readcol,'~/Lobster/Swift_2015.txt',line,delim='$',skip=1,format='(a)'
   nlines=n_elements(line)
 
   afst=create_struct('date','','time',0d,'duration',0d,'target','','ra',0.,'dec',0.,'roll',0.,'sun_ra',0.,'sun_dec',0.,'sun_ha',0.)
@@ -179,7 +196,7 @@ pro read_swift_afst
      afst[i].sun_ha=ha
   endfor 
 
-  mwrfits,afst,'Swift_2015_afst.fits',/create
+  mwrfits,afst,'~/Lobster/Swift_2015_afst.fits',/create
 
 ;  stop
   return
@@ -212,9 +229,21 @@ pro swift_sim,wfi=wfi,irt=irt
 
   ;;;; other huge benefit is our own catalogs for difference imaging
 
-  afst=mrdfits('Swift_2015_afst.fits',1)
+  afst=mrdfits('~/Lobster/Swift_2015_afst.fits',1)
   w=where(strpos(afst.target,'saa') eq -1)
   afst=afst[w]
+;  w=where(afst.time ge 2015.+(94/365.) and afst.time le 2015+(95./365))
+;  afst=afst[w]
+;  add='_1day2'
+;  addlabel='1 day '
+;  add='_1month'
+;  addlabel='1 month '
+  add='_1week2'
+  addlabel='1 week '
+  w=where(afst.time ge 2015.5 and afst.time le 2015.5+7/365.)
+  afst=afst[w]
+;  add='_1year'
+;  addlabel='1 year '
   n=n_elements(afst)
 
 ;  map_set,/aitoff,/grid
@@ -224,7 +253,7 @@ pro swift_sim,wfi=wfi,irt=irt
 ;     plots,afst[i].ra,afst[i].dec,psym=1
      ;; wfi
      if keyword_set(wfi) then begin
-        rotate_box,afst[i].roll,xx,yy,xc=afst[i].ra,yc=afst[i].dec,xsize=10,ysize=45,bin=0.5
+        rotate_box,afst[i].roll,xx,yy,xc=afst[i].ra,yc=afst[i].dec,xsize=38,ysize=38,bin=0.5
         nside=16
      endif 
      ;; irt
@@ -248,12 +277,12 @@ pro swift_sim,wfi=wfi,irt=irt
   w=where(map eq 0)
   map[w]=1.
   if keyword_set(irt) then begin
-     mollview,map,title='1 year IRT-driven IRT pointings',/log,png='IRT_swift_pointings.png'
-     mwrfits,map,'irt_swift_points_expomap.fits',/create
+     mollview,map,title=addlabel+'IRT-driven IRT pointings',/log,png='IRT_swift_pointings'+add+'.png'
+     mwrfits,map,'irt_swift_points_expomap'+add+'.fits',/create
   endif 
   if keyword_set(wfi) then begin
-     mollview,map,title='1 year IRT-driven WFI pointings',/log,png='WFI_swift_pointings.png'
-     mwrfits,map,'wfi_swift_points_expomap.fits',/create
+     mollview,map,title=addlabel+'IRT-driven WFI pointings',png='WFI_swift_pointings'+add+'.png'
+     mwrfits,map,'wfi_swift_points_expomap'+add+'.fits',/create
   endif 
 
 stop
@@ -291,7 +320,7 @@ pro sky_survey_sim,irt=irt,wfi=wfi
 
   if keyword_set(wfi) then begin 
      for i=0L,n_elements(ra)-1 do begin 
-        rotate_box,0,xx,yy,xc=ra[i],yc=dec[i],xsize=45,ysize=10,bin=0.5
+        rotate_box,0,xx,yy,xc=ra[i],yc=dec[i],xsize=38,ysize=38,bin=0.5
         add_maps,xx,yy,map,add=1.,nside=64
 ;        mollview,map
 ;        k=get_kbrd(10)
@@ -309,7 +338,7 @@ end
 
 pro sky_survey_plots
 
-  cd,'~/iLobster/ETA_2016/'
+  cd,'~/Lobster/TAP/'
   
 goto,skip
   irt=mrdfits('irt_swift_points_expomap.fits',0)
@@ -355,17 +384,23 @@ skip:
 ;  dec=[replicate(67.5,18)]
   ra=0
   dec=0
-  for i=0,8 do begin 
-     ra=[ra,findgen(i+1)/(i+1.)*360.]
-     dec=[dec,replicate(84.99-i*10.,i+1)]
+;  d=[72,36,0,-36,-71]
+  numdec=7.
+  d=180/(numdec-1)*(numdec-1-findgen(numdec-1))-15-90
+  for i=0,n_elements(d)-1 do begin 
+;     ra=[ra,findgen(i+1)/(i+1.)*360.]
+;     dec=[dec,replicate(84.99-i*10.,i+1)]
+     npoint=round(360*cos(d[i]*!dtor)/30.+0.5)
+     dec=[dec,replicate(d[i],npoint)]
+     ra=[ra,360./npoint*findgen(npoint)]
 ;     print,findgen(i+1)/(i+1.),replicate(90-i*10.,i+1)
+     print,npoint
   endfor 
 
 ;  ra=[0,findgen(2)/2.,findgen(3)/3.,findgen(4)/4.,findgen(5)/5.]*360.
 ;  dec=[90,80,80,70,70,70,60,60,60,60,50,50,50,50,50]
   ra=ra[1:*]
   dec=dec[1:*]
-
 ;  ra=[ra,reverse(ra)]
 ;  dec=[dec,reverse(-dec)]
 
@@ -377,35 +412,41 @@ skip:
   ra[w]=ra[w]-360.
 
   n=n_elements(ra)
+
+  print,ra,dec
+stop
   
-goto,survey
+;goto,survey
   for i=0,n-1 do begin 
-     rotate_box,0.,xx,yy,xc=ra[i],yc=dec[i],xsize=45,ysize=10,bin=0.5
+     rotate_box,0.,xx,yy,xc=ra[i],yc=dec[i],xsize=38,ysize=38,bin=0.5
 
-     for j=0,9 do begin 
-        add_maps,xx+36*j,yy,map,add=1.,nside=64
-        add_maps,xx+36*j,-yy,map,add=1.,nside=64
-     endfor 
-
+     add_maps,xx,yy,map,add=1.,nside=64
+;     for j=0,9 do begin 
+;        add_maps,xx+36*j,yy,map,add=1.,nside=64
+;        add_maps,xx+36*j,-yy,map,add=1.,nside=64
+;     endfor 
   endfor 
+  map=map+1
   mollview,map,title='WFI Sky Survey',png='WFI_survey_pointings.png'
   mwrfits,map,'wfi_survey_points_expomap.fits',/create
 
   for i=0,n-1 do begin 
      rotate_box,0.,xx,yy,xc=ra[i],yc=dec[i],xsize=1.,ysize=1.,bin=0.5
 
-     for j=0,9 do begin 
-        add_maps,xx+36*j,yy,map,add=1.,nside=64
-        add_maps,xx+36*j,-yy,map,add=1.,nside=64
-     endfor 
+     add_maps,xx,yy,map,add=1.,nside=64
+
+;     for j=0,9 do begin 
+;        add_maps,xx+36*j,yy,map,add=1.,nside=64
+;        add_maps,xx+36*j,-yy,map,add=1.,nside=64
+;     endfor 
 
   endfor 
   mollview,map,title='IRT Pointings in WFI Sky Survey',png='IRT_WFI_survey_pointings.png',max=max(map[1:*])
   mwrfits,map,'IRT_WFI_survey_points_expomap.fits',/create
   survey:
   
-  goto,skip2
-  wfi=mrdfits('wfi_survey_points_expomap.fits',0)
+;  goto,skip2
+  wfi=mrdfits('wfi_survey_points_expomap_1day.fits',0)
   nwfi=n_elements(wfi)*1.
 
   begplot,name='wfi_survey_pointings_hist.ps',/land,/color
@@ -416,7 +457,7 @@ goto,survey
   w=where(wfi eq 0,nw)
   print,nw*1./nwfi
 
-
+goto,skip2
   irt=mrdfits('irt_wfi_survey_points_expomap.fits',0)
   nirt=n_elements(irt)*1.
 
@@ -470,7 +511,7 @@ pro roll
   w=where(roll_range gt 360)
   roll_range[w]=roll_range[w]-360.
 
-  afst=mrdfits('Swift_2015_afst.fits',1)
+  afst=mrdfits('~/Lobster/Swift_2015_afst.fits',1)
   
 
   begplot,name='roll_range.ps',/land,/color
@@ -483,8 +524,8 @@ pro roll
   plots,sunra,0.,psym=8,thick=2
 
   for i=0,n-1 do begin
-     rotate_box,roll_range[0,i],xx0,yy0,xc=ra[i],yc=dec[i],xsize=10.,ysize=45.,bin=0.5
-     rotate_box,roll_range[1,i],xx1,yy1,xc=ra[i],yc=dec[i],xsize=10.,ysize=45.,bin=0.5
+     rotate_box,roll_range[0,i],xx0,yy0,xc=ra[i],yc=dec[i],xsize=38.,ysize=38.,bin=0.5
+     rotate_box,roll_range[1,i],xx1,yy1,xc=ra[i],yc=dec[i],xsize=38.,ysize=38.,bin=0.5
 
      oplot,xx0,yy0,color=!blue
      oplot,xx1,yy1,color=!red
