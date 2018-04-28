@@ -6,3 +6,7 @@ idl.lib/wmap/wmap_IDLpro_v20.tar.gz
 idl.lib/grbs/.#decay_lum_correlation.pro
 
 idl.lib/grbs/.#decay_lum_correlation.pro
+
+*.pyc
+
+*.pyc
