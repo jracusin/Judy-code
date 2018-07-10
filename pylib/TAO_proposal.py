@@ -48,7 +48,7 @@ def compare_sensitivity(time,tao_wfi_flux,daily_exptimes):
 	ltime=[2021,2024,2025]
 	lflux=loginterpol(time,tao_wfi_flux,daily_exptimes[1])
 	print(daily_exptimes[1])
-	lfov=19.1*19.1
+	lfov=18.6*18.6
 
 	## MAXI/SSC
 	mtime=[2009.75,2018]
@@ -60,7 +60,7 @@ def compare_sensitivity(time,tao_wfi_flux,daily_exptimes):
  # 	mflux=loginterpol(mexp,msens,86400.*0.7)
  # 	print 'MAXI flux crab: ', mflux
  	mflux=50e-3 #mCrab from Tsunemi et al. (2011)
-	mflux=mflux*jap.crab(meng[0],meng[1])*jap.pimms(meng,[0.3,5],2,5e20)
+	mflux=mflux*jap.crab(meng[0],meng[1])*jap.pimms(meng,[0.4,4],2,5e20)
 	mfov=1.5*90. # deg
 
 	## Swift BAT
@@ -72,21 +72,21 @@ def compare_sensitivity(time,tao_wfi_flux,daily_exptimes):
 	# print bflux
 	# bflux=5.3e-3
 	# print bflux
-	bflux=bflux*jap.crab(15,150)*jap.pimms([15,150],[0.3,5],2,0)#5e20)
-	print jap.pimms([15,150],[0.3,5],2,0)
-	print jap.pimms([15,150],[0.3,5],2,5e20)
+	bflux=bflux*jap.crab(15,150)*jap.pimms([15,150],[0.4,4],2,0)#5e20)
+	print jap.pimms([15,150],[0.4,4],2,0)
+	print jap.pimms([15,150],[0.4,4],2,5e20)
 
 	## RXTE ASM
 	atime=[1996,2011]
 	aflux=4e-10
 	aeng=[2.,12.]
 	aeff=0.4
-	aflux=20e-3*jap.crab(aeng[0],aeng[1])*jap.pimms(aeng,[0.3,5],2,5e20)
+	aflux=20e-3*jap.crab(aeng[0],aeng[1])*jap.pimms(aeng,[0.4,4],2,5e20)
 	afov=12*110. #deg
 
 	#astrosat
 	astime=[2015.8,2021]
-	asflux=28e-3*jap.crab(2.5,10)*jap.pimms([2.5,10],[0.3,5],2,5e20) ## mCrab for SSM instrument (2.5-10 keV, FoV 10x90 deg) 
+	asflux=28e-3*jap.crab(2.5,10)*jap.pimms([2.5,10],[0.4,4],2,5e20) ## mCrab for SSM instrument (2.5-10 keV, FoV 10x90 deg) 
 	asfov=10*90. # deg
 
 	xrange=[2016,2026]
@@ -107,14 +107,14 @@ def compare_sensitivity(time,tao_wfi_flux,daily_exptimes):
 	plot.plot(ltime[1],lflux,marker=r'$\blacktriangleright$',markersize=10,color='black')
 	plot.plot(mtime[0:2],np.repeat(mflux,2),lw=2,color='black')
 	plot.plot(mtime[1],mflux,marker=r'$\blacktriangleright$',markersize=10,color='black')
-	plot.plot(btime,np.repeat(bflux,2),lw=2,color='black')
-	plot.plot(btime[1],bflux,marker=r'$\blacktriangleright$',markersize=10,color='black')
+#	plot.plot(btime,np.repeat(bflux,2),lw=2,color='black')
+#	plot.plot(btime[1],bflux,marker=r'$\blacktriangleright$',markersize=10,color='black')
 	plot.plot([xrange[0],xrange[0]+4],np.repeat(aflux,2),'r--',lw=2,color='black')
 	plot.plot(astime[1],asflux,marker=r'$\blacktriangleright$',markersize=10,color='black')
 	plot.plot(astime,np.repeat(asflux,2),lw=2,color='black')
 
-	plot.annotate('TAO-ISS/WFI',xy=(ltime[0],lflux*1.2),xycoords='data',fontsize=22,color='black')
-	plot.annotate('Swift/BAT',xy=(btime[0]+13.3,bflux*0.9),xycoords='data',fontsize=18,color='black')
+	plot.annotate('ISS-TAO/WFI',xy=(ltime[0],lflux*1.2),xycoords='data',fontsize=22,color='black')
+#	plot.annotate('Swift/BAT',xy=(btime[0]+13.3,bflux*0.9),xycoords='data',fontsize=18,color='black')
 	plot.annotate('MAXI/SSC',xy=(mtime[0]+8.5,mflux*0.9),xycoords='data',fontsize=18,color='black')
 	plot.annotate('RXTE/ASM',xy=(xrange[0]+4.2,aflux*0.9),xycoords='data',fontsize=18,color='black')
 	plot.annotate('ASTROSAT/SSM',xy=(xrange[0]+5.2,asflux*0.9),xycoords='data',fontsize=18,color='black')
@@ -124,7 +124,7 @@ def compare_sensitivity(time,tao_wfi_flux,daily_exptimes):
 	plot.yscale('log')
 	plot.xlabel('Year')
 	plot.axes().xaxis.set_minor_locator(MultipleLocator(1))
-	plot.ylabel(r'0.3-5.0 keV Sensitivity (erg cm$^{-2}$ s$^{-1}$)')
+	plot.ylabel(r'0.4-4.0 keV Sensitivity (erg cm$^{-2}$ s$^{-1}$)')
 	plot.title('Full Sky Sensitivity in 1 day')
 	plot.savefig('compare_tao.eps')
 	plot.savefig('compare_tao.png')
@@ -296,7 +296,7 @@ def xflare_rates(daily_sensitivity):
 	d=3.8#14.3
 	d=d*mpc2cm
 	pl=1.0#1.6
-	conv=jap.pimms([0.3,10.0],[0.3,5.0],pl,0)
+	conv=jap.pimms([0.3,10.0],[0.4,4.0],pl,0)
 	flux1=lum1*conv/(4*math.pi*d**2)
 	flux2=lum2*conv/(4*math.pi*d**2)
 	l=4
@@ -340,7 +340,7 @@ def ccSNe_rates(t400_sensitivity,fov_frac):
 
 def TDE_rates(sensitivity,sky_frac):
 
-	rate=1e-5 # yr-1 galaxy-1
+	rate=1e-4 # yr-1 galaxy-1
 	galdens=1e-2 #Mpc-3 of SMBH (10^6-10^8 Msolar)
 	mpc2cm=3.08568025e24
 
@@ -675,9 +675,11 @@ def grb_redshift_rates(doplot=False):
 
 def TAO_source_rates(doplot=False,onlyTAO=False):
 
-	fovs=np.array([30*30.,19.1*19.1,4.*19.1*19.1,1.])
-	config=['ISS-Lobster: 30x30','TAO WFI: 20x20','TAP WFI: 4x20x20','TAP XRI: 1x1']
-	constraints=0.83
+	from tao_planning_sims import wfi_sensitivity
+
+	fovs=np.array([30*30.,18.6*18.6,4.*19.1*19.1,1.])
+	config=['ISS-Lobster: 30x30','TAO WFI: 18.6x18.6','TAP WFI: 4x20x20','TAP XRI: 1x1']
+	constraints=0.80
 	allsky=4.*math.pi*(180./math.pi)**2.
 	fov_frac=fovs/allsky
 	frac_sky=np.array([constraints,constraints,constraints,100./allsky])
@@ -706,7 +708,8 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 	lob_flux=flux
 	lob_time=time2
 
-	tao=ascii.read('/Users/jracusin/Lobster/TAO_2016/lobster_sensitivity_0.3_5_Ptak_45cm.dat',names=['time','bcount','mcount','grbflux'],data_start=1)
+	tao=ascii.read('/Users/jracusin/Lobster/TAO_2016/simulations/Ptak/tau_flux_limits_2018_prob1e-10.csv',names=['time','bcount','mcount','grbflux'],data_start=1)
+#	tao=ascii.read('/Users/jracusin/Lobster/TAO_2016/lobster_sensitivity_0.3_5_Ptak_45cm.dat',names=['time','bcount','mcount','grbflux'],data_start=1)
 #	tao_wfi_flux=flux/1.5**2
 #	w=np.where(tao_wfi_flux < 1e-12)
 #	tao_wfi_flux[w]=1e-12
@@ -715,7 +718,8 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 	jordan_wfi_flux[w]=1e-12
 	
 	time=np.array(tao['time'])
-	grbflux=np.array(tao['grbflux'])
+	grbflux=wfi_sensitivity(time)
+#	grbflux=np.array(tao['grbflux'])
 	nl=len(time)
 	#time2=np.append(t1,time)
 	#time2=np.append(time2,t2)
@@ -727,7 +731,7 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 	#w=np.where(flux < 1e-12)
 	#flux[w]=1e-12
 
-	tao_wfi_flux=tao['grbflux']
+	tao_wfi_flux=grbflux#tao['grbflux']
 	time2=tao['time']
 
 	w=np.where(tao_wfi_flux < 1e-12)
@@ -753,20 +757,25 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 		plot_sensitivity(time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux,jordan_wfi_flux,onlyTAO=onlyTAO)
 
 	### sensitivity for various exposures
-	daily_exptimes = np.array(86400*0.85/pointings-30) # 0.85 for SAA, 30 s for slewing
+	 # 0.85 for SAA, 30 s for slewing, 0.95 for ISS downtime, 22.5 for average slew time @4 deg/s
+	daily_exptimes = np.array(86400*0.85*0.95/pointings-30-22.5)
 	daily_sensitivity=interpol_sens(daily_exptimes,time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux)	
+	daily_sensitivity[1]=wfi_sensitivity(daily_exptimes[1])
 
-	weekly_exptimes = 7*86400*0.85/pointings-30 # 0.85 for SAA, 30 s for slewing
+	weekly_exptimes = 7*86400*0.85*0.95/pointings-30-22.5
 	weekly_sensitivity=interpol_sens(weekly_exptimes,time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux)
+	weekly_sensitivity[1]=wfi_sensitivity(weekly_exptimes[1])
 
-	monthly_exptimes = 30*86400*0.85/pointings-30 # 0.85 for SAA, 30 s for slewing
+	monthly_exptimes = 30*86400*0.85*0.95/pointings-30-22.5
 	monthly_sensitivity=interpol_sens(monthly_exptimes,time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux)
 
 	t400=[400.]
 	t400_sensitivity=interpol_sens(t400,time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux)	
+	t400_sensitivity[1]=wfi_sensitivity(t400)
 
 	t100=[100.]
 	t100_sensitivity=interpol_sens(t100,time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux)	
+	t100_sensitivity[1]=wfi_sensitivity(t100)
 	print t100_sensitivity
 
 	print 'Daily exptimes: ',daily_exptimes

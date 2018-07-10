@@ -50,6 +50,240 @@ import glob
 # trigger at random time, begin follow-up
 # output exposure time, time since trigger, ra/dec, detx/dety
 
+def shb_plot(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/TAO/simulations/'):
+
+	sims=read_sims(configfile=configfile)
+	w=np.where(sims['exposure']>0)
+	w12=np.where((sims['snr']>=12) & (sims['exposure']>0))[0]
+	w8=np.where((sims['snr'] < 12 ) & (sims['snr']>=8) & (sims['exposure']>0))[0]
+	w3=np.where(sims['ngwdet']==2)
+	w2=np.where(sims['ngwdet']==3)
+	sims=sims[w]
+#	n=50
+#	r=np.round(np.random.rand(n)*n).astype('int')
+#	sims=sims[r]
+
+	nsims=len(sims)
+
+	grbox=grb_catalogs.load_GRBOX(nointernet=True)
+
+	z=np.zeros(len(grbox))
+	mask=grbox['z'].mask
+	for i in range(len(grbox)):
+		if (mask[i]==False) and (grbox['z'][i] != 'low'):
+			z[i]=float(grbox['z'][i])
+
+	bat=grb_catalogs.load_BAT()
+	w=np.where(bat['T90']!='N/A')
+	bat=bat[w]
+	t90=np.array(bat['T90']).astype('float')
+
+	# replace some T90's with those in Fong et al. 2015 (short with long soft tails)
+	lsgrbs=np.array(['GRB050724','GRB061006','GRB061210','GRB070714B','GRB070729','GRB071227','GRB090510'])
+	lst90=np.array([1.99,0.4,0.2,1.99,0.9,1.8,0.3])
+	m1,m2=grb_catalogs.match_catalogs_name(bat['GRBname'],lsgrbs)
+	t90[m1]=lst90[m2]
+
+	m1,m2=grb_catalogs.match_catalogs_name(np.core.defchararray.add('GRB',grbox['GRB']),bat['GRBname'])
+	s=np.where((t90[m2] <= 2.) & (t90[m2] > 0))# & (z[m1]>0))
+	sGRBs=bat['GRBname'][m2][s]
+	print '# of sGRBs = ',len(s[0])
+	t90=t90[m2][s]
+	z=z[m1][s]
+	w0=np.where(z==0.)[0]
+	z[w0]=0.5
+	lumdist=cosmo.luminosity_distance(z).value
+	pc2cm=3.08568025e18	
+	dist=lumdist*1e6*pc2cm
+#	distgw=440e6*pc2cm  ## 440 Mpc
+	distgw=sims['distance']*1e6*pc2cm
+	zgw=grb_catalogs.dist2z(sims['distance'])
+
+	grbdir='/Users/jracusin/Swift/GRBfits/GRBs/'
+	oldgrbdir='/Users/jracusin/GRBs/'
+
+	eng=np.linspace(0.3,10.,100)
+	de=eng[1]-eng[0]
+	wtao=np.where((eng >=0.4) & (eng <= 4.0))
+
+	det=np.zeros(nsims)
+	det[:]=-1
+	detfrac=[]
+	ngrbs=len(sGRBs)
+
+	### need to go through each sim and randomly grab a GRB LC
+
+	plot.figure()
+
+#	i=0
+	f10=wfi_sensitivity(10.)
+	f500=wfi_sensitivity(500.)
+	f2000=wfi_sensitivity(2000)
+
+	rr=np.random.randint(0,high=nsims,size=ngrbs)
+#	print rr
+
+	first1=True
+	first2=True
+	for i in range(ngrbs):
+		p={}
+		sp={}
+		if (os.path.exists(grbdir+sGRBs[i]+'/lc_fit_out_py_int1.dat') & os.path.exists(oldgrbdir+sGRBs[i])\
+			& os.path.exists(oldgrbdir+sGRBs[i]+'') & (sGRBs[i] != 'GRB100628A') & (sGRBs[i] != 'GRB140311B')):
+			p=fit_lc.read_lcfit(dir=grbdir+sGRBs[i]+'/')
+			sp=fit_lc.read_specfit(dir=oldgrbdir+sGRBs[i]+'/')
+			if (p != {}) & (sp != {}):
+
+				r=rr[i]#int(np.random.uniform()*nsims)
+				linestyle='-'
+
+				if sims['snr'][r]<12: linestyle=':'
+
+			# scale by distance, and k-correct from 0.3-10 keV to 0.4-4.0 keV
+				if 'PC' in sp.keys(): spec=sp['PC'] 
+				else: spec=sp['WT']
+				lc=fit_lc.read_lc('/Users/jracusin/Swift/GRBfits/GRBs/'+sGRBs[i]+'/')
+				conv=np.sum(fit_functions.pow(eng[wtao],*[1.,spec.gamma])*de)/np.sum(fit_functions.pow(eng,*[1.,spec.gamma])*de)
+				k1=grb_catalogs.kcorr(0.3,10.,0.4,4,-spec.gamma,z[i])
+				k2=grb_catalogs.kcorr(0.4,4,0.4,4,-spec.gamma,zgw[r])
+
+				conv=spec.flux/spec.rate*conv*dist[i]**2/distgw[r]**2/k1*k2  #distgw from map
+
+				# flux of this GRB at time of obs
+		#		tbin=np.array([sims['nettstart'][r]+sims['netExposure'][r]/2.])
+#				t=np.logspace(np.log10(sims['nettstart'][r]),5,100)
+				t=np.logspace(min(np.log10(lc['Time'])),max(np.log10(lc['T_+ve'])),100)
+				fscaled=fit_functions.call_function(p.model,t/(1.+z[i])*(1.+zgw[r]),*p.par)*conv
+
+				if ((first1==True)) | ((first2==True)):
+					if ((first1==True) & (linestyle=='-')):
+						plot.plot(t,fscaled,color='black',linestyle=linestyle,label=r'$SNR_{GW}>12$')
+						first1=False
+					if ((first2==True) & (linestyle==':')):
+						plot.plot(t,fscaled,color='black',linestyle=linestyle,label=r'$8<SNR_{GW}<12$')
+						first2=False
+				else:
+					plot.plot(t,fscaled,color='black',linestyle=linestyle)
+
+	yrange=[1e-13,1e-5]
+	plot.plot([15,15],yrange,color='darksalmon',linewidth=3)
+	plot.annotate('Start of WFI Scan from GTM Trigger',xy=(18,3e-6),color='darksalmon',bbox=dict(boxstyle="round", fc="w",alpha=0.8,color='w'))
+
+	plot.plot([120,120],[1e-13,1.5e-6],color='steelblue',linewidth=3)
+	plot.annotate('GW Skymap Available',xy=(150,6e-7),color='steelblue',bbox=dict(boxstyle="round", fc="w",alpha=0.8,color='w'))
+
+	s=np.sort(sims['nettstart'])
+	m=max(s[0:-10])
+#	m=max(sims['nettstart'])
+	plot.plot([m,m],[1e-13,2e-7],color='lightslategrey',linewidth=3)
+	plot.annotate('Max Observation Start',xy=(m+1e3,0.9e-7),color='lightslategrey',bbox=dict(boxstyle="round", fc="w",alpha=0.8,color='w'))
+
+	tao=ascii.read('/Users/jracusin/TAO/simulations/Ptak/tau_flux_limits_2018_prob1e-10.csv')
+	c=248.
+	g=3.
+	R90= c*(tao['cntslim9']**2/(tao['cntslim9']+g*tao['bgd9']))**(-0.5)
+  	tp=[10.,500.,2000.]
+  	r90p=loginterpol(tao['expt'],R90,tp)/60.
+  	print r90p
+
+	plot.plot([10,1e6],[f10,f10],color='red',lw=2,linestyle='--')
+	plot.annotate(r"$R_{90}$<1.7' 10 s Sensitivity",xy=(1e4,1.8*f10),color='red',bbox=dict(boxstyle="round", fc="w",alpha=0.8,color='w'))
+
+	plot.plot([500,1e6],[f500,f500],color='red',lw=2,linestyle='--')
+	plot.annotate(r"$R_{90}$<1.3' 500 s Sensitivity",xy=(1e4,1.8*f500),color='red',bbox=dict(boxstyle="round", fc="w",alpha=0.8,color='w'))
+
+	plot.plot([2000,1e6],[f2000,f2000],color='red',lw=2,linestyle='--')
+	plot.annotate(r"$R_{90}$<1.2' 2000 s Sensitivity",xy=(1e4,0.38*f2000),color='red',bbox=dict(boxstyle="round", fc="w",alpha=0.8,color='w'))
+
+	plot.legend()
+	plot.xscale('log')
+	plot.yscale('log')
+	plot.xlabel('Time (s)')
+	plot.ylim([1e-13,1e-5])
+	plot.xlim([10,1e6])
+	plot.ylabel(r'0.4 - 4 keV Flux (erg cm$^{-2}$ s$^{-1}$)')
+	ax=plot.gca()
+	ax.get_yaxis().set_tick_params(direction='in',which='both')
+	ax.get_xaxis().set_tick_params(direction='in',which='both')
+	plot.title('sGRB X-ray afterglows scaled to GW simulated distances')
+	plot.savefig('shb_plot.pdf')
+	plot.savefig('shb_plot.eps')
+	plot.show()
+
+def write_results_table():
+	versions=np.arange(23,30)#17)
+#	versions=np.arange(22,23)
+	versions=np.append(np.array([23,23]),versions)
+	simtext=np.array(['All Sky (maximum)',\
+		# 'Nominal','0.5xSensitivity','2xSensitivity','Slew Speed 2 deg/s',\
+		# 'WFI FoV 16.1x16.1 deg','GTM FoV 1.4 pi','Nominal - 500s Exposure',\
+		# 'Slew Speed 2 deg/s - 500s Exposure',\
+		# 'WFI FoV 16.1x16.1 deg - 500s Exposure','GTM FoV 1.4 pi - 500s Exposure',\
+		# 'No Solar Panel','No ISS Comm Delay','No solar panel & no ISS Comm Delay',\
+		# 'SVOM/CALET','Fermi-GBM','Swift-BAT','INTEGRAL SPI/ACS','BurstCube','WFI FoV 12.4x12.5 deg',\
+		# '30 deg Sun Constraint','10 deg Moon Constraint','30/10 Sun/Moon',\
+		'Requirements Nominal',\
+		'Requirements 0.5xSensitivity','Requirements 2xSensitivity',\
+		'Requirements Slew Speed 2 deg/s','Requirement WFI FoV x 0.5',\
+		'Requirements GTM FoV 1.4pi sr','Requirements 500 s exposure'])
+#	simtext=simtext[versions]
+
+	outf=open('sim_table.txt','w+')
+	outf.write('Simulation, Detection Fraction, Detection Fraction (SNR>12), '+ \
+		'Detection Fraction (8<SNR<12), Number of Detections, Number of Detections (SNR>12), '+\
+		'Number of Detections (8<SNR<12) \n')
+
+	outf.close()
+
+	gwrate=1540.
+	lowgwrate=1540.-1220.
+	highgwrate=1540+3200.
+	sp=', '
+	j=0
+	for i in range(len(versions)):
+		simfile='tao_config_v'+str(versions[i])+'.txt'
+		print simfile
+		if os.path.exists(simfile):
+			outf=open('sim_table.txt','a')
+			sens=1.
+			if j==1: sens=0.5
+			if j==2: sens=2.0
+			obsrate,obsrate12,obsrate8,detfrac,detfrac12,detfrac8=gwrates(configfile=simfile,sensitivity_factor=sens)
+			obsrate_=str(np.round(obsrate,1))
+			obsraterr_=' ['+str(np.round(obsrate/gwrate*lowgwrate,1))+'-'+\
+				str(np.round(obsrate/gwrate*highgwrate,1))+']'
+			obsrate12_=str(np.round(obsrate12,1))
+			obsraterr12_=' ['+str(np.round(obsrate12/gwrate*lowgwrate,1))+'-'+\
+				str(np.round(obsrate12/gwrate*highgwrate,1))+']'		
+			obsrate8_=str(np.round(obsrate8,1))
+			obsraterr8_=' ['+str(np.round(obsrate8/gwrate*lowgwrate,1))+'-'+\
+				str(np.round(obsrate8/gwrate*highgwrate,1))+']'
+
+			detfrac_=str(np.round(detfrac,2))
+			detfrac12_=str(np.round(detfrac12,2))
+			detfrac8_=str(np.round(detfrac8,2))
+
+			detrate_=str(np.round(obsrate*detfrac,1))
+			detraterr_=' ['+str(np.round(obsrate*detfrac/gwrate*lowgwrate,1))+'-'+\
+				str(np.round(obsrate*detfrac/gwrate*highgwrate,1))+']'
+			detrate12_=str(np.round(obsrate12*detfrac12,1))
+			detraterr12_=' ['+str(np.round(obsrate12*detfrac12/gwrate*lowgwrate,1))+'-'+\
+				str(np.round(obsrate12*detfrac12/gwrate*highgwrate,1))+']'
+			detrate8_=str(np.round(obsrate8*detfrac8,1))
+			detraterr8_=' ['+str(np.round(obsrate8*detfrac8/gwrate*lowgwrate,1))+'-'+\
+				str(np.round(obsrate8*detfrac8/gwrate*highgwrate,1))+']'
+			if j==0:
+				outf.write(simtext[i]+sp+str(1)+sp+str(1)+sp+str(1)+sp+obsrate_+obsraterr_+sp+obsrate12_\
+					+obsraterr12_+sp+obsrate8_+obsraterr8_+' \n')
+
+			outf.write(simtext[i+1]+sp+detfrac_+sp+detfrac12_+sp+detfrac8_\
+				+sp+detrate_+detraterr_+sp+detrate12_+detraterr12_+sp+detrate8_\
+				+detraterr8_+' \n')
+			j=j+1
+
+	outf.close()
+
+
 def sim_results(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/TAO/simulations/'):
 
 	sims=read_sims(configfile=configfile)
@@ -101,6 +335,19 @@ def sim_results(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracus
 #	plot.show()
 	plot.close()
 
+	v='numtiles'
+	plotfile=v+'_'+configfile.split('.txt')[0]+'.png'
+	hist=plot.hist(sims[v][w],bins=np.arange(0,9)+0.5,density=True)#,label='All')
+#	hist=plot.hist(sims[v][w8],bins=np.arange(0,9),label='8<SNR<12',alpha=0.7)
+#	hist=plot.hist(sims[v][w12],bins=np.arange(0,9),label='SNR>12',alpha=0.7)
+	plot.xlabel('Number of Tiles')
+	plot.ylabel('Fraction of Simulation')
+#	plot.legend()
+#	plot.xscale('log')
+#	plot.yscale('log')
+	plot.savefig(plotfile)
+#	plot.show()
+	plot.close()
 
 def detstats(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/TAO/simulations/'):
 
@@ -141,15 +388,16 @@ def gwrates(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/T
 	print('GW rate = ',gwrate,' Mpc-3 yr-1')
 
 	## 200 Mpc (design range) * 1.5 (on-axis) * 1.5 (sub-threshold)
-	range=200.*1.5*1.5
-	print('Range = ',range,' Mpc')
+	gwrange=200.*1.5*1.5
+	print('Range = ',gwrange,' Mpc')
 	volume=4./3.*np.pi*(200.*1.5*1.5)**3 #Mpc3
 	totrate=gwrate*volume #BNS yr-1 in volume
 	print('All-sky all-orientation rate = ',totrate,' yr-1')
 
 	## need to account for beaming
 	allsky=4.*np.pi*(180./np.pi)**2.
-	scale=2*np.pi*taoconfig['jetangle']**2/allsky
+#	scale=2*np.pi*taoconfig['jetangle']**2/allsky
+	scale=sph_cap(taoconfig['jetangle'])*2.
 	print('Scale by opening angle = ',scale)
 
 	totrate=totrate*scale  # all sky rate
@@ -186,29 +434,43 @@ def gwrates(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/T
 
 
 	print('Sim breakdown (total, SNR>12, 8<SNR<12) = ',nsims,n12,n8)
-	wdet,wdet12,wdet8=throw_grbs(configfile=configfile,dir=dir,taoconfig=taoconfig,sensitivity_factor=sensitivity_factor)
-	print('Detected numbers = ',len(wdet),len(wdet12),len(wdet8))
-	detfrac=len(wdet)/nsims
+	nwdet=[] 
+	nwdet12=[]
+	nwdet8=[]
+	n=3
+	for i in range(n):
+		wdet,wdet12,wdet8=throw_grbs(configfile=configfile,dir=dir,taoconfig=taoconfig,sensitivity_factor=sensitivity_factor)
+		nwdet.append(len(wdet))
+		nwdet12.append(len(wdet12))
+		nwdet8.append(len(wdet8))
+
+	nwdet=np.mean(nwdet)
+	nwdet12=np.mean(nwdet12)
+	nwdet8=np.mean(nwdet8)
+
+	print('Detected numbers = ',nwdet,nwdet12,nwdet8)
+	detfrac=nwdet/nsims
 	print detfrac
 	wfirate=obsrate*detfrac#*0.87
 	print('GW-GRB rate = ',wfirate,' yr-1')
 	print('GW-GRB rate errors = ',wfirate/1540*(1540-1220.),wfirate/1540*(1540+3200.),' yr-1')
 
-	detfrac=len(wdet12)/n12
-	print detfrac
-	wfirate=obsrate12*detfrac#*0.87
-	print('GW-GRB rate (SNR>12) = ',wfirate,' yr-1')
-	print('GW-GRB rate errors = (SNR>12) ',wfirate/1540*(1540-1220.),wfirate/1540*(1540+3200.),' yr-1')
+	detfrac12=nwdet12/n12
+	print detfrac12
+	wfirate12=obsrate12*detfrac12#*0.87
+	print('GW-GRB rate (SNR>12) = ',wfirate12,' yr-1')
+	print('GW-GRB rate errors = (SNR>12) ',wfirate12/1540*(1540-1220.),wfirate12/1540*(1540+3200.),' yr-1')
 
-	detfrac8=len(wdet8)/n8
+	detfrac8=nwdet8/n8
 	print detfrac8
 	wfirate8=obsrate8*detfrac8#*0.87
 	print('GW-GRB rate (8<SNR<12) = ',wfirate8,' yr-1')
 	print('GW-GRB rate errors (8<SNR<12) = ',wfirate8/1540*(1540-1220.),wfirate8/1540*(1540+3200.),' yr-1')
 
 	print('GW-GRB rate (SNR>8) = ',wfirate+wfirate8,' yr-1')
-	print('GW-GRB rate errors (SNR>8) = ',(wfirate8+wfirate)/1540*(1540-1220.),(wfirate8+wfirate)/1540*(1540+3200.),' yr-1')
+	print('GW-GRB rate errors (SNR>8) = ',(wfirate8+wfirate12)/1540*(1540-1220.),(wfirate8+wfirate12)/1540*(1540+3200.),' yr-1')
 
+	return obsrate,obsrate12,obsrate8,detfrac,detfrac12,detfrac8
 
 #	wfirate2=len(wdet)/taoconfig['simrate']/2.#*0.87
 #	print('WFI rate (weighted)= ',wfirate2,' yr-1')
@@ -267,7 +529,7 @@ def throw_grbs(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusi
 
 	eng=np.linspace(0.3,10.,100)
 	de=eng[1]-eng[0]
-	wtao=np.where(eng <= 5.0)
+	wtao=np.where((eng >=0.4) & (eng <= 4.0))
 
 	det=np.zeros(nsims)
 	det[:]=-1
@@ -285,12 +547,12 @@ def throw_grbs(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusi
 			if (os.path.exists(grbdir+sGRBs[i]+'/lc_fit_out_py_int1.dat') & os.path.exists(oldgrbdir+sGRBs[i])):
 				p=fit_lc.read_lcfit(dir=grbdir+sGRBs[i]+'/')
 				sp=fit_lc.read_specfit(dir=oldgrbdir+sGRBs[i]+'/')
-		# scale by distance, and k-correct from 0.3-10 keV to 0.3-5.0 keV
+		# scale by distance, and k-correct from 0.3-10 keV to 0.4-4.0 keV
 		if 'PC' in sp.keys(): spec=sp['PC'] 
 		else: spec=sp['WT']
 		conv=np.sum(fit_functions.pow(eng[wtao],*[1.,spec.gamma])*de)/np.sum(fit_functions.pow(eng,*[1.,spec.gamma])*de)
-		k1=grb_catalogs.kcorr(0.3,10.,0.3,5,-spec.gamma,z[i])
-		k2=grb_catalogs.kcorr(0.3,5,0.3,5,-spec.gamma,zgw[r])
+		k1=grb_catalogs.kcorr(0.3,10.,0.4,4,-spec.gamma,z[i])
+		k2=grb_catalogs.kcorr(0.4,4,0.4,4,-spec.gamma,zgw[r])
 
 		conv=spec.flux/spec.rate*conv*dist[i]**2/distgw[r]**2/k1*k2  #distgw from map
 #				print spec.flux/spec.rate,conv,dist[i]**2/distgw**2,k
@@ -333,7 +595,43 @@ def throw_grbs(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusi
 
 	return wdet,wdet12,wdet8#,sGRBs,z
 
-def run_sims(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/TAO/simulations/',doplot=True,istart=0,noGTM=False):
+def read_tiles(tilefile='tiles_wfi18.6_roll10.txt',dir='/Users/jracusin/TAO/simulations/'):
+
+	data=ascii.read(dir+tilefile,data_start=1)
+	sims=np.array(data['col1'])
+	centers0=np.array([np.stack([data['col2'][i],data['col3'][i]]) for i in range(len(data))])
+	rolls0=np.array(data['col4'])#[np.stack(data['col4']) for i in range(len(data))]
+	probs0=np.array(data['col5'])#[np.stack(data['col5']) for i in range(len(data))]
+	tileperc=np.array(data['col6'])
+
+	return sims,centers0,rolls0,probs0,tileperc
+
+def just_tiling(taoconfig=None,configfile='tao_config_v23.txt',dir='/Users/jracusin/TAO/simulations/'):
+
+	if taoconfig==None:
+		taoconfig=read_tao_config(filename=dir+configfile)
+
+	c=', '
+
+	simdir=taoconfig['simdir']
+	detsize=str(taoconfig['detsize'])
+	print detsize
+	outf=open(dir+'tiles_wfi'+detsize+'_roll10.txt','w')
+	outf.write('sim'+c+'centers'+c+'rolls'+c+'probs'+c+'tileperc'+' \n')
+
+	for i in range(0,1688):
+		outf=open(dir+'tiles_wfi'+detsize+'_roll10.txt','a')
+
+		datafile=simdir+str(i)+'.nside32.fits.gz'
+		print datafile
+		theta,phi,m,hdr=read_healpix_map(datafile)
+		centers0,rolls0,probs0,tileperc=tiling(theta,phi,m,taoconfig=taoconfig)
+		for j in range(len(rolls0)):
+			outf.write(str(i)+c+str(centers0[j][0])+c+str(centers0[j][1])+c+str(rolls0[j])+c+str(probs0[j])+c+str(tileperc)+' \n')
+		outf.close()
+
+
+def run_sims(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/TAO/simulations/',doplot=True,istart=0,noGTM=False,other_instrument=False):
 
 	if taoconfig==None:
 		taoconfig=read_tao_config(filename=dir+configfile)
@@ -354,8 +652,10 @@ def run_sims(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/
 #	ntrig=int(nsims)
 
 	outf=open(dir+outfile,'a')
-	outf.write('map, time, distance, ngwdet, snr, numtiles, tileperc, tileRA, tileDec, RealRA, RealDec, offset, roll, exposure, slewtime, netExposure, tstart, nettstart \n')
+	outf.write('map, time, distance, ngwdet, snr, numtiles, tileperc, tileRA, tileDec, RealRA, RealDec, offset, roll, exposure, slewtime, netExposure, tstart, nettstart, whichtiledet \n')
 	outf.close()
+
+	allsimnums,allcenters,allrolls,allprobs,alltileperc=read_tiles(tilefile='tiles_wfi'+str(taoconfig['detsize'])+'_roll10.txt',dir='/Users/jracusin/TAO/simulations/')
 
 	for i in range(istart,ntrig):
 
@@ -414,6 +714,17 @@ def run_sims(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/
 		wt=wtime[wt]
 
 		sep=separation(scra[wt],scdec[wt],realra,realdec)
+
+		if other_instrument==True: ## instead of GTM, use GBM or BC or CALET etc
+			randra,randdec=random_sky()
+			sep=separation(randra,randdec,realra,realdec)
+			## SVOM-GRM = 2.6 sr - 54 deg
+			## Fermi-GBM = 8.8 sr - 114 deg
+			## Swift BAT = 1.4 sr - 39 deg 
+			## CALET - CGBM = 3 sr - 58.5
+			## INTEGRAL SPI/ACS - 11 sr - 139 deg
+			## BurstCube - 5.2 sr - 80 deg
+
 
 		# scenarios
 		# 1 - GRB outside GTM_FoV, SNR<12, any ndet - do nothing
@@ -502,7 +813,14 @@ def run_sims(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/
 
 			if ((tile == 1) & (gwtiling)):
 				if doplot: hp.mollview(m3)
-				centers0,rolls0,probs0,tileperc=tiling(theta,phi,m3,taoconfig=taoconfig)
+#				if donetiles==True:
+				ws=np.where(allsimnums==i)[0]
+				centers0=allcenters[ws]
+				rolls0=allrolls[ws]
+				probs0=allprobs[ws]
+				tileperc=alltileperc[ws[0]]
+#				else:
+#					centers0,rolls0,probs0,tileperc=tiling(theta,phi,m3,taoconfig=taoconfig)
 				## grab 2 orbits around trigger time
 				startdelay=taoconfig['command_delay']+iss_comm_delay()[0]
 				wtime=np.where(((sctime-tmet-startdelay)>0) & ((sctime-tmet-startdelay)<(taoconfig['norbits']*taoconfig['orbittime']*60)))[0]
@@ -516,7 +834,7 @@ def run_sims(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/
 				print 'output: ',coinc_id,t.isot,distance,snr,0,0,0,0,0,0,0,0,0,0,0
 				outf=open(outfile,'a')
 				sp=', '
-				outf.write(str(coinc_id)+sp+str(t.isot)+sp+str(distance)+sp+str(ngwdet)+sp+str(snr)+sp+'0,0,0,0,0,0,0,0,0,0,0,0,0'+' \n')
+				outf.write(str(coinc_id)+sp+str(t.isot)+sp+str(distance)+sp+str(ngwdet)+sp+str(snr)+sp+'0,0,0,0,0,0,0,0,0,0,0,0,0,0'+' \n')
 				outf.close()
 				break
 
@@ -646,10 +964,10 @@ def run_sims(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/
 				
 				if ((ntiles==0) | (ngti==0)):
 					print 'NO TILES ARE OUT OF CONSTRAINT AND CONTAIN THE GRB'
-					print 'output: ',coinc_id,t.isot,distance,snr,numtiles,tileperc,0,0,0,0,0,0,0,0,0,0,0
+					print 'output: ',coinc_id,t.isot,distance,snr,numtiles,tileperc,0,0,0,0,0,0,0,0,0,0,0,0
 					outf=open(outfile,'a')
 					sp=', '
-					outf.write(str(coinc_id)+sp+str(t.isot)+sp+str(distance)+sp+str(ngwdet)+sp+str(snr)+sp+str(numtiles)+sp+str(tileperc)+sp+'0,0,0,0,0,0,0,0,0,0,0'+' \n')
+					outf.write(str(coinc_id)+sp+str(t.isot)+sp+str(distance)+sp+str(ngwdet)+sp+str(snr)+sp+str(numtiles)+sp+str(tileperc)+sp+'0,0,0,0,0,0,0,0,0,0,0,0'+' \n')
 					outf.close()
 
 		#			print 'NO TILES ARE OUT OF CONSTRAINT'
@@ -758,20 +1076,20 @@ def run_sims(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/
 						print 'map, time, distance, ngwdet, snr, tileRA, tileDec, RealRA, RealDec, offset, roll, exposure, slewtime, netExposure, tstart, nettstart'
 						print 'output: ',coinc_id,t.isot,distance,ngwdet, snr, numtiles, tileperc, tilesra[realtile],tilesdec[realtile],realra,realdec,dist[realtile],\
 							rolls[realtile],exposure[j],slewtimes[realtile],exposure[j]-slewtimes[realtile],\
-							tstart[realtile]-tmet,tstart[realtile]-tmet+slewtimes[realtile],startdelay
+							tstart[realtile]-tmet,tstart[realtile]-tmet+slewtimes[realtile]+startdelay,realtile
 						outf=open(outfile,'a')
 						sp=', '
 						outf.write(str(coinc_id)+sp+str(t.isot)+sp+str(distance)+sp+str(ngwdet)+sp+str(snr)+sp+str(numtiles)+sp+str(tileperc)+sp+\
 							str(tilesra[realtile])+sp+str(tilesdec[realtile])+sp+str(realra)+sp+str(realdec)+sp+str(dist[realtile])+\
 							sp+str(rolls[realtile])+sp+str(exposure[j])+sp+str(slewtimes[realtile])+sp+str(exposure[j]-slewtimes[realtile])+\
-							sp+str(tstart[realtile]-tmet)+sp+str(tstart[realtile]-tmet+slewtimes[realtile]+startdelay)+' \n')
+							sp+str(tstart[realtile]-tmet)+sp+str(tstart[realtile]-tmet+slewtimes[realtile]+startdelay)+sp+str(realtile)+' \n')
 						outf.close()
 					else:
 						print 'NO TILES ARE OUT OF CONSTRAINT AND CONTAIN THE GRB'
-						print 'output: ',coinc_id,t.isot,distance,ngwdet,snr,0,0,0,0,0,0,0,0,0,0,0
+						print 'output: ',coinc_id,t.isot,distance,ngwdet,snr,0,0,0,0,0,0,0,0,0,0,0,0
 						outf=open(outfile,'a')
 						sp=', '
-						outf.write(str(coinc_id)+sp+str(t.isot)+sp+str(distance)+sp+str(ngwdet)+sp+str(snr)+sp+'0,0,0,0,0,0,0,0,0,0,0,0,0'+' \n')
+						outf.write(str(coinc_id)+sp+str(t.isot)+sp+str(distance)+sp+str(ngwdet)+sp+str(snr)+sp+'0,0,0,0,0,0,0,0,0,0,0,0,0,0'+' \n')
 						outf.close()
 				# else:
 				# 	print 'SINGLE GW LOCALIZATION, NO TILING FOR TAO'
@@ -790,7 +1108,7 @@ def read_sims(taoconfig=None,outfile=None,configfile='tao_config_v1.txt',dir='/U
 	if taoconfig==None:
 		taoconfig=read_tao_config(filename=dir+configfile)
 
-	if outfile== None: outfile=configfile.split('.txt')[0]+'.out'
+	if outfile== None: outfile=dir+configfile.split('.txt')[0]+'.out'
 	print outfile
 
 	sims=ascii.read(outfile)
@@ -827,7 +1145,7 @@ def make_small_files(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/j
 
 	ntrig=int(nsims)
 
-	for i in range(603,1679):
+	for i in range(1679,1688):
 
 		datafile=simdir+str(i)+'.fits.gz'
 		outdatafile=simdir+str(i)+'.nside32.fits.gz'
@@ -1224,21 +1542,24 @@ def tiling(theta,phi,m,prob_coverage=0.9,taoconfig=None):
 
 	while ptot < prob_coverage:
 		bestcenter,r,maxp=find_best_tile(theta,phi,mmask,taoconfig=taoconfig)
-		wfi,wfirot=wfi_fov(wficenter=np.degrees(bestcenter),wfiroll=r,taoconfig=taoconfig)
+		if r!=-1:
+			wfi,wfirot=wfi_fov(wficenter=np.degrees(bestcenter),wfiroll=r,taoconfig=taoconfig)
 
-		incp,w=prob_inside_fov(np.degrees(theta),np.degrees(phi),mmask,wfirot)
-		mask[w]=True
-# 		mask[w]=np.logical_not(mask[w])#False
-# 		print w
-# #		mmask[w]=hp.UNSEEN
- 		mmask.mask=mask
-# 		print len(np.where(mmask.mask==False)[0])
-# 		w0=np.where(mask==False)[0]
-# 		print len(w0)
+			incp,w=prob_inside_fov(np.degrees(theta),np.degrees(phi),mmask,wfirot)
+			mask[w]=True
+	# 		mask[w]=np.logical_not(mask[w])#False
+	# 		print w
+	# #		mmask[w]=hp.UNSEEN
+	 		mmask.mask=mask
+	# 		print len(np.where(mmask.mask==False)[0])
+	# 		w0=np.where(mask==False)[0]
+	# 		print len(w0)
 
 
-		ptot=ptot+incp
-		pout=ptot
+			ptot=ptot+incp
+			pout=ptot
+		else:
+			break
 
 		tilenum += 1
 		print incp,ptot,tilenum
@@ -1256,6 +1577,9 @@ def find_best_tile(theta,phi,map,threshold=1e-3,taoconfig=None):
 #	wm=np.where(map.mask == False)[0]
 	pix=np.where(map >= threshold)[0]  # search only pixels above some probability threshold
 #	pix=wm[pix]
+	
+	if len(pix)==0:
+		return -1,-1,-1
 
 	p=[]
 	roll=[]
@@ -1492,8 +1816,13 @@ def read_ft2(mjd,dir='/Users/jracusin/Lobster/TAO_2016/simulations/FT2/'):
 
 	return ft2	
 
-def sph_cap(ang):
-	return 2*np.pi*(1-np.cos(ang*np.pi/180.))/(4.*np.pi)
+def sph_cap(ang,frac=False):
+	if frac == False: 
+		r=(1-np.cos(np.radians(ang)))/2.
+	else:
+		r=np.degrees(np.arccos(1.-2*ang))
+
+	return r
 
 def estimate_viewing_area():
 
@@ -1757,7 +2086,7 @@ def wheninFoR(ra,dec,cra,cdec,time,taoconfig=None,configfile='tao_config_v1.txt'
 
 	# return slewtime,waittime,ontime
 
-def random_sky(n):
+def random_sky(n=1):
 
 	u=np.random.rand(n)
 	v=np.random.rand(n)#*(1.-2*0.043)+0.043 # limits to between -66 < dec < +66
@@ -1779,9 +2108,69 @@ def loginterpol(x,y,x1):
 
 	return y1
 
+def plot_sensitivities():
+
+	tao=ascii.read('/Users/jracusin/TAO/simulations/TAO-ISS_sensitivity.dat')
+	minf=[]
+	for t in tao:
+		x=np.array([t['flux5'],t['flux6'],t['flux7'],t['flux8'],t['flux9'],t['flux10'],t['flux12'],t['flux14'],t['flux16']])
+		minf.append(min(x))
+#	flux=loginterpol(tao['secs'],minf,exposure)
+	dick_time=np.array(tao['secs'])
+	dick_flux=np.array(minf)
+
+	ptak=ascii.read('/Users/jracusin/TAO/simulations/Ptak/tau_flux_limits_2018_prob1e-10.csv')
+	ptak_flux=np.array(ptak['flim9'])
+	ptak_time=np.array(ptak['expt'])
+
+	lien=ascii.read('/Users/jracusin/TAO/simulations/Lien/mid_bkg_9arcmin_fwhm_3.4effarea_row536_col536.txt')
+	lien_time=np.array(lien['col1'])
+	lien_flux10=np.array(lien['col2'])
+	lien_flux50=np.array(lien['col3'])
+	lien_flux90=np.array(lien['col4'])
+
+	plot.figure()
+	k=tao.keys()[1:]
+#	for i in k:
+	i='flux9'
+#	plot.plot(dick_time,tao[i],label='Dick '+i)		
+
+#	plot.plot(dick_time,dick_flux,label='Dick Min Flux')
+
+	plot.plot(ptak_time,ptak_flux,label='Ptak Flux',linestyle='--')
+	plot.plot(lien_time,lien_flux10,label=r'Lien midbkg, 9 arcmin, 3.4, $10\%$')
+	plot.plot(lien_time,lien_flux50,label=r'Lien midbkg, 9 arcmin, 3.4, $50\%$')
+	plot.plot(lien_time,lien_flux90,label=r'Lien midbkg, 9 arcmin, 3.4, $90\%$')
+
+#	d=np.where(dick_time == 100)[0]
+	p=np.where(ptak_time == 100)[0]
+#	r=dick_flux[d]/ptak_flux[p]
+#	print r
+#	plot.plot(ptak_time,ptak_flux*r,label='Andy Flux scaled to Dick Min Flux',linestyle='--')
+
+
+	plot.xscale('log')
+	plot.yscale('log')
+	plot.xlabel('Exposure (s)')
+	plot.ylabel('0.4-4 keV Sensitivity (erg cm-2 s-1)')
+	plot.legend()
+	plot.savefig('Ptak_Lien_WFI_sensitivites.pdf')
+	plot.show()
+
 def wfi_sensitivity(exposure=10):
-	tao=ascii.read('/Users/jracusin/Lobster/TAO_2016/lobster_sensitivity_0.3_5_Ptak_45cm.dat',names=['time','bcount','mcount','grbflux'],data_start=1)
-	flux=loginterpol(tao['time'],tao['grbflux'],exposure)
+#	tao=ascii.read('/Users/jracusin/Lobster/TAO_2016/lobster_sensitivity_0.3_5_Ptak_45cm.dat',names=['time','bcount','mcount','grbflux'],data_start=1)
+#	flux=loginterpol(tao['time'],tao['grbflux'],exposure)
+#	tao=ascii.read('/Users/jracusin/TAO/simulations/TAO-ISS_sensitivity.dat')
+	# minf=[]
+	# for t in tao:
+	# 	x=np.array([t['flux5'],t['flux6'],t['flux7'],t['flux8'],t['flux9'],t['flux10'],t['flux12'],t['flux14'],t['flux16']])
+	# 	minf.append(min(x))
+	# flux=loginterpol(tao['secs'],minf,exposure)
+
+	tao=ascii.read('/Users/jracusin/TAO/simulations/Ptak/tau_flux_limits_2018_prob1e-10.csv')
+	minf=tao['flim9']
+	time=tao['expt']
+	flux=loginterpol(time,minf,exposure)
 
 	return flux
 

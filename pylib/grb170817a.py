@@ -268,6 +268,15 @@ def calc_energetics(grbox,gbm,FLNC_Emin=10.,FLNC_Emax=1000.,Emin=1.,Emax=1e4,m1=
 	m1=m1[w] ; m2=m2[w]
 	n=len(w[0])
 
+	size=14
+	plot.rc('font', size=size)          # controls default text sizes
+	plot.rc('axes', titlesize=size)     # fontsize of the axes title
+	plot.rc('axes', labelsize=size+2)    # fontsize of the x and y labels
+	plot.rc('xtick', labelsize=size)    # fontsize of the tick labels
+	plot.rc('ytick', labelsize=size)    # fontsize of the tick labels
+	plot.rc('legend', fontsize=size)    # legend fontsize
+
+
 	zs=grbox['z'][m1]
 	pc2cm=3.08568025e18
 
@@ -343,18 +352,20 @@ def calc_energetics(grbox,gbm,FLNC_Emin=10.,FLNC_Emax=1000.,Emin=1.,Emax=1e4,m1=
 	## plot Eiso vs z
 	fix,ax=plot.subplots()
 	## separate short & long bursts
-	s=np.where((gbm[m2]['T90']!=0) & (gbm[m2]['T90']<=2) & (gbm['FLNC_BEST_FITTING_MODEL'][m2] != 'FLNC_PLAW'))
-	l=np.where((gbm[m2]['T90']>2)  & (gbm['FLNC_BEST_FITTING_MODEL'][m2] != 'FLNC_PLAW'))
+	s=np.where((gbm[m2]['T90']!=0) & (gbm[m2]['T90']<=2) & (gbm['FLNC_BEST_FITTING_MODEL'][m2] != 'FLNC_PLAW'))[0]
+	l=np.where((gbm[m2]['T90']>2)  & (gbm['FLNC_BEST_FITTING_MODEL'][m2] != 'FLNC_PLAW'))[0]
 
-	spl=np.where((gbm[m2]['T90']<=2) & (gbm['FLNC_BEST_FITTING_MODEL'][m2] == 'FLNC_PLAW'))
-	lpl=np.where((gbm[m2]['T90']>2)  & (gbm['FLNC_BEST_FITTING_MODEL'][m2] == 'FLNC_PLAW'))
+	spl=np.where((gbm[m2]['T90']<=2) & (gbm['FLNC_BEST_FITTING_MODEL'][m2] == 'FLNC_PLAW'))[0]
+	lpl=np.where((gbm[m2]['T90']>2)  & (gbm['FLNC_BEST_FITTING_MODEL'][m2] == 'FLNC_PLAW'))[0]
 
-	plot.scatter(redshifts[l],Eiso[l[0]],label='Long GRBs',linestyle='None',marker='o',color='C0',alpha=aval)
+	plot.scatter(redshifts[l],Eiso[l],label='Long GRBs',linestyle='None',marker='o',color='C0',alpha=aval)
 #	plot.errorbar(redshifts[l],Eiso[l[0]],yerr=[Eiso_err0[l[0]],Eiso_err1[l[0]]],linestyle='None',color='C0',alpha=aval)
-	plot.errorbar(redshifts[lpl],Eiso[lpl[0]],0.7*Eiso[lpl[0]],linestyle='None',marker='o',uplims=True,color='C0',alpha=aval)
+	plot.errorbar(redshifts[lpl],Eiso[lpl],0.7*Eiso[lpl],linestyle='None',marker='o',uplims=True,color='C0',alpha=aval)
 #	plot.errorbar(redshifts[s],Eiso[s[0]],yerr=[Eiso_err0[s[0]],Eiso_err1[s[0]]],linestyle='None',zorder=32,color='C1',alpha=aval)
-	plot.scatter(redshifts[s],Eiso[s[0]],label='Short GRBs',linestyle='None',marker='o',color='C1',zorder=32,alpha=aval)
-	plot.errorbar(redshifts[spl],Eiso[spl[0]],0.7*Eiso[spl[0]],linestyle='None',marker='o',uplims=True,color='C1',zorder=32,alpha=aval)
+	plot.scatter(redshifts[s],Eiso[s],label='Short GRBs',linestyle='None',marker='o',color='C1',zorder=32,alpha=aval)
+	wn15=np.where(gbm['GBMNAME'][m2[spl]]!='GRB150101641')[0]
+	wn15=spl[wn15]
+	plot.errorbar(redshifts[wn15],Eiso[wn15],0.7*Eiso[wn15],linestyle='None',marker='o',uplims=True,color='C1',zorder=32,alpha=aval)
 
 	#GRB 170817A
 	gwz=0.009845
@@ -432,22 +443,28 @@ def calc_energetics(grbox,gbm,FLNC_Emin=10.,FLNC_Emax=1000.,Emin=1.,Emax=1e4,m1=
 	print 'GW Eiso (comp) = ','{:0.2e}, {:0.2e}, {:0.2e}'.format(gweiso_nt,gweiso_err0_nt,gweiso_err1_nt)
 	print 'GW Eiso (bbody) = ','{:0.2e}, {:0.2e}, {:0.2e}'.format(gweiso_t,gweiso_err0_t,gweiso_err1_t)
 	print 'GW Eiso (total) = ','{:0.2e}, {:0.2e}, {:0.2e}'.format(gweiso_d,gweiso_err0_d,gweiso_err1_d)
-	plot.scatter(gwz,gweiso,label='GRB 170817A',color='magenta',marker='*',s=100,zorder=32,alpha=aval)
+	plot.scatter(gwz,gweiso,label='GRB 170817A',color='magenta',marker='*',s=100,zorder=32)
 	plot.errorbar(gwz,gweiso,yerr=[[gweiso_err0,gweiso_err1]],color='magenta',alpha=aval)
 
+	## add GRB150101B to plot
+	w15=np.where(gbm['GBMNAME'][m2]=='GRB150101641')[0]
+	plot.scatter(redshifts[w15],Eiso[w15],label='GRB 150101B',color='green',marker='*',s=100,zorder=33)
+	plot.errorbar(redshifts[w15],Eiso[w15],0.7*Eiso[w15],color='green',uplims=True,linestyle='None')
+	print gbm['GBMNAME'][m2[w15]][0],redshifts[w15][0],Eiso[w15][0],gbm['FLNC_BEST_FITTING_MODEL'][m2[w15]][0]
  	z=np.arange(0.001,9,0.01)
 
  	#detection limit, approximated
-	lumlim=1e-7*4*np.pi*((cosmo.luminosity_distance(z).value*1e6*pc2cm)**2)/(1.+z)
-	plot.plot(z,lumlim,linestyle='--',color='C2')
+ 	detlim=1e-7
+	lumlim=detlim*4*np.pi*((cosmo.luminosity_distance(z).value*1e6*pc2cm)**2)/(1.+z)
+	plot.plot(z,lumlim,linestyle='--',color='black')
 
-	plot.legend(loc=4)
+	plot.legend(loc=2)
 	plot.yscale('log')
 	plot.xscale('log')
 	plot.xlabel('Redshift (z)')
 	plot.ylabel(r'$E_{iso}$ (1 keV - 10 MeV) (erg)')
-#	ax.yaxis.set_major_locator(LogLocator(numticks=15))
-#	ax.yaxis.set_minor_locator(LogLocator(numticks=15,subs=np.arange(2,10)))
+	ax.yaxis.set_major_locator(LogLocator(numticks=15))
+	ax.yaxis.set_minor_locator(LogLocator(numticks=15,subs=np.arange(2,10)))
 #	minor_ticks = np.arange(0, 9, 0.5)
 #	ax.set_xticks(minor_ticks, minor = True)
 	ax.tick_params(direction='in',axis='both',which='both',right='on',top='on')
@@ -462,17 +479,20 @@ def calc_energetics(grbox,gbm,FLNC_Emin=10.,FLNC_Emax=1000.,Emin=1.,Emax=1e4,m1=
 	### plot Liso vs z
 	fig,ax=plot.subplots()
 
-	s=np.where((gbm[m2]['T90']<=2) & (gbm['PFLX_BEST_FITTING_MODEL'][m2] != 'PFLX_PLAW'))
-	l=np.where((gbm[m2]['T90']>2)  & (gbm['PFLX_BEST_FITTING_MODEL'][m2] != 'PFLX_PLAW'))
+	s=np.where((gbm[m2]['T90']<=2) & (gbm['PFLX_BEST_FITTING_MODEL'][m2] != 'PFLX_PLAW'))[0]
+	l=np.where((gbm[m2]['T90']>2)  & (gbm['PFLX_BEST_FITTING_MODEL'][m2] != 'PFLX_PLAW'))[0]
 
-	spl=np.where((gbm[m2]['T90']<=2) & (gbm['PFLX_BEST_FITTING_MODEL'][m2] == 'PFLX_PLAW'))
-	lpl=np.where((gbm[m2]['T90']>2)  & (gbm['PFLX_BEST_FITTING_MODEL'][m2] == 'PFLX_PLAW'))
+	spl=np.where((gbm[m2]['T90']<=2) & (gbm['PFLX_BEST_FITTING_MODEL'][m2] == 'PFLX_PLAW'))[0]
+	lpl=np.where((gbm[m2]['T90']>2)  & (gbm['PFLX_BEST_FITTING_MODEL'][m2] == 'PFLX_PLAW'))[0]
 
-	plot.scatter(redshifts[l],Liso[l[0]],label='Long GRBs',linestyle='None',marker='o',color='C0',alpha=aval)
+	plot.scatter(redshifts[l],Liso[l],label='Long GRBs',linestyle='None',marker='o',color='C0',alpha=aval)
 	plot.errorbar(redshifts[lpl],Liso[lpl],0.7*Liso[lpl],linestyle='None',marker='o',uplims=True,color='C0',alpha=aval)
 	## GRBs with best fit spectra as power laws overestimate Eiso because the spectrum must turn over, so draw them as upper limits
-	plot.scatter(redshifts[s],Liso[s[0]],label='Short GRBs',linestyle='None',marker='o',color='C1',zorder=32,alpha=aval)
-	plot.errorbar(redshifts[spl],Liso[spl],0.7*Liso[spl],linestyle='None',marker='o',uplims=True,color='C1',zorder=32,alpha=aval)
+	plot.scatter(redshifts[s],Liso[s],label='Short GRBs',linestyle='None',marker='o',color='C1',zorder=32,alpha=aval)
+	wn15=np.where(gbm['GBMNAME'][m2[spl]]!='GRB150101641')[0]
+	wn15=spl[wn15]
+	plot.errorbar(redshifts[wn15],Liso[wn15],0.7*Liso[wn15],linestyle='None',marker='o',uplims=True,color='C1',zorder=32,alpha=aval)
+#	plot.errorbar(redshifts[spl],Liso[spl],0.7*Liso[spl],linestyle='None',marker='o',uplims=True,color='C1',zorder=32,alpha=aval)
 
 	eng=np.logspace(np.log10(Emin),np.log10(Emax),100)/(1.+gwz)
 	eng2=np.logspace(np.log10(FLNC_Emin),np.log10(FLNC_Emax),100)
@@ -488,13 +508,23 @@ def calc_energetics(grbox,gbm,FLNC_Emin=10.,FLNC_Emax=1000.,Emin=1.,Emax=1e4,m1=
 	gwliso_err1=calc_eiso(gwz,gwpflux+gwpfluxerr,ef1p,ef2p,Liso=True)-gwliso
 
 	print 'GW Liso = ','{:0.2e}, {:0.2e}, {:0.2e}'.format(gwliso,gwliso_err0,gwliso_err1)
-	plot.scatter(gwz,gwliso,label='GRB 170817A',color='magenta',marker='*',s=100,zorder=32,alpha=aval)
-	plot.errorbar(gwz,gwliso,yerr=[[gwliso_err0,gwliso_err1]],color='magenta',alpha=aval)
+	plot.scatter(gwz,gwliso,label='GRB 170817A',color='magenta',marker='*',s=100,zorder=32)
+	plot.errorbar(gwz,gwliso,yerr=[[gwliso_err0,gwliso_err1]],color='magenta')
 	z=np.arange(0.001,9,0.01)
-	lumlim=2.4e-7*4*np.pi*((cosmo.luminosity_distance(z).value*1e6*pc2cm)**2)#/(1.+z)
-	plot.plot(z,lumlim,linestyle='--',color='C2')
+	detlim=2.7e-7#2.4e-7
+	lumlim=detlim*4*np.pi*((cosmo.luminosity_distance(z).value*1e6*pc2cm)**2)#/(1.+z)
+	plot.plot(z,lumlim,linestyle='--',color='black')
 
-	plot.legend(loc=4)
+	## add GRB150101B to plot
+	w15=np.where(gbm['GBMNAME'][m2]=='GRB150101641')[0]
+	plot.scatter(redshifts[w15],Liso[w15],label='GRB 150101B',color='green',marker='*',s=100,zorder=32)
+	plot.errorbar(redshifts[w15],Liso[w15],0.7*Liso[w15],uplims=True,color='green',linestyle='None',zorder=35)
+	print gbm['GBMNAME'][m2[w15]][0],redshifts[w15][0],Liso[w15][0],gbm['PFLX_BEST_FITTING_MODEL'][m2[w15]][0]
+
+ 	z=np.arange(0.001,9,0.01)
+
+
+	plot.legend(loc=2)
 	plot.xlabel('Redshift (z)')
 	plot.ylabel(r'$L_{iso}$ (1 keV - 10 MeV) (erg/s)')
 #	plot.xlim([-0.5,9])
@@ -767,7 +797,7 @@ def load_GBM():
 ### download and load GRBOX archive
 def load_GRBOX():
 
-	url='http://www.astro.caltech.edu/grbox/grboxtxt.php?form=submitted&starttime=080611&endtime=170831&sort=time&reverse=y&showindex=y&showt90=y&showra=y&showdec=y&showz=y&showut=y&xor=y&ref=y&observatory=t&obsdate=2017-08-18&posfmt=dec&xrtpos=gcn&format=txt'
+	url='http://www.astro.caltech.edu/grbox/grboxtxt.php?form=submitted&starttime=080611&endtime=220101&sort=time&reverse=y&showindex=y&showt90=y&showra=y&showdec=y&showz=y&showut=y&xor=y&ref=y&observatory=t&obsdate=2017-08-18&posfmt=dec&xrtpos=gcn&format=txt'
 	filename='grboxtxt.txt'
 	urllib.urlretrieve(url,filename)
 	grbox=ascii.read(filename,format='fixed_width',\
@@ -813,3 +843,61 @@ def load_GRBOX():
 		names=['GRB','TRIG_UT','TRIG_MET','RA','Dec','z','afterglow'])
 
 	return rtable
+
+def grb150101b(FLNC_Emin=10.,FLNC_Emax=1000.,Emin=1.,Emax=1e4):
+## add GRB 150101B to energetics plots
+
+	z=0.134
+	dist=637.7
+	disterr=0
+	zerr=0
+
+	eng=np.logspace(np.log10(Emin),np.log10(Emax),100)/(1.+z)
+	eng2=np.logspace(np.log10(FLNC_Emin),np.log10(FLNC_Emax),100)
+
+	print 'Time integrated:'
+	engflux=np.array([8.3,4.8,72,3.1])*1e-7
+	engfluxerr=np.array([1.4,1.1,8,0.4])*1e-7
+	epeakkt=[0,0,7.9,10.4,550,6]
+	epeakkterr=[0,0,190,0.6]
+	plind=[-1.8,-2.4,-0.8,0]
+	plerr=[0.1,0.3,0.2,0]
+	t1=[-0.64,0.0,-0.016,0.000]
+	t2=[0.64,0.64,0.000,0.064]
+	for i in range(len(engflux)):
+		if ((plind[i] != 0) & (epeakkt[i] != 0)):
+			f1=comp(eng,plind[i],epeakkt[i])
+			f2=comp(eng2,plind[i],epeakkt[i])
+		if (plind[i]==0):
+			f1=bbody(eng,epeakkt[i])
+			f2=bbody(eng2,epeakkt[i])
+		if ((plind[i]!=0) & (epeakkt[i] == 0)):
+			f1=pl(eng,plind[i])
+			f2=pl(eng2,plind[i])
+		eiso=calc_eiso(z,engflux[i]*(t2[i]-t1[i]),f1,f2,lumdist=dist)
+		eisoerr=eiso-calc_eiso(z,(engflux[i]-engfluxerr[i])*(t2[i]-t1[i]),f1,f2,lumdist=dist)		
+		print '{:0.2} - {:0.2}: Eiso = {:0.2e} +/- {:0.2e} erg/s'.format(t1[i],t2[i],eiso,eisoerr)
+
+		liso=calc_eiso(z,engflux[i],f1,f2,lumdist=dist,Liso=True)
+		lisoerr=liso-calc_eiso(z,engflux[i]-engfluxerr[i],f1,f2,lumdist=dist,Liso=True)
+		print '{:0.4} - {:0.2}: Liso = {:0.2e} +/- {:0.2e} erg/s'.format(t1[i],t2[i],liso,lisoerr)
+
+
+	print 'Time resolved:'
+	engflux=np.array([96,49,4.5,2.7,2.9,3.3])*1e-7
+	engfluxerr=np.array([14,8,1.,0.8,0.7,0.7])*1e-7
+	epeakkt=[1280,190,9,7.1,6.2,3.7]
+	epeakkterr=[590,50,1.3,1.6,1.5,0.7]
+	plind=[-0.4,-0.7,0,0,0,0]
+	t1=[-0.016,-0.008,0.0,0.016,0.032,0.048]
+	t2=[-0.008,0.000,0.016,0.032,0.048,0.064]
+	for i in range(len(engflux)):
+		if plind[i] != 0:
+			f1=comp(eng,plind[i],epeakkt[i])
+			f2=comp(eng2,plind[i],epeakkt[i])
+		else:
+			f1=bbody(eng,epeakkt[i])
+			f2=bbody(eng2,epeakkt[i])			
+		liso=calc_eiso(z,engflux[i],f1,f2,lumdist=dist,Liso=True)
+		lisoerr=liso-calc_eiso(z,engflux[i]-engfluxerr[i],f1,f2,lumdist=dist,Liso=True)		
+		print '{:0.4} - {:0.2}: Liso = {:0.2e} +/- {:0.2e} erg/s'.format(t1[i],t2[i],liso,lisoerr)

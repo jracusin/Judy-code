@@ -313,7 +313,8 @@ pro transient_plot
 ;  lobflux=[7.3e-9,3.5e-9,1.5e-9,1.1e-9,6.2e-10,2.4e-10,1.5e-10,7.0e-11,4.9e-11]
 ;  lobtime=[10,20,50,100,200,400,1000,2000,1e4,2e4,4e4,8e4]
 ;  lobflux=[9.29e-10,4.64e-10,1.86e-10,9.29e-11,4.64e-11,2.61e-11,1.33e-11,7.71e-12,2.7e-12,1.88e-12,1.27e-12,1e-12];8.47e-13] ;4sigma
-  readcol,'~/Lobster/TAO_2016/lobster_sensitivity_0.3_5_Ptak_45cm.dat',time, bcount, mcount, grbflux
+;  readcol,'~/Lobster/TAO_2016/lobster_sensitivity_0.3_5_Ptak_45cm.dat',time, bcount, mcount, grbflux
+  readcol,'~/Lobster/TAO_2016/simulations/Ptak/tau_flux_limits_2018_prob1e-10.csv',time, bcount, mcount, grbflux,delim=',',skipline=1
 
   readcol,'/Users/jracusin/Lobster/TAP/XRI_sensitivity_15arcmin.dat',starx_time,starx_flux
 
@@ -328,7 +329,7 @@ pro transient_plot
   flux=grbflux
 
   time2=[time,1e7]
-  flux2=[flux,6d-14]
+  flux2=[flux,3d-13]
 
   time=[time,1e7]
   flux=[flux,1d-12]
@@ -337,10 +338,12 @@ pro transient_plot
 
 
   nl=n_elements(lobtime)
-
 ;  !x.margin=[14,0]
   xrange=[1e-1,1e7]
-  p=plot([1e-1,1e7],[1e-14,1e-5],/nodata,xrange=xrange,yrange=[1e-15,1e-5],xtitle='Timescale (s)',ytitle='0.3-5 keV X-ray Flux (erg cm!U-2!N s!U-1!N)',/xlog,/ylog,xmajor=9,ymajor=11,xminor=9,yminor=9);,xtickname=replicate(' ',9),yticks=9)
+  p=plot([1e-1,1e7],[1e-14,1e-5],/nodata,xrange=xrange,yrange=[1e-15,1e-5],xtitle='Timescale (s)',ytitle='0.4-4 keV X-ray Flux (erg cm!U-2!N s!U-1!N)',/xlog,/ylog,xmajor=9,ymajor=11,xminor=9,yminor=9);,xtickname=replicate(' ',9),yticks=9)
+;  p4=plot(time,flux2,linestyle=2,/over,/current,thick=3);,color=!grey50
+;  p.save,'~/Lobster/TAO_2016/transient_plot_justcurve.pdf'
+
   x=0
   square=intarr(n)
   square[*]=1
@@ -421,6 +424,7 @@ pro transient_plot
 
   p.save,'~/Lobster/TAO_2016/transient_plot.png'
   p.save,'~/Lobster/TAO_2016/transient_plot.eps'
+  p.save,'~/Lobster/TAO_2016/transient_plot.pdf'
   p.close
 
 return

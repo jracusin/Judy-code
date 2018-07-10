@@ -356,7 +356,7 @@ def load_GBM(dir='/Users/jracusin/GBM/'):
 
 def load_GRBOX(nointernet=False):
 
-	url='http://www.astro.caltech.edu/grbox/grboxtxt.php?form=submitted&starttime=041222&endtime=170831&sort=time&reverse=y&showindex=y&showt90=y&showra=y&showdec=y&showz=y&showut=y&xor=y&ref=y&observatory=t&obsdate=2017-08-18&posfmt=dec&xrtpos=gcn&format=txt'
+	url='http://www.astro.caltech.edu/grbox/grboxtxt.php?form=submitted&starttime=041222&endtime=220101&sort=time&reverse=y&showindex=y&showt90=y&showra=y&showdec=y&showz=y&showut=y&xor=y&ref=y&observatory=t&obsdate=2017-08-18&posfmt=dec&xrtpos=gcn&format=txt'
 	filename='grboxtxt.txt'
 	if nointernet==False: urllib.urlretrieve(url,filename)
 	grbox=ascii.read(filename,format='fixed_width',\
