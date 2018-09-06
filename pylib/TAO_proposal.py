@@ -463,8 +463,9 @@ def Blazar_rates(daily_sensitivity,weekly_sensitivity,sky_frac):
 def stellar_flares_rates(fovs):
 
 	#  scaling from 2010 rates which were 30-300 /yr
-	wfirate0=fovs/fovs[0]*30.
-	wfirate1=fovs/fovs[0]*300.
+	oldlob=30*30.
+	wfirate0=fovs/oldlob*30.
+	wfirate1=fovs/oldlob*300.
 	rate=[wfirate0,wfirate1]
 
 	return rate
@@ -677,45 +678,46 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 
 	from tao_planning_sims import wfi_sensitivity
 
-	fovs=np.array([30*30.,18.6*18.6,4.*19.1*19.1,1.])
-	config=['ISS-Lobster: 30x30','TAO WFI: 18.6x18.6','TAP WFI: 4x20x20','TAP XRI: 1x1']
+	fovs=np.array([12.4*12.4,18.6*18.6,4.*19.1*19.1,1.])
+	config=['TAO TSM WFI: 12.4x12.4','TAO WFI: 18.6x18.6','TAP WFI: 4x20x20','TAP XRI: 1x1']
 	constraints=0.80
 	allsky=4.*math.pi*(180./math.pi)**2.
 	fov_frac=fovs/allsky
 	frac_sky=np.array([constraints,constraints,constraints,100./allsky])
 	pointings = np.round(allsky/fovs*frac_sky)
+	print 'Pointings = ',pointings
 	mpc2cm=3.08568025e24
 
 	## Setting up sensitivity
-	oldlob=ascii.read('/Users/jracusin/Lobster/2014_proposal/lobster_sensitivity_0.3_5_Ptak.dat', 
-		names=['time','bcount','mcount','grbflux'],data_start=1)
+	# oldlob=ascii.read('/Users/jracusin/Lobster/2014_proposal/lobster_sensitivity_0.3_5_Ptak.dat', 
+	# 	names=['time','bcount','mcount','grbflux'],data_start=1)
 
 	t1=np.array([0.1,0.15,0.2,0.3,0.4,0.5,0.7,1.])
 	t2=np.array([2e4,4e4,7e4,9e4,1e5,1.3e5,1.7e5,2e5,2.5e5,3e5,3.5e5,4e5,5e5,8e5,1e6])
-	time=np.array(oldlob['time'])
-	grbflux=np.array(oldlob['grbflux'])
-	nl=len(time)
-	time2=np.append(t1,time)
-	time2=np.append(time2,t2)
+	# time=np.array(oldlob['time'])
+	# grbflux=np.array(oldlob['grbflux'])
+	# nl=len(time)
+	# time2=np.append(t1,time)
+	# time2=np.append(time2,t2)
 
-	flux=grbflux[0]/(t1/time[0])
-	flux=np.append(flux,grbflux)
-	flux=np.append(flux,grbflux[nl-1]/np.sqrt(t2/time[nl-1]))
+	# flux=grbflux[0]/(t1/time[0])
+	# flux=np.append(flux,grbflux)
+	# flux=np.append(flux,grbflux[nl-1]/np.sqrt(t2/time[nl-1]))
 
-	w=np.where(flux < 1e-12)
-	flux[w]=1e-12
+	# w=np.where(flux < 1e-12)
+	# flux[w]=1e-12
 
-	lob_flux=flux
-	lob_time=time2
+	# lob_flux=flux
+	# lob_time=time2
 
 	tao=ascii.read('/Users/jracusin/Lobster/TAO_2016/simulations/Ptak/tau_flux_limits_2018_prob1e-10.csv',names=['time','bcount','mcount','grbflux'],data_start=1)
 #	tao=ascii.read('/Users/jracusin/Lobster/TAO_2016/lobster_sensitivity_0.3_5_Ptak_45cm.dat',names=['time','bcount','mcount','grbflux'],data_start=1)
 #	tao_wfi_flux=flux/1.5**2
 #	w=np.where(tao_wfi_flux < 1e-12)
 #	tao_wfi_flux[w]=1e-12
-	jordan_wfi_flux=flux/1.5**2
-	w=np.where(jordan_wfi_flux < 1e-12)
-	jordan_wfi_flux[w]=1e-12
+	# jordan_wfi_flux=flux/1.5**2
+	# w=np.where(jordan_wfi_flux < 1e-12)
+	# jordan_wfi_flux[w]=1e-12
 	
 	time=np.array(tao['time'])
 	grbflux=wfi_sensitivity(time)
@@ -737,10 +739,12 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 	w=np.where(tao_wfi_flux < 1e-12)
 	tao_wfi_flux[w]=1e-12
 
-	lob_flux=loginterpol(lob_time,lob_flux,time2)
-	jordan_wfi_flux=loginterpol(lob_time,jordan_wfi_flux,time2)
+#	lob_flux=loginterpol(lob_time,lob_flux,time2)
+#	jordan_wfi_flux=loginterpol(lob_time,jordan_wfi_flux,time2)
 
 	tap_wfi_flux=tao_wfi_flux
+	lob_flux=tao_wfi_flux
+	lob_time=time2
 
 	starx=ascii.read('/Users/jracusin/Lobster/TAP/XRI_sensitivity_15arcmin.dat',names=['time','flux'],data_start=1)
 	starx_time=np.array(starx['time'])
@@ -754,7 +758,7 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 	time=time2
 
 	if doplot:
-		plot_sensitivity(time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux,jordan_wfi_flux,onlyTAO=onlyTAO)
+		plot_sensitivity(time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux,tao_wfi_flux,onlyTAO=onlyTAO)
 
 	### sensitivity for various exposures
 	 # 0.85 for SAA, 30 s for slewing, 0.95 for ISS downtime, 22.5 for average slew time @4 deg/s
@@ -803,50 +807,52 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 	grbs=grb_redshift_rates(doplot=True)
 	xf,xfflux1,xfflux2=xflare_rates(daily_sensitivity)
 
+	numprint=2
+
 	print 'ccSNe Rates'
-	for i in range(0,4):
+	for i in range(0,numprint):
 		print config[i],ccSNe[0][i],ccSNe[1][i]
 
 	print
 	print 'TDE Rates (weekly)'
 	print '       non-jetted       jetted'
-	for i in range(0,4):
+	for i in range(0,numprint):
 		print config[i],tde[0][i],tde[1][i],tde[0][i]+tde[1][i],tde[2][i],tde[3][i],tde[4][i]
 
 	print
 	print 'AGN Rates (daily/weekly)'
-	for i in range(0,4):
+	for i in range(0,numprint):
 		print config[i],agn[0][i],agn[1][i]
 
 	print
 	print 'Blazar Rates (daily/weekly)'
-	for i in range(0,4):
+	for i in range(0,numprint):
 		print config[i],blazars[0][i],blazars[1][i]
 
 	print
 	print 'Stellar Flares Rates'
-	for i in range(0,4):
+	for i in range(0,numprint):
 		print config[i],stellar_flares[0][i],stellar_flares[1][i]
 
 	print
 	print 'Novae Rates'
-	for i in range(0,4):
+	for i in range(0,numprint):
 		print config[i],novae[i]
 
 	print
 	print 'Thermonuclear Burst Rates'
-	for i in range(0,4):
+	for i in range(0,numprint):
 		print config[i],thermonuclear_burst[i]
 
 	print
 	print 'GRB z Rates'
-	for i in range(0,3):
+	for i in range(0,numprint):
 		print config[i],grbs[0][i],grbs[1][i]
 
 	print
 	print 'EG X-ray flashes'
 	print xfflux1,xfflux2
-	for i in range(0,4):
+	for i in range(0,numprint):
 		print config[i],xf[0][i],xf[1][i]
 
 	twant=np.array([2])

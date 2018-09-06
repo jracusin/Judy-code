@@ -42,9 +42,16 @@ def pimms(en1,en2,pl,nh):
 
 	return conv
 
-def wabsPL(eng,nh,p):
+def wabswabsPL(eng,nhgal,nh,p,z=0.):
 
-	f=wabs(eng,nh)*pow_func(eng,p)
+	f=wabs(eng,nhgal)*wabs(eng,nh,z=z)*pow_func(eng,p)
+
+	return f
+
+
+def wabsPL(eng,nh,p,z=0.):
+
+	f=wabs(eng,nh,z=z)*pow_func(eng,p)
 
 	return f
 

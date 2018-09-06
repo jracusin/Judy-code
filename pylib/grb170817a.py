@@ -28,13 +28,13 @@ Written by Judy Racusin (NASA/GSFC)
 
 import urllib
 from astropy.io import fits,ascii
-from astropy.table import Table
+from astropy.table import Table,vstack
 import numpy as np
 from astropy.time import Time
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 import matplotlib.pylab as plot
-from astropy.cosmology import WMAP9 as cosmo
+from astropy.cosmology import Planck15 as cosmo
 from scipy.optimize import curve_fit
 import scipy.odr as odr
 from matplotlib.ticker import LogLocator,MultipleLocator
@@ -237,14 +237,15 @@ def bbody(eng,kt):
 def calc_eiso(z,fluence,f1,f2,FLNC_Emin=10.,FLNC_Emax=1000.,Emin=1.,Emax=1e4,lumdist=None,Liso=False):
 
 	## energy over output Eiso range
-	eng=np.logspace(np.log10(Emin),np.log10(Emax),100)/(1.+z)
+	eng=np.logspace(np.log10(Emin),np.log10(Emax),1e4)/(1.+z)
 	## energy over  measure fluence range
-	eng2=np.logspace(np.log10(FLNC_Emin),np.log10(FLNC_Emax),100)
+	eng2=np.logspace(np.log10(FLNC_Emin),np.log10(FLNC_Emax),1e4)
 	k1=np.trapz(f1*eng,eng)
 	k2=np.trapz(f2*eng2,eng2)
 	pc2cm=3.08568025e18	
 
 	k=k1/k2
+#	print k,k1,k2
 	if lumdist==None:
 		lumdist=cosmo.luminosity_distance(z).value
 	dist=lumdist*1e6*pc2cm
@@ -523,7 +524,6 @@ def calc_energetics(grbox,gbm,FLNC_Emin=10.,FLNC_Emax=1000.,Emin=1.,Emax=1e4,m1=
 
  	z=np.arange(0.001,9,0.01)
 
-
 	plot.legend(loc=2)
 	plot.xlabel('Redshift (z)')
 	plot.ylabel(r'$L_{iso}$ (1 keV - 10 MeV) (erg/s)')
@@ -556,6 +556,11 @@ def calc_energetics(grbox,gbm,FLNC_Emin=10.,FLNC_Emax=1000.,Emin=1.,Emax=1e4,m1=
 	f2=band(eng2,pregwalpha,pregwepeak,pregwbeta)
 	preliso=calc_eiso(gwz,pregwflux,f1,f2,Liso=True)
 	print 'Precursor Liso lim = ','{:0.2e}'.format(preliso)
+
+	## write out Eiso, Liso
+	data1=Table([gbm[m2[s]]['GBMNAME'],Liso[s],gbm[m2[s]]['PFLX_BEST_FITTING_MODEL']],names=['GRB','Liso','PFLX_BEST_FITTING_MODEL'])
+	data2=Table([gbm[m2[spl]]['GBMNAME'],Liso[spl],gbm[m2[spl]]['PFLX_BEST_FITTING_MODEL']],names=['GRB','Liso','PFLX_BEST_FITTING_MODEL'])
+	ascii.write(vstack(data1,data2),'GBM_sGRB_Liso.dat')
 
 	return m1,m2,Eiso,Liso
 
@@ -848,39 +853,48 @@ def grb150101b(FLNC_Emin=10.,FLNC_Emax=1000.,Emin=1.,Emax=1e4):
 ## add GRB 150101B to energetics plots
 
 	z=0.134
-	dist=637.7
+	dist=654.#637.7
 	disterr=0
 	zerr=0
 
-	eng=np.logspace(np.log10(Emin),np.log10(Emax),100)/(1.+z)
-	eng2=np.logspace(np.log10(FLNC_Emin),np.log10(FLNC_Emax),100)
+	eng=np.logspace(np.log10(Emin),np.log10(Emax),1e4)/(1.+z)
+	eng2=np.logspace(np.log10(FLNC_Emin),np.log10(FLNC_Emax),1e4)
 
 	print 'Time integrated:'
-	engflux=np.array([8.3,4.8,72,3.1])*1e-7
+	engflux=np.array([8.3,4.8,72.,3.1])*1e-7
 	engfluxerr=np.array([1.4,1.1,8,0.4])*1e-7
-	epeakkt=[0,0,7.9,10.4,550,6]
-	epeakkterr=[0,0,190,0.6]
+	epeakkt=[0,0,550.,6.]
+	epeakkterr=[0,0,190.,0.6]
 	plind=[-1.8,-2.4,-0.8,0]
 	plerr=[0.1,0.3,0.2,0]
-	t1=[-0.64,0.0,-0.016,0.000]
-	t2=[0.64,0.64,0.000,0.064]
+	t1=[-0.064,0.0,-0.016,0.000]
+	t2=[0.064,0.064,0.000,0.064]
+	model=''
+	par=''
 	for i in range(len(engflux)):
 		if ((plind[i] != 0) & (epeakkt[i] != 0)):
 			f1=comp(eng,plind[i],epeakkt[i])
 			f2=comp(eng2,plind[i],epeakkt[i])
+			model='comp '
+			par=str(plind[i])+' '+str(epeakkt[i])+' '
 		if (plind[i]==0):
 			f1=bbody(eng,epeakkt[i])
 			f2=bbody(eng2,epeakkt[i])
+			model='bbody '
+			par=str(epeakkt[i])+' '
 		if ((plind[i]!=0) & (epeakkt[i] == 0)):
 			f1=pl(eng,plind[i])
 			f2=pl(eng2,plind[i])
-		eiso=calc_eiso(z,engflux[i]*(t2[i]-t1[i]),f1,f2,lumdist=dist)
-		eisoerr=eiso-calc_eiso(z,(engflux[i]-engfluxerr[i])*(t2[i]-t1[i]),f1,f2,lumdist=dist)		
-		print '{:0.2} - {:0.2}: Eiso = {:0.2e} +/- {:0.2e} erg/s'.format(t1[i],t2[i],eiso,eisoerr)
+			model='pl '
+			par=str(plind[i])+' '
 
-		liso=calc_eiso(z,engflux[i],f1,f2,lumdist=dist,Liso=True)
-		lisoerr=liso-calc_eiso(z,engflux[i]-engfluxerr[i],f1,f2,lumdist=dist,Liso=True)
-		print '{:0.4} - {:0.2}: Liso = {:0.2e} +/- {:0.2e} erg/s'.format(t1[i],t2[i],liso,lisoerr)
+		eiso=calc_eiso(z,engflux[i]*(t2[i]-t1[i]),f1,f2,lumdist=dist,Emin=Emin,Emax=Emax)
+		eisoerr=eiso-calc_eiso(z,(engflux[i]-engfluxerr[i])*(t2[i]-t1[i]),f1,f2,lumdist=dist,Emin=Emin,Emax=Emax)		
+		print '{:0.2} - {:0.2}: Eiso = {:0.2e} +/- {:0.2e} erg/s'.format(t1[i],t2[i],eiso,eisoerr), model,par, engflux[i]
+
+		liso=calc_eiso(z,engflux[i],f1,f2,lumdist=dist,Liso=True,Emin=Emin,Emax=Emax)
+		lisoerr=liso-calc_eiso(z,engflux[i]-engfluxerr[i],f1,f2,lumdist=dist,Liso=True,Emin=Emin,Emax=Emax)
+		print '{:0.4} - {:0.2}: Liso = {:0.2e} +/- {:0.2e} erg/s'.format(t1[i],t2[i],liso,lisoerr),model,par, engflux[i]
 
 
 	print 'Time resolved:'
@@ -891,13 +905,16 @@ def grb150101b(FLNC_Emin=10.,FLNC_Emax=1000.,Emin=1.,Emax=1e4):
 	plind=[-0.4,-0.7,0,0,0,0]
 	t1=[-0.016,-0.008,0.0,0.016,0.032,0.048]
 	t2=[-0.008,0.000,0.016,0.032,0.048,0.064]
+	model=''
 	for i in range(len(engflux)):
 		if plind[i] != 0:
 			f1=comp(eng,plind[i],epeakkt[i])
 			f2=comp(eng2,plind[i],epeakkt[i])
+			model='comp'
 		else:
 			f1=bbody(eng,epeakkt[i])
 			f2=bbody(eng2,epeakkt[i])			
-		liso=calc_eiso(z,engflux[i],f1,f2,lumdist=dist,Liso=True)
-		lisoerr=liso-calc_eiso(z,engflux[i]-engfluxerr[i],f1,f2,lumdist=dist,Liso=True)		
-		print '{:0.4} - {:0.2}: Liso = {:0.2e} +/- {:0.2e} erg/s'.format(t1[i],t2[i],liso,lisoerr)
+			model='bbody'
+		liso=calc_eiso(z,engflux[i],f1,f2,lumdist=dist,Liso=True,Emin=Emin,Emax=Emax)
+		lisoerr=liso-calc_eiso(z,engflux[i]-engfluxerr[i],f1,f2,lumdist=dist,Liso=True,Emin=Emin,Emax=Emax)		
+		print '{:0.4} - {:0.2}: Liso = {:0.2e} +/- {:0.2e} erg/s'.format(t1[i],t2[i],liso,lisoerr),model
