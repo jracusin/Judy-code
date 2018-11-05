@@ -51,15 +51,71 @@ from matplotlib.ticker import FuncFormatter
 # trigger at random time, begin follow-up
 # output exposure time, time since trigger, ra/dec, detx/dety
 
-def back_of_the_envelope():
+def likelihood_counterparts():
+	### numbers from Frank integrating over the distribution of merger rates for various sims
+	### should figure out how to do this myself
+	dir='/Users/jracusin/TAO/simulations/'
+
+	### 18 month mission
+	threshold=ascii.read(dir+'tao_events_thresh_18.out')
+	req=ascii.read(dir+'tao_events_req_18.out')
+	cbe=ascii.read(dir+'tao_events_cbe_18.out')
+
+	plot.figure()
+	plot.bar(threshold['m'],threshold['sum0'],label='Threshold Mission')
+	plot.bar(req['m'],req['sum0'],label='Baseline Requirements',alpha=0.7)
+	plot.bar(cbe['m'],cbe['sum0'],label='Performance/CBE',alpha=0.5)
+	plot.plot(threshold['m'],threshold['sum0'],color='C0',label='Threshold Mission')
+	plot.plot(req['m'],req['sum0'],color='C1',label='Baseline Requirements')
+	plot.plot(cbe['m'],cbe['sum0'],color='C2',label='Performance/CBE')
+	plot.xlabel('Number of WFI-detected GW Counterparts')
+	plot.ylabel('Probability of Detecting N Counterparts')
+	plot.xlim([0,30])
+	plot.legend()
+	plot.savefig('tao_events_likelihood_18_N.png')
+#	plot.show()
+
+	plot.figure()
+	plot.bar(threshold['m'],threshold['sum_p'],label='Threshold Mission')
+	plot.bar(req['m'],req['sum_p'],label='Baseline Requirements',alpha=0.7)
+	plot.bar(cbe['m'],cbe['sum_p'],label='Performance/CBE',alpha=0.5)
+	plot.plot(threshold['m'],threshold['sum_p'],color='C0',label='Threshold Mission')
+	plot.plot(req['m'],req['sum_p'],color='C1',label='Baseline Requirements')
+	plot.plot(cbe['m'],cbe['sum_p'],color='C2',label='Performance/CBE')
+	plot.xlabel('Number of WFI-detected GW Counterparts')
+	plot.ylabel(r'Probability of Detecting $\leq$N Counterparts')
+	plot.xlim([0,30])
+	plot.legend()
+	plot.savefig('tao_events_likelihood_18_lessN.png')
+#	plot.show()
+
+
+
+def back_of_the_envelope(bh=False,grb=False):
 
 	rate=1540.
 	rate_low=1540.-1220
 	rate_high=1540+3200.
-	range=np.array([rate_low/rate,rate_high/rate])
 
 	ligo_range=0.19 # Gpc
 	virgo_range=0.125 # Gpc
+
+	if bh==True:
+		rate=3600.
+		rate_low=0.
+		rate_high=3600.
+		ligo_range=0.294#0.19 # Gpc
+		virgo_range=0.125/0.19*ligo_range#0.125 # Gpc
+
+	if grb==True:
+		rate=10.
+		rate_low=5.
+		rate_high=15.
+		ligo_range=0.355#294
+		virgo_range=0.125/0.19*ligo_range#0.125 # Gpc
+
+	range=np.array([rate_low/rate,rate_high/rate])
+
 
 	ligo_vol=4./3.*np.pi*ligo_range**3
 	virgo_vol=4./3.*np.pi*virgo_range**3
@@ -72,6 +128,10 @@ def back_of_the_envelope():
 
 	opening_angle2=19.
 	beaming_fraction2=1.-np.cos(np.radians(opening_angle2))
+
+	if grb==True:
+		beaming_fraction1=1.
+		beaming_fraction2=0.
 
 	jet_boost=1.5**3
 	sub_thresh_boost=1.5**3-1.
@@ -340,6 +400,19 @@ def shb_plot(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/
 	m1,m2=grb_catalogs.match_catalogs_name(np.core.defchararray.add('GRB',grbox['GRB']),bat['GRBname'])
 	s=np.where((t90[m2] <= 2.) & (t90[m2] > 0))# & (z[m1]>0))
 	sGRBs=bat['GRBname'][m2][s]
+
+	# ra=np.array(bat['RA_ground'][m2][s])
+	# dec=np.array(bat['DEC_ground'][m2][s])
+	# lat=[]
+	# for i in range(len(ra)):
+	# 	c = SkyCoord(ra=float(ra[i])*u.degree, dec=float(dec[i])*u.degree)
+	# 	lat.append(c.galactic.b.value)
+	# plot.figure()
+	# plot.hist(lat,bins=36)
+	# plot.xlabel('Galactic Latitude (deg)')
+	# plot.savefig('sGRB_gal_lat.png')
+	# plot.show()
+
 	print '# of sGRBs = ',len(s[0])
 
 	# D'Avanzo (2014) flux limited sample
@@ -349,14 +422,14 @@ def shb_plot(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/
 	t90=t90[m2][s]
 	z=z[m1][s]
 	w0=np.where(z==0.)[0]
-	z[w0]=0.5
+#	z[w0]=0.5
 	lumdist=cosmo.luminosity_distance(z).value
 	pc2cm=3.08568025e18	
 	dist=lumdist*1e6*pc2cm
 #	distgw=440e6*pc2cm  ## 440 Mpc
 	distgw=sims['distance']*1e6*pc2cm
-#	zgw=grb_catalogs.dist2z(sims['distance'])
-	zgw=np.repeat(0.03,len(sims))
+	zgw=grb_catalogs.dist2z(sims['distance'])
+#	zgw=np.repeat(0.03,len(sims))
 #	zgw=np.repeat(0.045,len(sims))
 
 	grbdir='/Users/jracusin/Swift/GRBfits/GRBs/'
@@ -424,7 +497,7 @@ def shb_plot(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/
 
 				color='black'
 				if sGRBs[i] in dagrbs: 
-					color='blue'
+#					color='blue'
 					fscaled_10.append(loginterpol(t,fscaled,150.))
 					fscaled_500.append(loginterpol(t,fscaled,150.+250.))
 					fscaled_2000.append(loginterpol(t,fscaled,150.+1000.))
@@ -877,7 +950,7 @@ def sample():
 
 def kcorr(input_Emin,input_Emax,output_Emin,output_Emax,gamma,nhgal,nh,zin,zout):
 
-	eng1=np.logspace(np.log10(output_Emin),np.log10(output_Emax),100)*(1.+zout)
+	eng1=np.logspace(np.log10(output_Emin),np.log10(output_Emax),100)/(1.+zout)
 	eng2=np.logspace(np.log10(input_Emin),np.log10(input_Emax),100)*(1.+zin)
 
 #	f1=pl(eng,gamma,epiv=1)
@@ -1311,8 +1384,8 @@ def run_sims(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/
 				zenithra=np.degrees(np.radians(taoconfig['zenithcon'])*np.sin(thetacirc)+np.radians(scra[wt]))
 				zenithdec=np.degrees(np.radians(taoconfig['zenithcon'])*np.cos(thetacirc)+np.radians(scdec[wt]))
 				zeniththeta,zenithphi=radec2thetaphi(zenithra,zenithdec)
-				hp.projplot(zeniththeta,zenithphi,color='blue')			
-				plot.show()
+				hp.projplot(zeniththeta,zenithphi,color='blue')	
+#				plot.show()
 
 
 			## using these tiles, figure out gtis
@@ -1515,8 +1588,8 @@ def run_sims(taoconfig=None,configfile='tao_config_v1.txt',dir='/Users/jracusin/
 							if scra[0]!=-1:
 								spth,spphi=radec2thetaphi(spra,spdec)
 								hp.projplot(spth,spphi,color='blue')
-
-							plot.show()
+							plot.savefig(dir+'plots/sim'+'_'+str(i)+'_tile_'+str(j)+'.png')		
+#							plot.show()
 
 					dist=separation(realra,realdec,tilesra,tilesdec)
 					wreal=np.where(dist<np.sqrt(2.)/2.*taoconfig['detsize'])[0]
@@ -1941,7 +2014,7 @@ def plot_tiles(map,centers,rolls,doplot=True,taoconfig=None):
 	for i in range(ntiles):
 		wfi,wfirot=wfi_fov(wficenter=np.degrees(centers[i]),wfiroll=rolls[i],taoconfig=taoconfig)
 
-		hp.projplot(np.radians(wfirot[:,0]),np.radians(wfirot[:,1]),color='red')
+		hp.projplot(np.radians(wfirot[:,0]),np.radians(wfirot[:,1]),color='orange')
 	if doplot: 
 		plot.show()
 
@@ -1952,7 +2025,7 @@ def plot_tile(map,center,roll,doplot=True,taoconfig=None):
 
 	wfi,wfirot=wfi_fov(wficenter=np.degrees(center),wfiroll=roll,taoconfig=taoconfig)
 
-	hp.projplot(np.radians(wfirot[:,0]),np.radians(wfirot[:,1]),color='red')
+	hp.projplot(np.radians(wfirot[:,0]),np.radians(wfirot[:,1]),color='orange')
 
 #	if doplot: 
 #		plot.show()
@@ -2370,6 +2443,7 @@ def test_solar_panels(scra,scdec,t,taoconfig=None):
 #		plot.ylim(0,180)
 		plot.show()
 
+
 def solar_panels(scra,scdec,t,taoconfig=None):
 	### they move at 3.8 deg/min = 0.063 deg/s
 	### width = 20 deg, but account for edge of FoV, not mid add 0.5*detsize
@@ -2384,33 +2458,33 @@ def solar_panels(scra,scdec,t,taoconfig=None):
 	if sunha<-180: sunha=sunha+360.
 	sunsep=abs(sunha)/15.#separation(sunra,sundec,scra,sundec)/15.
 
-	if sunsep>6:  # night time 
-		spra=np.array([-1])
-		spdec=np.array([-1])
-	else:
+	# if sunsep>6:  # night time - all the time
+	# 	spra=np.array([-1])
+	# 	spdec=np.array([-1])
+	# else:
 	# print sunha
 	# if ((sunha < 90) | ((sunha > -270) & (sunha<0))):
-		d=(np.sin(np.radians(sunha)))*0.25
-		x=90.
-		xarr=np.arange(0,width,1)/width*x#round(x*d),x*d/width)
-		yarr=np.arange(-width/2.,width/2.,1)
-		n=len(xarr)
+	d=(np.sin(np.radians(sunha)))*0.25
+	x=90.
+	xarr=np.arange(0,width,1)/width*x#round(x*d),x*d/width)
+	yarr=np.arange(-width/2.,width/2.,1)
+	n=len(xarr)
 
-		ra=np.append(np.append(xarr,np.repeat(max(xarr),n)),np.append(xarr[::-1],np.repeat(min(xarr),n)))
+	ra=np.append(np.append(xarr,np.repeat(max(xarr),n)),np.append(xarr[::-1],np.repeat(min(xarr),n)))
 #			[0,60,60,0,0])
-		dec=np.append(np.append(np.repeat(width/2.,n),yarr[::-1]),np.append(np.repeat(-width/2.,n),yarr))#+width/2.
-		#np.array([width/2.,width/2.,-width/2.,-width/2.,width/2.])
-		spra=scra+ra+(360.-elevation-x/2.)#250#*d
-		w=np.where(spra<0)[0]
-		spra[w]=spra[w]+360.
-		w=np.where(spra>360)[0]
-		spra[w]=spra[w]-360.
+	dec=np.append(np.append(np.repeat(width/2.,n),yarr[::-1]),np.append(np.repeat(-width/2.,n),yarr))#+width/2.
+	#np.array([width/2.,width/2.,-width/2.,-width/2.,width/2.])
+	spra=scra+ra+(360.-elevation-x/2.)#250#*d
+	w=np.where(spra<0)[0]
+	spra[w]=spra[w]+360.
+	w=np.where(spra>360)[0]
+	spra[w]=spra[w]-360.
 #		print sunha
-		spdec=scdec+dec-sunha
-		w=np.where(spdec<-90)[0]
-		spdec[w]=spdec[w]+180.
-		w=np.where(spdec>90)[0]
-		spdec[w]=spdec[w]-180.
+	spdec=scdec+dec-sunha
+	w=np.where(spdec<-90)[0]
+	spdec[w]=spdec[w]+180.
+	w=np.where(spdec>90)[0]
+	spdec[w]=spdec[w]-180.
 #		if scdec<-90: spdec=spdec+180.
 #		if scdec>90: spdec=spdec-180.
 

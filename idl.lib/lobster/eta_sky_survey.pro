@@ -2,18 +2,18 @@ pro exposure_hist
 
   ;add=['1day','1day2','1week','1month','1year']
   add='1week2'
-  bin=[1000,1000,1000,1e4,1e5]
+  bin=[500,1000,1000,1e4,1e5]
   for i=0,n_elements(add)-1 do begin 
      
      l=mrdfits('wfi_swift_points_expomap_'+add[i]+'.fits')
 
      begplot,name='WFI_pointings_hist_'+add[i]+'.ps',/color,/land
-     plothist,l,bin=bin[i],/fill,xtitle='Exposure Time (s)',fcolor=!blue,ytitle='N',title=add[i]
+     plothist,l,bin=bin[i],/fill,xtitle='Exposure Time (s)',fcolor=!blue,ytitle='N',title=add[i],xrange=[0,10000]
      endplot
      ps2pdf,'WFI_pointings_hist_'+add[i]+'.ps'
 
   endfor 
-
+  stop
 end
 
 pro add_maps,xx,yy,map,add=add,nside=nside
@@ -253,8 +253,9 @@ pro swift_sim,wfi=wfi,irt=irt
 ;     plots,afst[i].ra,afst[i].dec,psym=1
      ;; wfi
      if keyword_set(wfi) then begin
-        rotate_box,afst[i].roll,xx,yy,xc=afst[i].ra,yc=afst[i].dec,xsize=38,ysize=38,bin=0.5
-        nside=16
+        rotate_box,0,xx,yy,xc=afst[i].ra,yc=afst[i].dec,xsize=38,ysize=38,bin=0.5
+;        rotate_box,afst[i].roll,xx,yy,xc=afst[i].ra,yc=afst[i].dec,xsize=38,ysize=38,bin=0.5
+        nside=64
      endif 
      ;; irt
      if keyword_set(irt) then begin

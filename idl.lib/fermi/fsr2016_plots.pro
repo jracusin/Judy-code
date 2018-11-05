@@ -908,7 +908,7 @@ pro bib
 ;;  plot of papers as function of time (single panel of previous plot)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  cd,'~/Fermi/Senior_Review/SR2016'
+  cd,'~/Fermi/Senior_Review/SR2019'
   bib=mrdfits('Fermi_bibliography.fits',1)
   nbib=n_elements(bib)
   w=where(bib.date gt 2008.5,nbib)
@@ -923,15 +923,15 @@ pro bib
 ;  goto,skip
 ;  plothist,bib.date,x,y,bin=bin,/noplot
   x=fltarr(n+2) & y=fltarr(n+2)
-  for i=0,n+1 do begin 
-     w1=where(bib.date ge 2008+i*bin and bib.date lt 2008+(1+i)*bin,nw1)
+  for i=0,n do begin 
+     w1=where(bib.date ge 2008+i*bin and bib.date le 2008+(1+i)*bin,nw1)
      x[i]=2008+i*bin
      y[i]=nw1
   endfor 
+
   p=barplot(x+bin*0.5,y/bin,xrange=[2008,2016],yrange=[0,400],ytitle='             Papers per Year',xminor=3,xtitle='Year',position=[0.12,0.25,0.93,0.7],yminor=4,fill_color="blue",xtickval=2008+indgen(9),width=0.8,color='blue',font_size=14)
   t=text(0.035,0.305,'Fermi',font_style='it',orientation=90,font_size=14)
   plotsym,0,1,/fill
-
 ;  p=plot([2009.,2009.]+7./12.,[0,2000],linestyle='--',/overplot,thick=2)
 ;  t=text(2009.5,30,'Pass 6',orientation=90,/data,font_color='white')
 ;  t=text(2009.85,40,'Data',orientation=90,/data,font_color='white')
@@ -1022,7 +1022,7 @@ pro read_bib,p
   s=sort(p.date)
   p=p[s]
 
-  mwrfits,p,'~/Fermi/Senior_Review/SR2016/Fermi_bibliography.fits',/create
+  mwrfits,p,'~/Fermi/Senior_Review/SR2019/Fermi_bibliography.fits',/create
 
   by=200
   for i=0,n-1,by do begin
