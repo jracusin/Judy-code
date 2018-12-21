@@ -350,25 +350,30 @@ end
 pro wfi_rates
 
   cd,'~/Lobster/TAO_2016/'
-  readcol,'~/Lobster/2014_proposal/lobster_sensitivity_0.3_5_Ptak.dat',time,bcount,mcount,grbflux
-  fovs=[30*30.,19.1*19.1,4.*19.1*19.1,1.]
+;  readcol,'~/Lobster/2014_proposal/lobster_sensitivity_0.3_5_Ptak.dat',time,bcount,mcount,grbflux
+  readcol,'/Users/jracusin/TAO/simulations/sensitivity_curves/TAO-ISS_sensitivity_8_0.3_5.dat',time,bcount, mcount, crabflux, grbflux, sgrbflux
+
+  fovs=[30*30.,18.6^2,4.*18.6^2,1.]
   wficonfig=['30x30','20x20','4x20x20','XRI 1x1']
   t1=[0.1,0.15,0.2,0.3,0.4,0.5,0.7,1.]
 ;  t2=[4e5,1e6,2e6,1e7]
   t2=[2e4,4e4,7e4,9e4,1e5,1.3e5,1.7e5,2e5,2.5e5,3e5,3.5e5,4e5,5e5,8e5,1e6]
   nl=n_elements(time)
-  time2=[t1,time,t2]
-  flux=[grbflux[0]/(t1/time[0]),grbflux,grbflux[nl-1]/sqrt(t2/time[nl-1])]
+;  time2=[t1,time,t2]
+  time2=time
+  flux=grbflux;[grbflux[0]/(t1/time[0]),grbflux,grbflux[nl-1]/sqrt(t2/time[nl-1])]
 ;  w=where(time2 ge 3e5)
-  w=where(flux le 1d-12)
-  flux[w]=1d-12
+;  w=where(flux le 1d-12)
+;  flux[w]=1d-12
 ;  flux2=flux/4.  ;;; scaling the old sensitivity
 ;  w=where(flux2 le 1d-12)
 ;  flux2[w]=1d-12
-  flux3=flux/1.5^2.  ;;; scaling the old sensitivity
-  w=where(flux3 le 1d-12)
-  flux3[w]=1d-12
-  flux2=flux3
+;  flux3=flux/1.5^2.  ;;; scaling the old sensitivity
+;  w=where(flux3 le 1d-12)
+;  flux3[w]=1d-12
+;  flux2=flux3
+  flux2=flux
+  flux3=flux
 
   ;;; XRI rates
   readcol,'~/Lobster/TAP/XRI_sensitivity_15arcmin.dat',xri_time,xri_flux,skip=1
@@ -471,12 +476,13 @@ pro wfi_rates
 
   ;;; TDFs
 
-  rate=1e-5 ;;; yr-1 galaxy-1
+  rate=1e-4 ;;; yr-1 galaxy-1
   galdens=1e-2 ;;; Mpc-3 of SMBH (10^6-10^8 Msolar)
   xrt2wfi=0.594
+  frac=0.61
 
   ;;; non-jetted
-  lum=1d44;*xrt2wfi ;; erg/s  ;;; all thermal, don't lose anything >5 keV
+  lum=1d44;*xrt2wfi*frac ;; erg/s  ;;; all thermal, don't lose anything >5 keV
   dist=sqrt(lum/(4.*!pi*weekly_wfisens))/mpc2cm
   z=interpol(z0,ld,dist)
 ;  print,z
@@ -496,7 +502,7 @@ pro wfi_rates
   theta=5.*!dtor ;;; deg->radian
   area=2*!pi*(1.-cos(theta))
   areafrac=area/(4*!pi)*2.
-  lum=1d47*xrt2wfi ;;; erg/s
+  lum=1d47*xrt2wfi*frac ;;; erg/s
   dist=sqrt(lum/(4.*!pi*weekly_wfisens))/mpc2cm
   print,dist
   z=interpol(z0,ld,dist)

@@ -349,7 +349,10 @@ def TDE_rates(sensitivity,sky_frac):
 	f=interpolate.interp1d(lumdist,z0)
 
 	##  NON-JETTED
-	lum=1e44 #spectrum is thermal so same lum as XRT
+	bol2wfi=0.027#0.14
+	bol2xrt=0.0147#0.039
+	conv=np.array([bol2wfi,bol2wfi,bol2wfi,bol2xrt])
+	lum=1e44*conv #spectrum is thermal so same lum as XRT
 	limit_dist=np.sqrt(lum/(4*math.pi*sensitivity))/mpc2cm
 
 	limit_z=f(limit_dist)
@@ -360,8 +363,8 @@ def TDE_rates(sensitivity,sky_frac):
 
 	## JETTED
 
-	xrt2wfi=0.594
-	xrt2xri=0.16
+	xrt2wfi=0.66#0.594
+	xrt2xri=0.70#0.16
 	conv=np.array([xrt2wfi,xrt2wfi,xrt2wfi,xrt2xri])
 	frac=0.1  # 10% are beamed (though very uncertain)
 	theta=5.*math.pi/180. # deg->radian
@@ -678,13 +681,13 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 
 	from tao_planning_sims import wfi_sensitivity
 
-	fovs=np.array([12.4*12.4,18.6*18.6,4.*19.1*19.1,1.])
-	config=['TAO TSM WFI: 12.4x12.4','TAO WFI: 18.6x18.6','TAP WFI: 4x20x20','TAP XRI: 1x1']
-	constraints=0.80
+	fovs=np.array([12.4*12.4,18.6*18.6,4.*18.6*18.6,1.])
+	config=['TAO TSM WFI: 12.4x12.4','TAO WFI: 18.6x18.6','TAP WFI: 4x18.6x18.6','TAP XRT: 1x1']
 	allsky=4.*math.pi*(180./math.pi)**2.
 	fov_frac=fovs/allsky
-	frac_sky=np.array([constraints,constraints,constraints,100./allsky])
+	frac_sky=np.array([0.8,0.8,0.85,100./allsky])
 	pointings = np.round(allsky/fovs*frac_sky)
+	pointings[3]=pointings[2] ### because XRT follows WFI
 	print 'Pointings = ',pointings
 	mpc2cm=3.08568025e24
 
@@ -710,8 +713,9 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 	# lob_flux=flux
 	# lob_time=time2
 
-	tao=ascii.read('/Users/jracusin/Lobster/TAO_2016/simulations/Ptak/tau_flux_limits_2018_prob1e-10.csv',names=['time','bcount','mcount','grbflux'],data_start=1)
+#	tao=ascii.read('/Users/jracusin/Lobster/TAO_2016/simulations/Ptak/tau_flux_limits_2018_prob1e-10.csv',names=['time','bcount','mcount','grbflux'],data_start=1)
 #	tao=ascii.read('/Users/jracusin/Lobster/TAO_2016/lobster_sensitivity_0.3_5_Ptak_45cm.dat',names=['time','bcount','mcount','grbflux'],data_start=1)
+	tao=ascii.read('/Users/jracusin/TAO/simulations/sensitivity_curves/TAO-ISS_sensitivity_8_0.3_5.dat')#,names=['time','bcount','mcount','crabflux','grbflux','sgrbflux'],data_start=1)
 #	tao_wfi_flux=flux/1.5**2
 #	w=np.where(tao_wfi_flux < 1e-12)
 #	tao_wfi_flux[w]=1e-12
@@ -720,7 +724,7 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 	# jordan_wfi_flux[w]=1e-12
 	
 	time=np.array(tao['time'])
-	grbflux=wfi_sensitivity(time)
+	grbflux=wfi_sensitivity(time,configfile='tao_config_v51.txt')
 #	grbflux=np.array(tao['grbflux'])
 	nl=len(time)
 	#time2=np.append(t1,time)
@@ -734,7 +738,7 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 	#flux[w]=1e-12
 
 	tao_wfi_flux=grbflux#tao['grbflux']
-	time2=tao['time']
+	time2=time#tao['time']
 
 	w=np.where(tao_wfi_flux < 1e-12)
 	tao_wfi_flux[w]=1e-12
@@ -761,21 +765,26 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 		plot_sensitivity(time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux,tao_wfi_flux,onlyTAO=onlyTAO)
 
 	### sensitivity for various exposures
-	 # 0.85 for SAA, 30 s for slewing, 0.95 for ISS downtime, 22.5 for average slew time @4 deg/s
-	daily_exptimes = np.array(86400*0.85*0.95/pointings-30-22.5)
+	uptime=np.array([0.95*0.85,0.95*0.85,1.,1.]) # down, SAA
+		 # 0.85 for SAA, 30 s for settling, 0.95 for ISS downtime, 22.5 for average slew time @4 deg/s
+	week_slew_factor=np.array([1.,1.,7.,7.]) # on longer exposures, will spread exposure across snapshots
+	month_slew_factor=np.array([1.,1.,30.,30.]) # on longer exposures, will spread exposure across snapshots
+
+	daily_exptimes = np.array(86400*uptime/pointings-30-22.5)
 	daily_sensitivity=interpol_sens(daily_exptimes,time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux)	
 	daily_sensitivity[1]=wfi_sensitivity(daily_exptimes[1])
 
-	weekly_exptimes = 7*86400*0.85*0.95/pointings-30-22.5
+	weekly_exptimes = 7*86400*uptime/pointings-(30-22.5)*week_slew_factor
 	weekly_sensitivity=interpol_sens(weekly_exptimes,time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux)
 	weekly_sensitivity[1]=wfi_sensitivity(weekly_exptimes[1])
 
-	monthly_exptimes = 30*86400*0.85*0.95/pointings-30-22.5
+	monthly_exptimes = 30*86400*uptime/pointings-(30-22.5)*month_slew_factor
 	monthly_sensitivity=interpol_sens(monthly_exptimes,time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux)
 
 	t400=[400.]
 	t400_sensitivity=interpol_sens(t400,time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux)	
 	t400_sensitivity[1]=wfi_sensitivity(t400)
+	print t400_sensitivity
 
 	t100=[100.]
 	t100_sensitivity=interpol_sens(t100,time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux)	
@@ -804,10 +813,10 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 	novae=novae_rates(fovs,t100_sensitivity)
 	thermonuclear_burst=thermonuclear_burst_rates(fovs)
 	#gw=gw_counterpart_rates(time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux)
-	grbs=grb_redshift_rates(doplot=True)
+	grbs=grb_redshift_rates(doplot=False)
 	xf,xfflux1,xfflux2=xflare_rates(daily_sensitivity)
 
-	numprint=2
+	numprint=4
 
 	print 'ccSNe Rates'
 	for i in range(0,numprint):

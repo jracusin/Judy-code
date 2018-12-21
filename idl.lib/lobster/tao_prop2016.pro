@@ -7,7 +7,7 @@ pro shb_plot
   w=where(grb.t90 le 2. and grb.t90 gt 0. and grb.grb ne 'GRB100628A' and grb.grb ne 'GRB140311B')
   grb=grb[w]
 
-;  begplot,name='~/Lobster/TAO_2016/sgrb_plot.eps',/land,/color,font='helvetica'
+  begplot,name='~/Lobster/TAO_2016/sgrb_plot.eps',/land,/color,font='helvetica'
   !x.margin=[5,1]
   !y.margin=[2,0]
   xrange=[10,1e6]
@@ -70,6 +70,7 @@ pro shb_plot
      conv=total(pow(eng[0:47],[1.,grb[i].phind])*de)/total(pow(eng,[1.,grb[i].phind])*de)
      
      r=grb[i].cfratio*conv*dist^2/dist200^2/kcorr(z,[1.,grb[i].phind],/pow)
+;     r=grb[i].cfratio*conv
 
      if nw gt 1 then begin
         if f[0]*r gt 1e-11 then begin 
@@ -130,8 +131,8 @@ pro shb_plot
   oplot,[2000,1e6],[f2000,f2000],thick=15,color=c,line=5
   xyouts,7e3,f2000*0.4,'R!L90!N<'+numdec(r90p[2],1)+"' "+'2000 s Sensitivity',color=c
   
-;  endplot
-;  spawn,'ps2pdf ~/Lobster/TAO_2016/sgrb_plot.eps ~/Lobster/TAO_2016/sgrb_plot.pdf'
+  endplot
+  spawn,'ps2pdf ~/Lobster/TAO_2016/sgrb_plot.eps ~/Lobster/TAO_2016/sgrb_plot.pdf'
   help,detect
   nd=n_elements(detect)
   w0=where(detect eq 0,nw0)

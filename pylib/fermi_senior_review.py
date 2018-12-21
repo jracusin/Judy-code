@@ -19,10 +19,11 @@ def read_bib(dir='/Users/jracusin/Fermi/Senior_Review/SR2019/'):
 	bib0=ascii.read(dir+file)
 
 	date=bib0['Date Published']
-#	month=[d[0:3] for d in date]
-#	year==[d[5:9] for d in bib0['Date Published']]
+	month=[d[0:3] for d in date]
+	year==[d[5:9] for d in date]
+	print bib0.keys()
 
-	return date#month#,year
+	return month,year
 #	strptime('Feb','%b').tm_mon
 
 #	bib=Table(names=('date','citations','category','subjects'))

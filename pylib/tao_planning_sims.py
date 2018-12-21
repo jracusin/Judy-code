@@ -2703,13 +2703,14 @@ def wfi_sensitivity(exposure=10,taoconfig=None,configfile=None,doplot=False,sgrb
 
 	sensdir='/Users/jracusin/TAO/simulations/sensitivity_curves/'
 
-
+	sens_factor=1.
 	if taoconfig==None:
 		if configfile != None:
 			taoconfig=read_tao_config(dir+configfile)
 			sensfile=taoconfig['sensitivity_file']
 			energy_range=[taoconfig['WFI_E_low'],taoconfig['WFI_E_high']]
 			tao=ascii.read(sensfile)
+			sens_factor=taoconfig['WFI_sensitivity_factor']
 		else:
 			if performance==True:  # performance values
 				if energy_range == [0.4,4]:
@@ -2723,6 +2724,7 @@ def wfi_sensitivity(exposure=10,taoconfig=None,configfile=None,doplot=False,sgrb
 		sensfile=taoconfig['sensitivity_file']
 		energy_range=[taoconfig['WFI_E_low'],taoconfig['WFI_E_high']]
 		tao=ascii.read(sensfile)
+		sens_factor=taoconfig['WFI_sensitivity_factor']
 
 	### curve used in CSR
 	taocsr=ascii.read('/Users/jracusin/TAO/simulations/Ptak/tau_flux_limits_2018_prob1e-10.csv')
@@ -2735,9 +2737,10 @@ def wfi_sensitivity(exposure=10,taoconfig=None,configfile=None,doplot=False,sgrb
 		minf=tao['grbflux']
 	else:
 		minf=tao['sgrbflux']
-	time=tao['time']
 
-	minf=minf*taoconfig['WFI_sensitivity_factor']
+	time=np.array(tao['time'])*1.
+
+	minf=minf*sens_factor
 
 	flux=loginterpol(time,minf,exposure)
 

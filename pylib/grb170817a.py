@@ -237,9 +237,9 @@ def bbody(eng,kt):
 def calc_eiso(z,fluence,f1,f2,FLNC_Emin=10.,FLNC_Emax=1000.,Emin=1.,Emax=1e4,lumdist=None,Liso=False):
 
 	## energy over output Eiso range
-	eng=np.logspace(np.log10(Emin),np.log10(Emax),1e4)/(1.+z)
+	eng=np.logspace(np.log10(Emin),np.log10(Emax),1e2)/(1.+z)
 	## energy over  measure fluence range
-	eng2=np.logspace(np.log10(FLNC_Emin),np.log10(FLNC_Emax),1e4)
+	eng2=np.logspace(np.log10(FLNC_Emin),np.log10(FLNC_Emax),1e2)
 	k1=np.trapz(f1*eng,eng)
 	k2=np.trapz(f2*eng2,eng2)
 	pc2cm=3.08568025e18	
@@ -560,9 +560,13 @@ def calc_energetics(grbox,gbm,FLNC_Emin=10.,FLNC_Emax=1000.,Emin=1.,Emax=1e4,m1=
 	## write out Eiso, Liso
 	data1=Table([gbm[m2[s]]['GBMNAME'],Liso[s],gbm[m2[s]]['PFLX_BEST_FITTING_MODEL']],names=['GRB','Liso','PFLX_BEST_FITTING_MODEL'])
 	data2=Table([gbm[m2[spl]]['GBMNAME'],Liso[spl],gbm[m2[spl]]['PFLX_BEST_FITTING_MODEL']],names=['GRB','Liso','PFLX_BEST_FITTING_MODEL'])
-	ascii.write(vstack(data1,data2),'GBM_sGRB_Liso.dat')
+	ascii.write(vstack([data1,data2]),'GBM_sGRB_Liso.dat')
 
-	return m1,m2,Eiso,Liso
+	# data1=Table([gbm[m2[s]]['GBMNAME'],Eiso[s],gbm[m2[s]]['PFLX_BEST_FITTING_MODEL']],names=['GRB','Eiso','FLNC_BEST_FITTING_MODEL'])
+	# data2=Table([gbm[m2[spl]]['GBMNAME'],Eiso[spl],gbm[m2[spl]]['FLNC_BEST_FITTING_MODEL']],names=['GRB','Eiso','FLNC_BEST_FITTING_MODEL'])
+	# ascii.write(vstack(data1,data2),'GBM_sGRB_Eiso.dat')
+
+	return m1,m2,Eiso,Liso#,s,spl,data1,data2
 
 def match_catalogs_name(name1,name2):
 
