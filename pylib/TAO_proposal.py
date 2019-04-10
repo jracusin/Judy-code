@@ -681,11 +681,12 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 
 	from tao_planning_sims import wfi_sensitivity
 
-	fovs=np.array([12.4*12.4,18.6*18.6,4.*18.6*18.6,1.])
+	fovs=np.array([12.4*12.4,18.6*18.6,36.2*36.3,1.])
 	config=['TAO TSM WFI: 12.4x12.4','TAO WFI: 18.6x18.6','TAP WFI: 4x18.6x18.6','TAP XRT: 1x1']
 	allsky=4.*math.pi*(180./math.pi)**2.
 	fov_frac=fovs/allsky
 	frac_sky=np.array([0.8,0.8,0.85,100./allsky])
+
 	pointings = np.round(allsky/fovs*frac_sky)
 	pointings[3]=pointings[2] ### because XRT follows WFI
 	print 'Pointings = ',pointings
@@ -765,7 +766,7 @@ def TAO_source_rates(doplot=False,onlyTAO=False):
 		plot_sensitivity(time,lob_flux,tao_wfi_flux,tap_wfi_flux,tap_xri_flux,tao_wfi_flux,onlyTAO=onlyTAO)
 
 	### sensitivity for various exposures
-	uptime=np.array([0.95*0.85,0.95*0.85,1.,1.]) # down, SAA
+	uptime=np.array([0.95*0.85,0.95*0.85,0.865,0.865]) # down, SAA
 		 # 0.85 for SAA, 30 s for settling, 0.95 for ISS downtime, 22.5 for average slew time @4 deg/s
 	week_slew_factor=np.array([1.,1.,7.,7.]) # on longer exposures, will spread exposure across snapshots
 	month_slew_factor=np.array([1.,1.,30.,30.]) # on longer exposures, will spread exposure across snapshots

@@ -164,7 +164,7 @@ class Detector(object):
         if np.isnan(phi): phi=0.
         return theta,phi
 
-    def exposure(self, ra, dec, FoV=False, alt=-10., index=0.77):
+    def exposure(self, ra, dec, FoV=False, alt=-10., fov=90., index=0.77):
 
         locdb = "Test,f|V,{},{},21.26,2000".format(deg2HMS(ra),deg2DMS(dec))
         test_point = eph.readdb(locdb)
@@ -176,7 +176,8 @@ class Detector(object):
                 return 1.0
             else:
                 sep = eph.separation((self.azimuth,self.altitude),(test_point.az,test_point.alt))
-                if sep > np.pi/2.:
+#                if sep > np.pi/2.:
+                if sep > np.radians(fov):
                     return 0.0
                 else:
                     return np.cos(sep)**index

@@ -1,19 +1,3 @@
-pro plot_st_results_new
-
-  color=['red','green','blue','cyan','magenta','orange','purple','pink','dark green','salmon','grey','dodger blue']
-
-;  for st=1,3,2 do begin ;;; loop over 3 star trackers
-;     pixf=mrdfits('ST'+ntostr(st)+'_warm_pixel_list.fits',1,/silent)
-;     np=n_elements(pixf)
-;     ni=n_elements(pixf[0].comp)
-;     ;;; plot positions of suspect pixels
-;     p=plot([0,512],[0,512],xrange=[0,511],yrange=[0,511],/xsty,/ysty,xtitle='x',ytitle='y',/iso,title='ST #'+ntostr(st),/nodata)
-;     for i=0,ni-1 do begin 
-     
-
-  return
-end 
-
 pro plot_st_results
 
   begplot,name='~/Fermi/Spacecraft/star_tracker/hot_pix_analysis.ps',/color,font='helvetica',/land
@@ -214,7 +198,7 @@ pro star_tracker_analysis
 
            ims[*,*,i]=im
            
-           w=where(im gt starthresh,nw)  ;;;;;; SHOULD I REMOVE BOX AROUND BRIGHT PIXELS OR REMOVE BOX AROUNG GLASTCAT STARS, LATTER WOULD SAVE REAL HOX PIXELS, BUT REQUIRE ABSOLUTE ASTROMETRY
+           w=where(im gt starthresh,nw) 
 
            for j=0,nw-1 do begin  ;;; remove 3x3 box around each pixel above threshold
               xa=[-1,0,1,-1,0,1,-1,0,1]
@@ -274,7 +258,6 @@ pro star_tracker_analysis
         ystr[wstr]='0'+ystr[wstr]
 
         s=rem_dup(xstr+ystr)
-;        s=rem_dup(pix.x*pix.y) ;;; NEED TO DEAL WITH CROSS PRODUCTS - also duplicate or triplicate?
         ns=n_elements(s)
         pixf=replicate(pixf,ns)
         mloc=fltarr(nim)
@@ -310,6 +293,5 @@ pro star_tracker_analysis
      endif
   endfor ;;; loop over each star tracker
 
-stop
   return
 end 
