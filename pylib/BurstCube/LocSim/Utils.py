@@ -1,14 +1,14 @@
-def deg2HMS( RA ):
+def deg2HMS( RA0 ):
 
    '''Borrowed from Sylvain Baumont 
     http://supernovae.in2p3.fr/~baumont/'''
         
-   if(RA<0):
+   if(RA0<0):
       sign = -1
-      ra   = -RA
+      ra   = -RA0
    else:
       sign = 1
-      ra   = RA
+      ra   = RA0
 
    h = int( ra/15. )
    ra -= h*15.
@@ -22,17 +22,17 @@ def deg2HMS( RA ):
    
    return out
 
-def deg2DMS( DEC ):
+def deg2DMS( DEC0 ):
     
    '''Borrowed from Sylvain Baumont 
     http://supernovae.in2p3.fr/~baumont/'''
     
-   if(DEC<0):
+   if(DEC0<0):
       sign = -1
-      dec  = -DEC
+      dec  = -DEC0
    else:
       sign = 1
-      dec  = DEC
+      dec  = DEC0
 
    d = int( dec )
    dec -= d

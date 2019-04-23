@@ -165,7 +165,6 @@ class Detector(object):
         return theta,phi
 
     def exposure(self, ra, dec, FoV=False, alt=-10., fov=90., index=0.77):
-
         locdb = "Test,f|V,{},{},21.26,2000".format(deg2HMS(ra),deg2DMS(dec))
         test_point = eph.readdb(locdb)
         test_point.compute(self.obs)
