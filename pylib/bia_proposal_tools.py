@@ -12,15 +12,28 @@ import healpy as hp
 from pylab import cm
 import matplotlib.colors as mpl_col
 
-def plot_exposures(pointings,Aeff_fact,index=1,lat='00:00:00',lon='260:00:00',Earth=True,antiEarth=False):
+def plot_exposures(pointings,Aeff_fact,index=1,lat='00:00:00',lon='260:00:00',Earth=True,antiEarth=False,NSIDE=32):
     npointings=len(pointings)
     sc = Spacecraft(pointings,lat=lat,lon=lon)
-    NSIDE = 32
     exposure_positions_hp = np.arange(hp.nside2npix(NSIDE))
     exposure_positions_pix = hp.pix2ang(NSIDE, exposure_positions_hp, lonlat=True)
     exposure_positions = np.vstack(exposure_positions_pix)
     exposures = np.array([[ detector.exposure(position[0],position[1], alt=-90.,index=index) for position in exposure_positions.T] 
                           for detector in sc.detectors])
+
+    exps=exposures.sum(axis=0)*Aeff_fact
+    fs=exps#-min(gbm_exps))/max(gbm_exps)
+
+    if Earth: 
+        vec=hp.ang2vec(180,0,lonlat=True)
+        i=hp.query_disc(NSIDE,vec,67*np.pi/180.)
+        fs[i]=0
+        exposures[:,i]=0
+    if antiEarth:
+        vec=hp.ang2vec(0,0,lonlat=True)
+        i=hp.query_disc(NSIDE,vec,67*np.pi/180.)
+        fs[i]=0
+        exposures[:,i]=0
 
     plot.figure(figsize=(20,npointings))
     s=np.argsort(pointings.keys())
@@ -28,22 +41,12 @@ def plot_exposures(pointings,Aeff_fact,index=1,lat='00:00:00',lon='260:00:00',Ea
         i=s[j]
         hp.mollview(exposures[i]/max(exposures[i])*Aeff_fact,title='Detector '+pointings.keys()[i],\
                     sub = [np.round(npointings/3.+0.5),3,int(str(j+1))])
-    exps=exposures.sum(axis=0)*Aeff_fact
-    #bia_fs=(exps-min(exps))/max(exps)
-    fs=exps#-min(gbm_exps))/max(gbm_exps)
-    if Earth: 
-        vec=hp.ang2vec(180,0,lonlat=True)
-        i=hp.query_disc(NSIDE,vec,67*np.pi/180.)
-        fs[i]=0
-    if antiEarth:
-        vec=hp.ang2vec(0,0,lonlat=True)
-        i=hp.query_disc(NSIDE,vec,67*np.pi/180.)
-        fs[i]=0
+
     hp.mollview(fs,title='Sum of All Detectors')
 #    plot.savefig(biadir+'exposure_maps_'+str(ang)+'.png')
     return sc,fs,exposure_positions,pointings,exposures
 
-def num_detectors(sc,exposure_positions,pointings,antiEarth=False,NSIDE=32):
+def num_detectors(sc,exposure_positions,pointings,antiEarth=False,NSIDE=32,Earth=True):
 
     npointings=len(pointings)
     ## evaluate detector overlap
@@ -61,6 +64,12 @@ def num_detectors(sc,exposure_positions,pointings,antiEarth=False,NSIDE=32):
     fs_det=exps#-min(gbm_exps))/max(gbm_exps)
 
     cmap_skewed=colormap_skewed(exps)
+
+    if Earth:
+        vec=hp.ang2vec(180,0,lonlat=True)
+        i=hp.query_disc(NSIDE,vec,67*np.pi/180.)
+        fs_det[i]=0
+
     if antiEarth:
         vec=hp.ang2vec(0,0,lonlat=True)
         i=hp.query_disc(NSIDE,vec,67*np.pi/180.)
@@ -69,6 +78,16 @@ def num_detectors(sc,exposure_positions,pointings,antiEarth=False,NSIDE=32):
     hp.mollview(fs_det,title='Overlap of Detectors',cmap=cmap_skewed)
 
     return fs_det
+
+def num_detectors_frac(fs_det):
+    ndet=int(np.max(fs_det))
+    print ndet
+    npix=float(len(fs_det))
+
+    print('Fraction of sky seen by # of detectors:')
+    for i in range(ndet):
+        frac=float(len(np.where(fs_det==i)[0])/npix)
+        print(str(i)+' '+str(frac))
 
 def colormap_skewed(exps):
     vmin_skewed = -1.0
