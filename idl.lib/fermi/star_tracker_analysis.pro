@@ -1,3 +1,53 @@
+pro plot_st_trends
+
+  begplot,name='~/Fermi/Spacecraft/star_tracker/hot_pix_trends.ps',/color,font='helvetica',/land
+  !p.multi=[0,3,2]
+  !x.margin=[10,3]
+  !y.margin=[10,2]
+  colors=[!red,!green,!blue,!cyan,!magenta,!orange,!purple,!pink,!forestgreen,!salmon,!dodgerblue,!violet,!darkred]
+  colors=[colors,colors,colors]
+
+  l1=mrdfits('~/Fermi/Spacecraft/star_tracker/ST1_warm_pixel_list.fits',1)  
+  l3=mrdfits('~/Fermi/Spacecraft/star_tracker/ST3_warm_pixel_list.fits',1)  
+
+  n1=n_elements(l1[0].date)
+  min1=fltarr(n1)
+  max1=fltarr(n1)
+  mean1=fltarr(n1)
+  for i=0,n1-1 do begin
+    min1[i]=min(l1.loc_bkg[i])
+    max1[i]=max(l1.loc_bkg[i])
+    mean1[i]=median(l1.loc_bkg[i])
+  endfor 
+
+  n3=n_elements(l3[0].date)
+  min3=fltarr(n3)
+  max3=fltarr(n3)
+  mean3=fltarr(n3)
+  for i=0,n3-1 do begin
+    min3[i]=min(l3.loc_bkg[i])
+    max3[i]=max(l3.loc_bkg[i])
+    mean3[i]=median(l3.loc_bkg[i])
+  endfor
+
+  !p.multi=0
+  plot,[2013,round(l1[0].date[i]+0.5)],[0,70],/nodata,xtitle='Date',ytitle='Local Background Level',/xsty,/ysty
+  for i=0,n1-1 do oplot,[l1[0].date[i],l1[0].date[i]],[min1[i],max1[i]],color=!blue
+  oplot,l1[0].date,mean1,color=!blue,psym=1
+  oplot,minmax(l1.date),[median(l1.loc_bkg),median(l1.loc_bkg)],color=!blue,line=2
+
+  for i=0,n3-1 do oplot,[l3[0].date[i],l3[0].date[i]],[min3[i],max3[i]],color=!red
+  oplot,l3[0].date,mean3,color=!red,psym=1
+  oplot,minmax(l3.date),[median(l3.loc_bkg),median(l3.loc_bkg)],color=!red,line=2
+
+  legend,['ST1','ST3'],psym=[1,1],color=[!blue,!red],textcolor=[!blue,!red]
+
+  endplot
+  ps2pdf,'~/Fermi/Spacecraft/star_tracker/hot_pix_trends.ps
+
+  return
+  end 
+
 pro plot_st_results
 
   begplot,name='~/Fermi/Spacecraft/star_tracker/hot_pix_analysis.ps',/color,font='helvetica',/land
@@ -5,7 +55,7 @@ pro plot_st_results
   !x.margin=[10,3]
   !y.margin=[10,2]
   colors=[!red,!green,!blue,!cyan,!magenta,!orange,!purple,!pink,!forestgreen,!salmon,!dodgerblue,!violet,!darkred]
-  colors=[colors,colors]
+  colors=[colors,colors,colors]
 
   plotsym,8,0.3,/fill
   for st=1,3,2 do begin ;;; loop over 3 star trackers
@@ -85,11 +135,13 @@ pro plot_st_results
 ;;; plot only those pixels which have been hot >4 times
      ni=n_elements(pixf[0].comp)
 ;     !p.multi=[0,ni+2,4]
-     !p.multi=[0,round(ni/2.+1.),4]
+;     !p.multi=[0,round(ni/2+1),4]
+      !p.multi=[0,round(ni/3+1),3]
 ;     multiplot,[ni+1,4],/init
 
      ims=intarr(512,512,ni)
      for i=0,ni-1 do begin
+
         im=mrdfits(strtrim(pixf[0].wim[i],2),/silent)
         sim=size(im)
         if sim[0] eq 3 then im=im[*,*,0]
@@ -121,8 +173,8 @@ pro plot_st_results
            if nw gt 0 then plots,pixf[w].x,pixf[w].y,psym=8,color=!green,symsize=2
            xyouts,xmn+3,ymx+1,strmid(pixf[p].wim[i],9,15),charsize=0.5
            xyouts,xmn+1,ymn+5,'pix val='+ntostr(pixf[p].val[i]),charsize=0.5
-           xyouts,xmn+1,ymn+3,'loc bkg='+ntostr(pixf[p].loc_bkg[i],4),charsize=0.5
-           xyouts,xmn+1,ymn+1,'>bkg='+ntostr(pixf[p].comp[i],4),charsize=0.5
+           xyouts,xmn+1,ymn+3,'loc bkg='+ntostr(sigfig(pixf[p].loc_bkg[i])),charsize=0.5
+           xyouts,xmn+1,ymn+1,'>bkg='+ntostr(sigfig(pixf[p].comp[i],3)),charsize=0.5
            legend,ntostr(pixf[p].x)+', '+ntostr(pixf[p].y),/top,/left,box=0,charsize=0.5
         endfor
         ;;; make plot of pixel value as function of time
@@ -130,7 +182,7 @@ pro plot_st_results
         plot,indgen(10),xtickname=replicate(' ',10),ytickname=replicate(' ',10),/nodata,color=!white
         if ni mod 2 eq 1 then plot,indgen(10),xtickname=replicate(' ',10),ytickname=replicate(' ',10),/nodata,color=!white
 ;        plot,indgen(ni)+1,pixf[p].comp,psym=5,xrange=[0,ni+1],yrange=[0,max(pixf[p].comp)+5],charsize=1,ymargin=[4,4],symsize=0.5,xtitle='IM #',ytitle='>bkg',xmargin=[-20,0]
-        plot,pixf[p].date,pixf[p].comp,psym=5,xrange=xrange3,yrange=[0,max(pixf[p].comp)+5],charsize=1,ymargin=[4,4],symsize=0.5,xtitle='Image Year',ytitle='>bkg',xmargin=[-20,0]
+        plot,pixf[p].date,pixf[p].comp,psym=5,xrange=xrange3,yrange=[0,max(pixf[p].comp)+5],charsize=1,ymargin=[4,4],symsize=0.5,xtitle='Image Year',ytitle='>bkg',xmargin=[-15,0]
 ;        oplot,[0,ni+1],[8,8],color=!orange,line=1
         oplot,xrange3,[8,8],color=!orange,line=1
 
